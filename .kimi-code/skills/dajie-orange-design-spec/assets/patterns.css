@@ -1,0 +1,183 @@
+/* ═══════════════════════════════════════════════════════════
+   大界橙色通用设计规范 · Pattern 层（布局变体）
+   ───────────────────────────────────────────────────────────
+   依赖：必须先引入 design-tokens.css，本文件只消费 --token 变量。
+   铁律：本文件内**禁止出现硬编码色值/圆角/阴影**，一律 var(--x)。
+        唯一的例外是语义色（当前 token 未定义，见 patterns.md §8）。
+
+   命名规则：.v-<变体名>         区块根
+             .v-<变体名>__<部件> 区块内元素（BEM）
+             .v-<变体名>--<状态> 状态修饰
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── 演示页容器 ──────────────────────────────────────────────
+   仅用于 tools/variants/*.html 预览页，业务代码不要复制这一段。
+   它负责给变体一个灰色页面底，模拟真实页面语境。
+   ──────────────────────────────────────────────────────────── */
+.v-demo {
+  padding: 24px;
+  background: var(--page-bg);
+  min-height: 100vh;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   P-01 两列表单  form-two-col
+   适用：字段 ≥6 个、桌面宽屏录入页，一屏内收完
+   不适用：字段 ≤4 个（用单列更清爽）、移动端主流程
+   ═══════════════════════════════════════════════════════════ */
+.v-form2 {
+  background: #fff;
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-card-y) var(--space-card-x);
+}
+
+.v-form2__head {
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--divider);
+}
+.v-form2__title {
+  margin: 0;
+  font-size: var(--fs-title);
+  font-weight: 500;
+  color: var(--text-1);
+}
+.v-form2__hint {
+  margin: 6px 0 0;
+  font-size: var(--fs-hint);
+  font-weight: 400;
+  color: var(--text-3);
+}
+
+.v-form2__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 24px;
+}
+
+.v-form2__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+/* 跨整行的字段（长文本、地址等） */
+.v-form2__field--full { grid-column: 1 / -1; }
+
+.v-form2__label {
+  font-size: var(--fs-body);
+  font-weight: 400;
+  color: var(--text-1);
+}
+.v-form2__label--req::before {
+  content: '*';
+  color: var(--brand);
+  margin-right: 2px;
+}
+
+.v-form2__input,
+.v-form2__select,
+.v-form2__textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-input);
+  font-family: inherit;
+  font-size: var(--fs-body);
+  font-weight: 400;
+  color: var(--text-1);
+  background: #fff;
+}
+.v-form2__input,
+.v-form2__select { height: var(--ctl-h); padding: 0 var(--ctl-px-input); }
+.v-form2__textarea {
+  min-height: 72px;
+  padding: 8px 11px;
+  line-height: 1.6;
+  resize: vertical;
+}
+.v-form2__input::placeholder,
+.v-form2__textarea::placeholder { color: var(--text-4); }
+.v-form2__input:focus,
+.v-form2__select:focus,
+.v-form2__textarea:focus {
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: 0 0 0 2px var(--brand-light);
+}
+
+/* 底部操作区：对齐规范弹窗母版 .modal-foot
+   （右对齐、取消在左、主操作在右、间距 12px、无分隔线）
+   注意：按钮必须同时带 .btn 骨架类，否则只有颜色没有尺寸/圆角。 */
+.v-form2__foot {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--modal-foot-gap);
+  margin-top: var(--modal-foot-mt);
+}
+
+/* 平板及以下降为单列 */
+@media (max-width: 900px) {
+  .v-form2__grid { grid-template-columns: 1fr; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   P-02 详情描述列表  detail-desc
+   适用：只读详情、参数对照、信息卡
+   不适用：需要录入的场景（用 P-01）
+   ═══════════════════════════════════════════════════════════ */
+.v-desc {
+  background: #fff;
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-card-y) var(--space-card-x);
+}
+
+.v-desc__head {
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--divider);
+}
+.v-desc__title {
+  margin: 0;
+  font-size: var(--fs-title);
+  font-weight: 500;
+  color: var(--text-1);
+}
+
+.v-desc__list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px 24px;
+  margin: 0;
+}
+.v-desc__item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.v-desc__item--full { grid-column: 1 / -1; }
+
+.v-desc__k {
+  font-size: var(--fs-hint);
+  font-weight: 400;
+  color: var(--text-3);
+}
+.v-desc__v {
+  margin: 0;                      /* 清掉 dd 浏览器默认的 40px 缩进 */
+  font-size: var(--fs-body);
+  font-weight: 500;
+  color: var(--text-1);
+  word-break: break-word;
+}
+/* 数字类取值用 DIN */
+.v-desc__v--num { font-family: var(--font-number); }
+
+@media (max-width: 900px) {
+  .v-desc__list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+  .v-desc__list { grid-template-columns: 1fr; }
+}

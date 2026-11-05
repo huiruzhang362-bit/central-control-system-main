@@ -1,0 +1,164 @@
+/* ═══════════════════════════════════════════════════════════
+   通用设计规范 · Design Tokens（源自工业中控系统项目）
+   用法：在任何 Web 项目引入本文件，组件按变量取值。
+   ═══════════════════════════════════════════════════════════ */
+:root {
+  /* 品牌色 */
+  --brand: #EE6402;
+  --brand-hover: #FF7A45;
+  --brand-light: #FFF7E6;
+  --brand-border: #FFE7BA;
+
+  /* 文字（全站不用纯黑） */
+  --text-1: rgba(0,0,0,0.85);
+  --text-2: rgba(0,0,0,0.65);
+  --text-3: rgba(0,0,0,0.45);
+  --text-4: rgba(0,0,0,0.25);
+
+  /* 边框与背景 */
+  --border: #d9d9d9;
+  --divider: #f0f0f0;
+  --page-bg: #F8F9FA;
+  --track: #F5F5F5;
+
+  /* 圆角 */
+  --radius-card: 12px;   /* 卡片/弹窗/抽屉 */
+  --radius-btn: 4px;     /* 按钮 */
+  --radius-input: 2px;   /* 输入框/下拉/日期/小标签 */
+  --radius-square: 0;    /* 复选框/状态标签 */
+
+  /* 阴影（Figma 数据报表稿，页眉/卡片统一） */
+  --shadow-card: 0 2px 4px rgba(0,0,0,0.02), 0 1px 6px -1px rgba(0,0,0,0.02), 0 1px 2px rgba(0,0,0,0.03);
+
+  /* 间距（8px 网格，个别 2/4） */
+  --space-card-y: 16px;
+  --space-card-x: 24px;
+
+  /* 字体 */
+  --font-family: 'Source Han Sans CN', 'Source Han Sans SC', 'Noto Sans CJK SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-number: 'DIN Alternate', 'Helvetica Neue', sans-serif;
+}
+
+/* ── 基础 ── */
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--page-bg);
+  font-family: var(--font-family);
+  font-weight: 500;                 /* 全局 Medium */
+  color: var(--text-1);
+}
+/* 表单/正文内容例外为 Regular（命名与项目 .page-form 一致） */
+.page-form, .page-form * { font-weight: 400 !important; }
+
+/* ── 按钮 ── */
+.btn-primary {
+  height: 32px; padding: 0 24px;
+  background: var(--brand); color: #fff;
+  border: none; border-radius: var(--radius-btn);
+  font-size: 14px; font-weight: 400; cursor: pointer;
+}
+.btn-primary:hover:not(:disabled) { background: var(--brand-hover); }
+.btn-ghost {
+  height: 32px; padding: 0 24px;
+  background: #fff; color: var(--text-1);
+  border: 1px solid var(--border); border-radius: var(--radius-btn);
+  font-size: 14px; font-weight: 400; cursor: pointer;
+}
+.btn-ghost:hover:not(:disabled) { color: var(--brand); border-color: var(--brand); }
+/* 禁用态：无 hover/click 高亮 */
+:disabled, .is-disabled { cursor: not-allowed; opacity: .55; }
+:disabled:hover { color: inherit; background: inherit; border-color: inherit; }
+
+/* ── 文字按钮 ── */
+.btn-link {
+  color: var(--brand); text-decoration: underline;
+  font-size: 14px; font-weight: 400; cursor: pointer; background: none; border: none; padding: 0;
+}
+.btn-link:hover { color: var(--brand-hover); }
+
+/* ── 卡片 ── */
+.card {
+  background: #fff;
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-card-y) var(--space-card-x);
+}
+.card-title { font-size: 16px; font-weight: 500; color: var(--text-1); }
+
+/* ── 弹窗 ── */
+.modal {
+  background: #fff; border-radius: var(--radius-card);
+  position: fixed; left: 50%; top: 50%; transform: translate(-50%,-50%);
+}
+.modal-body { margin-top: 20px; }
+
+/* ── 表格 ── */
+.table { font-size: 14px; border-collapse: collapse; width: 100%; }
+.table th {
+  background: var(--page-bg); color: var(--text-1);
+  font-weight: 500; font-size: 14px; text-align: left;
+}
+.table th, .table td { padding: 12px 16px; white-space: nowrap; }
+.table tbody tr:hover { background: var(--page-bg); }
+.table tbody tr.row-selected { background: var(--brand-light); }
+
+/* ── 输入类 ── */
+.input, .select, .datepicker {
+  height: 32px; border: 1px solid var(--border);
+  border-radius: var(--radius-input);
+  padding: 0 11px; font-size: 14px; color: var(--text-1);
+}
+.input::placeholder { color: var(--text-4); }
+
+/* ── 面包屑 ── */
+.breadcrumb { display:flex; align-items:center; font-size:14px; font-weight:400; }
+.breadcrumb a { color:var(--text-3); cursor:pointer; }
+.breadcrumb a:hover { color:var(--brand); }
+.breadcrumb .sep { margin:0 8px; color:rgba(0,0,0,0.68); display:inline-flex; align-items:center; }
+.breadcrumb .current { color:var(--text-1); }
+
+/* ── 分页 ── */
+.pagination { display:flex; justify-content:flex-end; align-items:center; gap:8px; font-size:14px; }
+.pagination .pg-item {
+  width:32px; height:32px; display:flex; align-items:center; justify-content:center;
+  background:#fff; border:1px solid var(--border); border-radius:var(--radius-input);
+  color:var(--text-1); font-weight:400; cursor:pointer;
+}
+.pagination .pg-item:hover { color:var(--brand); }
+.pagination .pg-item.current { border-color:#E27400; color:#E27400; font-weight:500; cursor:default; }
+.pagination .pg-nav {
+  width:32px; height:32px; display:flex; align-items:center; justify-content:center;
+  background:#fff; border:1px solid var(--border); border-radius:var(--radius-input);
+  color:var(--text-1); cursor:pointer;
+}
+.pagination .pg-nav.disabled { color:var(--text-4); cursor:not-allowed; }
+.pagination .pg-jump {
+  display:flex; align-items:center; gap:8px; height:32px; padding:0 8px 0 12px;
+  background:#fff; border:1px solid var(--border); border-radius:var(--radius-input);
+  box-shadow:inset 0 -6px 8px rgba(0,0,0,0.02); color:var(--text-4); cursor:pointer;
+}
+
+/* ── 开关 ── */
+.switch {
+  position:relative; display:inline-flex; align-items:center; height:22px;
+  border-radius:100px; background:rgba(0,0,0,0.25);
+  font-size:12px; color:#fff; cursor:pointer; transition:background .2s;
+}
+.switch.on  { background:var(--brand); padding:0 26px 0 8px; }
+.switch.off { padding:0 8px 0 26px; }
+.switch .knob {
+  position:absolute; top:2px; width:18px; height:18px; border-radius:50%;
+  background:#fff; box-shadow:0 2px 4px rgba(0,0,0,0.2);
+}
+.switch.on .knob { right:2px; }
+.switch.off .knob { left:2px; }
+
+/* ── 信息提示 ── */
+.alert {
+  background: var(--brand-light);
+  border: 1px solid var(--brand-border);
+  color: var(--text-1); font-size: 14px;
+  padding: 12px 16px; border-radius: var(--radius-input);
+}
+.alert .icon { color: var(--brand); }

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>P-01 两列表单 · 变体预览</title>
+
+<!-- 规范依赖：token 层 + pattern 层。业务项目照这两行引入即可 -->
+<link rel="stylesheet" href="../../assets/design-tokens.css">
+<link rel="stylesheet" href="../../assets/patterns.css">
+
+<style>
+  /* 预览页专用，不属于变体本身 */
+  body { margin: 0; }
+</style>
+</head>
+<body>
+
+<div class="v-demo">
+
+<!-- ═══════════════ 以下为可复用片段：从这里开始复制 ═══════════════ -->
+<section class="v-form2" data-variant="form-two-col" data-version="1.1.0">
+
+  <div class="v-form2__head">
+    <h2 class="v-form2__title">新建加工任务</h2>
+    <p class="v-form2__hint">带 * 为必填项，保存后进入待排产队列。</p>
+  </div>
+
+  <div class="v-form2__grid">
+
+    <div class="v-form2__field">
+      <label class="v-form2__label v-form2__label--req">任务编号</label>
+      <input class="v-form2__input" type="text" value="TK-20261022-004" readonly>
+    </div>
+
+    <div class="v-form2__field">
+      <label class="v-form2__label v-form2__label--req">型材规格</label>
+      <select class="v-form2__select">
+        <option>HM 300×200</option>
+        <option>HN 400×200</option>
+        <option>HW 200×200</option>
+      </select>
+    </div>
+
+    <div class="v-form2__field">
+      <label class="v-form2__label v-form2__label--req">程序号</label>
+      <select class="v-form2__select">
+        <option>PY</option>
+        <option>PZ</option>
+        <option>PX</option>
+        <option>PJ</option>
+      </select>
+    </div>
+
+    <div class="v-form2__field">
+      <label class="v-form2__label v-form2__label--req">数量（件）</label>
+      <input class="v-form2__input" type="number" value="12" min="1">
+    </div>
+
+    <div class="v-form2__field">
+      <label class="v-form2__label">计划开始日期</label>
+      <input class="v-form2__input" type="date" value="2026-10-23">
+    </div>
+
+    <div class="v-form2__field">
+      <label class="v-form2__label">优先级</label>
+      <select class="v-form2__select">
+        <option>普通</option>
+        <option>加急</option>
+      </select>
+    </div>
+
+    <div class="v-form2__field v-form2__field--full">
+      <label class="v-form2__label">备注</label>
+      <textarea class="v-form2__textarea" placeholder="补充工艺要求、来料批次等（选填）"></textarea>
+    </div>
+
+  </div>
+
+  <!-- 底部操作区：与规范弹窗母版 .modal-foot 完全一致
+       取消在左、主操作在右、右对齐、两按钮、无分隔线 -->
+  <div class="v-form2__foot">
+    <button class="btn btn-ghost" type="button">取 消</button>
+    <button class="btn btn-primary" type="button">保存并提交</button>
+  </div>
+
+</section>
+<!-- ═══════════════ 可复用片段：到这里结束 ═══════════════ -->
+
+</div>
+</body>
+</html>

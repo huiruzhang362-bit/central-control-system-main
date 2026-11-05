@@ -1,0 +1,32 @@
+# ===== macOS 系统垃圾 =====
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# ===== 工具临时文件（每次运行都会重新生成，不必存档）=====
+.kimi-tmp/
+
+# ===== 工具工作目录（迭代截图、本地记忆，不进仓库）=====
+.workbuddy/
+
+# ===== 依赖与构建产物 =====
+node_modules/
+dist/
+build/
+
+# ===== 内联生成的本地预览镜像（每轮重新生成，非正式代码）=====
+中控系统_预览版.html
+*_预览版.html
+*_inline.html
+
+# ===== 密钥与环境变量（绝不上传）=====
+.env
+.env.local
+*.pem
+*.key
+
+# ===== Office 临时文件 =====
+~$*.docx
+~$*.xlsx
+~$*.pptx

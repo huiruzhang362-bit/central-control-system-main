@@ -1,0 +1,2237 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>型材切割排产仿真 v1</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="排产_输入数据.js"></script>
+<script src="排产_算法.js"></script>
+<style>
+  :root {
+    --primary: #E85B00; --primary-light: #ff8f4d;
+    --success: #52c41a; --warning: #faad14; --danger: #ff4d4f; --purple: #722ed1;
+    --bg: #f5f6fa; --card-bg: #fff;
+    --border: #d9d9d9; --border-light: #f0f0f0;
+    --text-1: rgba(0,0,0,.88); --text-2: rgba(0,0,0,.65); --text-3: rgba(0,0,0,.45);
+    --shadow: 0 1px 2px 0 rgba(0,0,0,.03), 0 1px 6px -1px rgba(0,0,0,.02), 0 2px 4px 0 rgba(0,0,0,.02);
+    --radius: 8px;
+  }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+         margin: 0; padding: 10px 12px; background: var(--bg); color: var(--text-1);
+         font-size: 14px; line-height: 1.5; }
+  /* 页面统一按钮规范：常规操作均使用同一高度、字号和圆角。 */
+  button{min-height:34px;padding:0 14px;border-radius:6px;font-size:13px;line-height:1;display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;}
+  button:focus-visible{outline:2px solid rgba(232,91,0,.28);outline-offset:2px;}
+  /* 翻页、关闭及纯图标操作保留紧凑尺寸，避免占用表格和抽屉空间。 */
+  .prod-pagination button,.date-nav-btn,.pkg-drawer-close,.icon-btn{min-height:28px;height:28px;padding:0 8px;}
+  h1 { font-size: 22px; margin: 0 0 4px; font-weight: 700; }
+  h2 { font-size: 15px; margin: 0 0 12px; font-weight: 600; }
+  .card { background: var(--card-bg); border-radius: var(--radius); padding: 16px 20px;
+          box-shadow: var(--shadow); margin-bottom: 16px; border: 1px solid var(--border-light); }
+  h2 { color: rgba(0,0,0,.88); }
+  .controls button, .ds-select, #parts-search, #speedSelect, #currentTime { border-radius: 6px; }
+  .controls button:hover { background: var(--primary-light); }
+  .meta-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+  .meta-row > div { padding: 10px 16px; background: #fff; border:1px solid #f0f0f0; border-radius: 8px; }
+  .meta-row > div span { font-size: 14px; color: rgba(0,0,0,.45); }
+  .meta-row b { font-size: 22px; font-weight:700; display: block; margin-top: 4px; line-height:1.2; }
+  .pill { display:inline-block; padding:1px 8px; border-radius:4px; font-size:12px; line-height:18px; }
+  .card h2 { padding-bottom:10px; margin-bottom:14px; border-bottom:1px solid var(--border-light); }
+  .controls { display: flex; align-items: center; gap: 12px; }
+  .controls button { background: var(--primary); color: white; border: none; padding: 8px 18px;
+                     border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; }
+  .controls button.secondary { background: var(--bg); color: var(--text-1); border: 1px solid var(--border); }
+  #timeSlider { flex: 1; height: 6px; }
+  #currentTime { font-family: 'SF Mono', Menlo, monospace; font-size: 13px;
+                  min-width: 130px; background: var(--bg); padding: 6px 10px; border-radius: 6px; }
+  #speedSelect { padding: 7px 10px; border-radius: 6px; border: 1px solid var(--border); }
+  .gantt-container { overflow-x: auto; border: 1px solid var(--border-light);
+                     border-radius: 6px; background: #fafbfc; padding: 4px; }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px;
+            margin-top: 12px; padding: 8px 10px; background: var(--bg); border-radius: 6px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .legend-color { width: 12px; height: 12px; border-radius: 3px; }
+  .now-line { stroke: var(--danger); stroke-width: 2; stroke-dasharray: 4 3; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border-light); }
+  th { background: #fafafa; font-weight: 600; position: sticky; top: 0;
+       text-transform: none; letter-spacing: 0; font-size: 12px; color: var(--text-1); }
+  tbody tr:nth-child(even) { background: #fcfcfd; }
+  .stats-table-wrap { max-height: 420px; overflow-y: auto; border: 1px solid var(--border-light); border-radius: 6px; }
+  #parts-search { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border); width: 260px; font-size: 13px; }
+  #loadingMsg { color: var(--text-3); padding: 60px; text-align: center; }
+  .error { color: var(--danger); padding: 16px; background: #fef2f2; border-radius: var(--radius); }
+  .pipeline-card { background: white; border: 1px solid var(--border-light);
+                    border-radius: 8px; padding: 12px 14px; flex: 1; min-width: 280px; }
+  .pipeline-card-title { font-weight: 600; color: var(--primary); margin-bottom: 10px;
+                          font-size: 13px; padding-bottom: 8px; border-bottom: 1px solid var(--border-light); }
+  .slot-row { display: flex; align-items: center; gap: 10px; padding: 5px 0; font-size: 12px; }
+  .slot-name { width: 70px; color: var(--text-2); font-size: 11px; }
+  .slot-chip { width: 14px; height: 14px; border-radius: 3px; flex-shrink: 0; }
+  .slot-empty { opacity: 0.35; }
+  .pallet-row { padding: 6px 0; border-bottom: 1px dashed var(--border-light); font-size: 12px; }
+  .pallet-row-head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+  .pallet-pos { font-weight: 600; min-width: 40px; }
+  .pallet-groups { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+  .dao-group { display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px;
+               border-radius: 10px; font-size: 11px; font-weight: 500; color: white;
+               font-family: 'SF Mono', Menlo, monospace; }
+  .dao-group .dao-count { background: rgba(255,255,255,0.3); padding: 0 5px;
+                          border-radius: 8px; font-size: 10px; }
+  .pallet-empty { color: var(--text-3); font-size: 11px; padding: 2px 0; }
+  /* 派单决策表格 */
+  .dispatch-card { border: 1px solid var(--border-light); border-radius: 8px;
+                   padding: 10px 14px; margin-bottom: 10px; background: #fafbfc; }
+  .dispatch-head { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+  .dispatch-title { font-family: monospace; font-weight: 600; }
+  .dispatch-tag { padding: 2px 8px; border-radius: 10px; font-size: 11px;
+                  background: var(--bg); color: var(--text-2); }
+  .dispatch-tag.split { background: #fef3c7; color: #92400e; }
+  .dispatch-tag.whole { background: #dcfce7; color: #166534; }
+  .dispatch-tag.chosen { background: var(--primary); color: white; font-weight: 600; }
+  .dispatch-table { width: 100%; font-size: 12px; margin-top: 6px; }
+  .dispatch-table th, .dispatch-table td { padding: 4px 10px; text-align: left;
+                                            border-bottom: 1px dashed var(--border-light); }
+  .dispatch-table th { background: white; font-weight: 600; color: var(--text-2); font-size: 11px; }
+  .dispatch-table tr.chosen { background: #dbeafe; font-weight: 600; }
+  .dispatch-table tr.chosen td:first-child::before { content:"✓ "; color: var(--primary); }
+  .dispatch-expand { font-size: 11px; color: var(--primary); cursor: pointer; user-select: none; margin-top: 4px; }
+  .dispatch-expand:hover { text-decoration: underline; }
+  .cfg-chip { padding: 5px 12px; border: 1px solid var(--border); border-radius: 14px;
+              cursor: pointer; font-size: 12px; background: white; user-select: none; }
+  .cfg-chip.on { background: var(--success); color: white; border-color: var(--success); }
+  .cfg-chip.off { background: var(--bg); color: var(--text-3); text-decoration: line-through; }
+  .cfg-topology{position:relative;height:300px;margin-top:14px;border:1px solid var(--border-light);border-radius:7px;overflow:hidden;background:linear-gradient(90deg,#fafafa 0 24%,#fff 24% 76%,#fafafa 76%);}
+  .cfg-topology svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible;}.cfg-topology .route{fill:none;stroke:var(--success);stroke-width:5;stroke-linecap:round;transition:opacity .2s,stroke .2s;}.cfg-topology .route.off{stroke:#bfbfbf;stroke-dasharray:9 8;}.cfg-topology .route.blocked{opacity:.2;}
+  .cfg-topology .zone{position:absolute;top:13px;font-size:12px;color:var(--text-3);font-weight:600;}.cfg-topology .zone.out{left:20px;}.cfg-topology .zone.cut{right:20px;}.cfg-topology .station{position:absolute;width:112px;background:#fff;border:1px solid var(--border);border-radius:7px;padding:8px 10px;box-shadow:0 1px 4px rgba(0,0,0,.04);}.cfg-topology .station.outlet{left:7%;border-left:4px solid #1677ff;}.cfg-topology .station.machine{right:7%;border-left:4px solid var(--success);}.cfg-topology .station.disabled{border-color:#bfbfbf;border-left-color:#8c8c8c;background:#f5f5f5;color:#8c8c8c;box-shadow:none;}.cfg-topology .station b{font-size:15px;display:block;}.cfg-topology .station span{font-size:12px;color:var(--text-3);}.cfg-topology .station.disabled span{color:#8c8c8c;}
+  @media(max-width:760px){.cfg-topology .station{width:94px;}.cfg-topology .station.outlet{left:3%;}.cfg-topology .station.machine{right:3%;}}
+  /* 紧凑拓扑：节点名称与状态横向排列，保持配置区高度克制。 */
+  .cfg-topology{height:190px;}.cfg-topology .station{width:76px;min-height:32px;padding:6px 8px;display:flex;align-items:center;gap:8px;}.cfg-topology .station b{display:inline;font-size:14px;}.cfg-topology .station span{width:9px;height:9px;border-radius:50%;background:var(--success);font-size:0;}.cfg-topology .station.disabled span{background:#bfbfbf;}
+  .bypass-storage-row{display:flex;align-items:center;gap:9px;margin:0 0 12px;padding:9px 10px;border:1px solid var(--border-light);border-radius:6px;background:#fafafa;font-size:13px;}.bypass-storage-row .hint{color:var(--text-3);font-size:12px;}.switch-toggle{position:relative;width:36px;height:20px;flex:0 0 auto;cursor:pointer;}.switch-toggle input{position:absolute;opacity:0;width:0;height:0;}.switch-toggle i{position:absolute;inset:0;border-radius:12px;background:#bfbfbf;transition:.2s;}.switch-toggle i::after{content:'';position:absolute;width:16px;height:16px;top:2px;left:2px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:.2s;}.switch-toggle input:checked + i{background:var(--success);}.switch-toggle input:checked + i::after{transform:translateX(16px);}.cfg-chip.disabled{cursor:not-allowed;opacity:.52;filter:grayscale(1);}.cfg-chip.hidden{display:none;}
+  .cfg-mode-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:0 0 12px;padding:9px 10px;border:1px solid var(--border-light);border-radius:6px;background:#fafafa}.cfg-mode-label{font-size:13px;font-weight:600;margin-right:3px}.cfg-mode{border:1px solid var(--border);border-radius:14px;padding:5px 10px;background:#fff;cursor:pointer;font-size:12px}.cfg-mode.on{background:#1677ff;border-color:#1677ff;color:#fff}.cfg-mode-note{width:100%;font-size:12px;color:var(--text-3);margin-top:2px}.cfg-control-row{display:flex;gap:18px 26px;flex-wrap:wrap;margin-bottom:8px}.cfg-label{font-size:12px;color:var(--text-2);margin-bottom:6px}.cfg-chip-list{display:flex;gap:8px;flex-wrap:wrap}.cfg-routes{flex-basis:100%}.cfg-final-topology{height:220px;background:linear-gradient(90deg,#fafafa 0 24%,#fff 24% 76%,#fafafa 76%)}.cfg-final-topology .station{width:68px;min-height:28px;padding:5px 7px;gap:6px}.cfg-final-topology .station b{font-size:13px}.cfg-final-topology .station span{width:7px;height:7px}.cfg-final-topology .zone.spray{left:46%;transform:translateX(-50%)}.cfg-final-topology .station.spray{left:46%;transform:translateX(-50%);border-left:4px solid #722ed1}.cfg-final-topology .station.emergency{left:7%;border-left:4px solid #fa8c16}.cfg-final-topology .route.off{stroke:#d9d9d9}.cfg-final-topology .station.skip{opacity:.42;border-style:dashed}.cfg-final-topology .station.skip span{background:#d9d9d9}  /* 页面级保存横条：固定于窗口底部，不受左右内容区滚动影响。 */
+  body{padding-bottom:96px;}.save-ribbon{position:fixed;left:0;right:0;bottom:0;height:78px;background:#fff;border-top:1px solid var(--border-light);box-shadow:0 -4px 18px rgba(0,0,0,.10);z-index:90;}.save-ribbon-inner{max-width:calc(100vw - 40px);height:100%;margin:0 auto;padding:0 20px;display:flex;align-items:center;gap:12px;}.save-ribbon-fields{display:flex;align-items:center;gap:14px;margin-right:auto;}.save-ribbon-field{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text-2);white-space:nowrap;}.save-ribbon .ds-select{height:34px;width:148px;}.save-ribbon-actions{display:flex;align-items:center;gap:10px;}.save-ribbon-actions .btn-primary,.save-ribbon-actions .btn-default{margin:0;}.save-ribbon-actions .btn-primary{padding:9px 20px;font-size:14px;}.save-ribbon-status{font-size:12px;color:var(--text-3);white-space:nowrap;}.save-ribbon-status b{color:var(--primary);font-weight:600;}@media(max-width:760px){body{padding-bottom:132px;}.save-ribbon{height:auto;padding:9px 0;}.save-ribbon-inner{flex-wrap:wrap;}.save-ribbon-fields{order:3;width:100%;margin-right:0;}.save-ribbon-status{display:none;}}
+  .gantt-mode-btn { padding: 3px 10px; margin-left: 4px; border: 1px solid var(--border);
+                    background: white; border-radius: 4px; cursor: pointer; font-size: 12px; }
+  .gantt-mode-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+  .card.hero { background: #fff; color: rgba(0,0,0,.88); }
+  .card.hero h1 { color: rgba(0,0,0,.88); font-size: 20px; }
+  /* 数据源面板 */
+  .ds-grid { display: grid; grid-template-columns: 280px 1fr; gap: 20px; align-items: start; }
+  .ds-grid > div > .ds-label { font-size: 12px; color: var(--text-2); margin-bottom: 6px; font-weight: 500; }
+  .ds-select { padding: 7px 10px; border-radius: 6px; border: 1px solid var(--border); width: 100%; font-size: 13px; background: white; }
+  .ds-db-info { margin-top: 6px; font-size: 11px; color: var(--text-3); }
+  .batch-chip { padding: 6px 12px; border: 1px solid var(--border); border-radius: 14px;
+                cursor: pointer; font-size: 12px; background: white; user-select: none;
+                display: inline-flex; align-items: center; gap: 6px; }
+  .batch-chip.on { background: var(--primary); color: white; border-color: var(--primary); }
+  .batch-chip .batch-meta { font-size: 10px; opacity: 0.7; }
+  .batch-chip-wrap { display: flex; flex-wrap: wrap; gap: 6px; max-height: 200px; overflow-y: auto;
+                     padding: 8px; border: 1px solid var(--border-light); border-radius: 6px; background: #fafbfc; }
+  .batch-toolbar { display: flex; gap: 8px; margin-bottom: 6px; align-items: center; font-size: 12px; }
+  .batch-toolbar button { padding: 3px 10px; border: 1px solid var(--border); background: white;
+                          border-radius: 4px; cursor: pointer; font-size: 11px; }
+  .ds-empty { color: var(--text-3); font-size: 12px; padding: 10px; text-align: center; }
+  .section-title{font-size:16px;font-weight:700;color:rgba(0,0,0,.88);margin:22px 2px 10px;padding-left:10px;border-left:4px solid var(--primary);}
+  .prod-list-wrap{max-height:240px;overflow:hidden;border:1px solid var(--border-light);border-radius:8px;margin-bottom:4px;display:flex;flex-direction:column;}
+  .prod-list-scroll{flex:1;overflow:auto;}
+  .prod-list{width:100%;border-collapse:collapse;font-size:12px;}
+  .prod-list th,.prod-list td{padding:7px 12px;border-bottom:1px solid var(--border-light);text-align:left;}
+  .prod-list th{background:#fafafa;position:sticky;top:0;}
+  .prod-pagination{display:flex;align-items:center;justify-content:flex-end;gap:7px;padding:10px 0 0;color:var(--text-3);font-size:12px;}
+  .prod-pagination button,.prod-pagination select{height:30px;border:1px solid var(--border);border-radius:6px;background:#fff;color:var(--text-2);padding:0 8px;cursor:pointer;}
+  .prod-pagination button.active{color:var(--primary);border-color:var(--primary);font-weight:600;}
+  .prod-pagination button:disabled{color:#bfbfbf;background:#fafafa;cursor:not-allowed;}
+  /* 创建排产工单弹窗：与中控系统排产列表保持相同的紧凑层级表格。 */
+  .atk-modal .prod-list{min-width:0!important;border-collapse:collapse;color:rgba(0,0,0,.88);}
+  .atk-modal .prod-list th,.atk-modal .prod-list td{height:42px;padding:8px 12px;border-bottom:1px solid #f0f0f0;background:#fff;}
+  .atk-modal .prod-list th{background:#fafafa;font-weight:600;position:static;}
+  .atk-modal .atk-package-row:hover td{background:#fafafa;}
+  .atk-modal .atk-expand{min-height:18px;width:18px;height:18px;margin:0 8px 0 0;padding:0;border:1px solid #d9d9d9;border-radius:50%;background:#fff;color:rgba(0,0,0,.65);font-size:13px;line-height:16px;vertical-align:middle;cursor:pointer;}
+  .atk-modal .atk-expand:hover{border-color:#ff7a00;color:#ff7a00;}
+  .atk-modal .atk-profile-detail>td{height:auto!important;padding:0 12px 8px 64px!important;background:#fafafa!important;}
+  .atk-modal .atk-profile-table{width:100%;border-collapse:collapse;background:#fff;font-size:12px;}
+  .atk-modal .atk-profile-table th,.atk-modal .atk-profile-table td{height:38px;padding:7px 10px;border-bottom:1px solid #f0f0f0;text-align:left;background:#fff;}
+  .atk-modal .atk-profile-table th{background:#fafafa;color:rgba(0,0,0,.88);font-weight:600;}
+  .atk-modal .atk-profile-scheduled,.atk-modal .atk-profile-scheduled td{color:#bfbfbf!important;background:#fafafa!important;}
+  .atk-modal input[type="checkbox"]{width:14px;height:14px;accent-color:#ff6a00;vertical-align:middle;}
+  /* 对齐中控系统 Ant Table 的切割工单展开表格样式。 */
+  .group-manifest{margin-bottom:14px;}.group-manifest h3{font-size:13px;margin:0 0 8px;color:#1f1f1f;font-weight:600}.group-manifest table{width:100%;border-collapse:collapse;font-size:12px;border:0;border-radius:0;overflow:visible}.group-manifest th,.group-manifest td{height:40px;padding:8px 12px;border-bottom:1px solid #f0f0f0;text-align:left;background:#fff}.group-manifest th{height:40px;background:#fafafa;color:rgba(0,0,0,.88);font-weight:600}.group-manifest .gm-summary-row{cursor:pointer}.group-manifest .gm-summary-row:hover td{background:#fafafa}.group-manifest .gm-name,.group-manifest .gm-machine,.group-manifest .gm-count{display:inline-flex;align-items:center;min-height:22px;padding:0 7px;border-radius:4px;font-size:12px;line-height:20px}.group-manifest .gm-name{border:1px solid #91caff;background:#e6f4ff;color:#1677ff;font-weight:600}.group-manifest .gm-machine{border:1px solid #adc6ff;background:#f0f5ff;color:#2f54eb}.group-manifest .gm-count{border:1px solid #d3adf7;background:#f9f0ff;color:#722ed1}.group-manifest .gm-expand{min-height:16px;width:16px;height:16px;padding:0;border:1px solid #d9d9d9;border-radius:50%;background:#fff;color:rgba(0,0,0,.65);font-size:13px;line-height:14px;cursor:pointer}.group-manifest .gm-expand:hover{border-color:#1677ff;color:#1677ff}.group-manifest .gm-detail-row>td{height:auto;padding:4px 0 4px 34px;background:#fafafa}.group-manifest .gm-detail-table{width:calc(100% - 12px);border:0;border-radius:0;background:#fff}.group-manifest .gm-detail-table th,.group-manifest .gm-detail-table td{height:38px;padding:7px 10px;font-size:12px;background:#fff}.group-manifest .gm-detail-table th{background:#fafafa}.group-manifest .gm-detail-table td:first-child{font-family:'SFMono-Regular',Menlo,Consolas,monospace;font-weight:700;color:#111827}
+  .btn-primary{min-height:34px;background:var(--primary);color:#fff;border:none;padding:0 16px;border-radius:6px;cursor:pointer;font-weight:600;margin-left:8px;}
+  .btn-default{min-height:34px;background:#fff;color:rgba(0,0,0,.88);border:1px solid var(--border);padding:0 16px;border-radius:6px;cursor:pointer;}
+  /* 工作台布局：任务与通路配置同排，排产结果按全宽纵向展开。 */
+  .app-shell{max-width:none;margin:0;}
+  @media(min-width:1051px){
+    .app-shell{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(660px,auto) auto auto auto;gap:12px;align-items:start;}
+    .side,.main{display:contents;}
+    .left-stack{display:grid !important;grid-column:1 / -1;grid-row:1;grid-template-columns:520px minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto;gap:0;min-height:660px;height:auto;padding:16px;background:#fff;border:1px solid var(--border-light);border-radius:9px;box-shadow:var(--shadow);overflow:visible;}
+    .left-stack .task-panel,.left-stack .topology-panel{min-height:0;height:auto;margin:0;padding:0;background:transparent;border:0;border-radius:0;box-shadow:none;}
+    .left-stack .task-panel{grid-column:1;grid-row:1;padding-right:14px;overflow:hidden;display:flex;flex-direction:column;}
+    .left-stack .task-panel>div:last-child{display:flex;flex:1;min-height:0;flex-direction:column;}
+    .left-stack .task-panel #secProdList{display:flex;flex:1;min-height:0;flex-direction:column;}
+    .left-stack .task-panel .prod-list-wrap{max-height:none;flex:1;}
+    .left-stack .task-panel .prod-pagination{margin-top:auto;flex:0 0 auto;}
+    .left-stack .topology-panel{grid-column:2;grid-row:1;padding-left:14px;border-left:1px solid var(--border-light);overflow:visible;}
+    .top-workbench-actions{grid-column:1 / -1;grid-row:2;display:flex;justify-content:flex-end;gap:10px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border-light);}
+    .layout-assignment{grid-column:1 / -1;grid-row:2;}
+    .layout-metrics{grid-column:1 / -1;grid-row:3;margin-top:4px;}
+    .layout-schedule{grid-column:1 / -1;grid-row:4;}
+  }
+  @media(max-width:1050px){
+    .side,.main,.left-stack{display:block;}
+    .task-panel,.topology-panel,.layout-metrics,.layout-schedule,.layout-assignment{margin-bottom:12px;}
+  }
+  .cur-sel{background:#fff7f0;border:1px solid #ffd8b8;}
+  .cur-sel .cs-date{font-size:22px;font-weight:700;color:var(--primary);margin:4px 0;}
+  .topbar{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--border-light);border-radius:8px;padding:10px 16px;margin-bottom:16px;box-shadow:var(--shadow);}
+  .date-nav{display:inline-flex;align-items:center;gap:10px;}
+  .date-nav-btn{width:26px;height:26px;border:1px solid var(--border-light);background:#fff;border-radius:4px;cursor:pointer;color:var(--text-2);font-size:15px;line-height:1;display:inline-flex;align-items:center;justify-content:center;padding:0;}
+  .date-nav-btn:hover{border-color:var(--primary);color:var(--primary);}
+  .date-nav-label{font-weight:700;font-size:16px;min-width:130px;text-align:center;color:var(--text-1);}
+  .collapse-card{background:#fff;border:1px solid var(--border-light);border-radius:8px;margin-bottom:12px;box-shadow:var(--shadow);overflow:hidden;}
+  .collapse-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;cursor:pointer;font-weight:600;font-size:14px;}
+  .collapse-head .arrow{transition:transform .2s;color:var(--text-3);}
+  .collapse-card.open .collapse-head .arrow{transform:rotate(90deg);}
+  .collapse-body{display:none;padding:0 16px 14px;}
+  .collapse-card.open .collapse-body{display:block;}
+  .cal2{font-size:12px;}
+  .cal2-head{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border-light);}
+  .cal2-head select{font-size:12px;padding:2px 6px;border:1px solid var(--border-light);border-radius:4px;background:#fff;cursor:pointer;color:var(--text-1);}
+  .cal2-seg{display:inline-flex;border:1px solid var(--border-light);border-radius:4px;overflow:hidden;}
+  .cal2-seg button{font-size:12px;padding:2px 10px;border:none;background:#fff;cursor:pointer;color:var(--text-2);}
+  .cal2-seg button.on{background:var(--primary);color:#fff;}
+  .cal2-grid{display:grid;grid-template-columns:repeat(7,1fr);}
+  .cal2-grid .dow{color:var(--text-3);font-size:12px;text-align:center;padding:4px 0;}
+  .cal2-cell{height:36px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;cursor:pointer;padding-top:3px;}
+  .cal2-cell .num{width:24px;height:24px;line-height:24px;text-align:center;border-radius:4px;font-size:13px;}
+  .cal2-cell:hover .num{background:#f5f5f5;}
+  .cal2-cell.today .num{border:1px solid var(--primary);line-height:22px;}
+  .cal2-cell.sel .num{background:var(--primary);color:#fff;}
+  .cal2-cell.other{visibility:hidden;}
+  .cal2-dot{width:6px;height:6px;border-radius:50%;background:var(--primary);margin-top:3px;}
+  .cal2-cell.sel .cal2-dot{background:#fff;}
+  .cal2-ygrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:6px 0;}
+  .cal2-mcell{text-align:center;padding:12px 0;border-radius:6px;cursor:pointer;font-size:13px;}
+  .cal2-mcell:hover{background:#f5f5f5;}
+  .cal2-mcell.sel{background:var(--primary);color:#fff;}
+  .mach-cols{display:grid;gap:12px;}
+  .mp-col{border:1px solid var(--border-light);border-radius:8px;padding:10px;background:#fafafa;}
+  .mp-head{font-weight:700;font-size:13px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;}
+  .mp-sum{font-weight:400;font-size:12px;color:var(--text-3);}
+  .mp-item{display:flex;align-items:center;gap:8px;padding:5px 6px;background:#fff;border:1px solid var(--border-light);border-radius:6px;margin-bottom:6px;font-size:12px;}
+  .mp-ord{width:18px;height:18px;line-height:18px;text-align:center;border-radius:4px;background:#f0f0f0;color:var(--text-2);font-size:11px;flex:0 0 auto;}
+  .mp-dot{width:8px;height:8px;border-radius:2px;flex:0 0 auto;}
+  .mp-name{font-family:monospace;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .mp-cnt{color:var(--text-3);flex:0 0 auto;}
+  .mp-empty{font-size:12px;color:var(--text-3);text-align:center;padding:10px;}
+  .mp-body{min-height:40px;}
+  .mp-item{cursor:grab;}
+  .mp-item:active{cursor:grabbing;}
+  .mp-item.dragging{opacity:.4;}
+  .mp-grip{color:var(--text-3);flex:0 0 auto;font-size:13px;line-height:1;}
+  .mp-body.dragover{outline:2px dashed var(--primary);outline-offset:2px;border-radius:6px;background:#fff7f0;}
+  .mp-recalc{display:flex;justify-content:flex-end;margin-top:12px;}
+  .mp-recalc #mpRecalcBtn{background:var(--primary);color:#fff;border:none;padding:7px 18px;border-radius:6px;cursor:pointer;font-weight:600;font-size:13px;}
+  .mp-recalc .mp-msg{margin-right:12px;align-self:center;font-size:12px;color:var(--text-3);}
+  .prod-detail{color:var(--primary);cursor:pointer;font-size:12px;}
+  .prod-detail:hover{text-decoration:underline;}
+  .pkg-mask{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:80;display:none;}
+  .pkg-mask.open{display:block;}
+  .pkg-drawer{position:fixed;top:0;right:0;height:100%;width:680px;max-width:94vw;background:#fff;z-index:81;box-shadow:-6px 0 24px rgba(0,0,0,.18);transform:translateX(100%);transition:transform .25s;display:flex;flex-direction:column;}
+  .pkg-drawer.open{transform:translateX(0);}
+  .pkg-drawer-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border-light);font-size:16px;font-weight:600;}
+  .pkg-drawer-head .x{cursor:pointer;color:var(--text-3);font-size:18px;}
+  .pkg-drawer-body{padding:18px 20px;overflow:auto;}
+  .pkg-desc{width:100%;border-collapse:collapse;border:1px solid var(--border-light);border-radius:8px;overflow:hidden;margin-bottom:16px;font-size:13px;}
+  .pkg-desc th,.pkg-desc td{border:1px solid var(--border-light);padding:8px 12px;text-align:left;}
+  .pkg-desc th{background:#fafafa;color:var(--text-2);font-weight:500;width:90px;white-space:nowrap;}
+  .pkg-mat{width:100%;border-collapse:collapse;font-size:12px;}
+  .pkg-mat th,.pkg-mat td{border:1px solid var(--border-light);padding:6px 10px;text-align:left;white-space:nowrap;}
+  .pkg-mat th{background:#fafafa;color:var(--text-2);font-weight:500;}
+</style>
+</head>
+<body>
+  <div id="meta" class="meta-row" style="margin-bottom:16px"></div>
+
+  <div class="card" id="cardConfig">
+    <h2>⚙️ 排产配置</h2>
+    <div id="secDate" style="margin-bottom:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span class="ds-label">生产日期</span>
+      <input id="planDate" type="date" class="ds-select" style="width:160px">
+    </div>
+    <div id="secProdList">
+      <div id="prodList" class="prod-list-wrap"></div>
+    </div>
+<div id="secTopo">
+    <div class="cfg-mode-row"><span class="cfg-mode-label">运行模式</span><div id="cfgModes" style="display:flex;gap:7px;flex-wrap:wrap"></div><span id="cfgModeNote" class="cfg-mode-note"></span></div>
+    <div class="bypass-storage-row"><label class="switch-toggle"><input id="bypassStorage" type="checkbox"><i></i></label><strong>不经过立库</strong><label class="switch-toggle"><input id="bypassSpray" type="checkbox"><i></i></label><strong>不启用喷码</strong></div>
+    <div class="cfg-control-row"><div><div class="cfg-label">出料口启停</div><div id="cfgOutlets" class="cfg-chip-list"></div></div><div><div class="cfg-label">喷码启停</div><div id="cfgSprays" class="cfg-chip-list"></div></div><div><div class="cfg-label">切割机启停</div><div id="cfgMachines" class="cfg-chip-list"></div></div><div class="cfg-routes"><div class="cfg-label">工艺通路</div><div id="cfgEdges" class="cfg-chip-list"></div></div></div>
+    <div id="cfgTopology" class="cfg-topology cfg-final-topology" aria-label="设备通路拓扑图"></div>
+    </div>
+    <!-- 隐藏控件：保留默认值供算法使用（数据库 / 切割包 / 拆包参数 / 派单权重） -->
+    <div style="display:none">
+      <select id="dsDatabase"></select>
+      <div id="dsDbInfo"></div>
+      <button id="batchSelectAll" type="button"></button>
+      <button id="batchSelectNone" type="button"></button>
+      <span id="batchSummary"></span>
+      <div id="dsBatchList"></div>
+      <input id="cfgSplitThreshold" type="number" value="8.33">
+      <input id="cfgMaxSplit" type="number" value="2">
+      <input id="cfgAlpha" type="number" value="1.0">
+      <input id="cfgGamma" type="number" value="100">
+    </div>
+    <div id="secRecalc">
+      <button id="recalcBtn" style="background:var(--primary);color:white;border:none;padding:8px 20px;border-radius:6px;cursor:pointer;font-weight:600">开始计算</button>
+      <button id="configResetBtn" class="btn-default" style="padding:8px 20px">重置</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>时间控制</h2>
+    <div class="controls">
+      <button id="playBtn">▶ 播放</button>
+      <button id="resetBtn" class="secondary">⏮ 重置</button>
+      <input type="range" id="timeSlider" min="0" max="1000" value="0">
+      <span id="currentTime">0s / 0s</span>
+      <select id="speedSelect">
+        <option value="30">30×</option><option value="60" selected>60×</option>
+        <option value="120">120×</option><option value="300">300×</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>切割机 Gantt
+      <span style="float:right;font-size:12px;font-weight:normal">
+        着色：
+        <button class="gantt-mode-btn active" data-mode="category">按道次类别</button>
+        <button class="gantt-mode-btn" data-mode="batch">按 batch</button>
+      </span>
+    </h2>
+    <div class="gantt-container"><svg id="machineGantt"></svg></div>
+    <div class="legend" id="machineGanttLegend"></div>
+  </div>
+
+  <div class="card" style="display:none">
+    <h2>出料口 Gantt（颜色 = 所属切割包）</h2>
+    <div class="gantt-container"><svg id="outletGantt"></svg></div>
+    <div class="legend" id="outletGanttLegend"></div>
+  </div>
+
+  <div class="card">
+    <h2>当前时刻 pipeline 状态（每机器 5 槽 + 出库口/分拣）</h2>
+    <div id="currentStatus"></div>
+  </div>
+
+  <div class="card">
+    <h2>选定型材的完整时间线（含阻塞）</h2>
+    <div style="margin-bottom:8px">
+      <label>gen 文件名: <input id="profileSelect" type="text" placeholder="如 27793010HCPY001-1-01" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;width:300px;font-family:monospace;font-size:12px"></label>
+      <button id="showProfileBtn" style="padding:4px 12px;margin-left:8px;background:var(--primary);color:white;border:none;border-radius:4px;cursor:pointer">显示</button>
+      <span style="margin-left:8px;color:var(--text-3);font-size:12px">灰色段 = 阻塞等待</span>
+    </div>
+    <div id="profileTimeline" style="font-size:13px"></div>
+  </div>
+
+  <div class="card">
+    <h2>托盘状态</h2>
+    <div id="palletStatus"></div>
+  </div>
+
+  <div class="card">
+    <h2>换盘次数统计
+      <span style="float:right;font-size:12px;font-weight:normal;color:var(--text-3)">
+        粗分=按道次大类 (H/M/G/...) 分组；细分=按子道次 (H1/H2/H3/...) 分组
+      </span>
+    </h2>
+    <div id="swapSummary" style="display:flex;gap:32px;margin-bottom:12px;padding:10px 14px;background:var(--bg);border-radius:6px"></div>
+    <div class="stats-table-wrap" style="max-height:340px">
+      <table id="swapTable">
+        <thead><tr>
+          <th>托盘</th><th>道次</th><th>总零件</th>
+          <th>粗分换盘</th><th>粗分序列</th>
+          <th>细分换盘</th><th>细分序列</th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+
+  <div class="card">
+    <h2>机器负载柱状图</h2>
+    <div id="machineLoadChart"></div>
+  </div>
+
+  <div class="card">
+    <h2>零件级生产统计</h2>
+    <div style="margin-bottom:8px">
+      <input id="parts-search" placeholder="搜索零件名、道次、分段..." />
+      <button id="exportExcelBtn" style="margin-left:12px;padding:6px 16px;background:var(--success);color:white;border:none;border-radius:4px;cursor:pointer">📊 导出 Excel</button>
+      <button id="exportCsvBtn" style="margin-left:6px;padding:6px 16px;background:var(--purple);color:white;border:none;border-radius:4px;cursor:pointer">💾 导出 CSV</button>
+      <span style="margin-left:12px;color:var(--text-3);font-size:12px">共 <span id="partsCount">0</span> 条</span>
+    </div>
+    <div class="stats-table-wrap">
+      <table id="partsTable">
+        <thead><tr>
+          <th>零件 ID</th><th>零件名</th><th>所属型材</th><th>船号</th><th>分段</th>
+          <th>道次</th><th>切割机</th><th>切割开始</th><th>切割完成</th><th>落盘托盘</th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card" id="prodOpCard">
+    <h2>排产操作</h2>
+    <button id="prodCancelBtn" class="btn-default">取消</button>
+    <button id="prodSaveBtn" class="btn-primary">保存</button>
+    <span id="prodOpStatus" style="margin-left:14px;color:var(--text-3);font-size:12px"></span>
+  </div>
+
+  <div id="loadingMsg">加载中…</div>
+
+<script>
+const COLORS = {
+  '纯_H':'#10b981','纯_M':'#6366f1','纯_G':'#f59e0b','纯_R':'#fb923c',
+  'H混套':'#8b5cf6','M混套':'#a78bfa','C混套':'#c084fc','其他混套':'#d8b4fe',
+  '加工件':'#ef4444','纯_C':'#0ea5e9','纯_Y':'#64748b','纯_S':'#64748b','纯_L':'#64748b','纯_K':'#64748b',
+};
+const STAGE_COLORS = {
+  unload:'#0ea5e9', print:'#8b5cf6', paint:'#f59e0b',
+  cut:'#10b981', sort:'#fbbf24'
+};
+const STAGE_NAMES = {
+  unload:'出库', print:'喷码', paint:'去底漆', cut:'切割', sort:'分拣'
+};
+const STAGE_ORDER = ['unload','print','paint','cut','sort'];
+const BATCH_PALETTE = ['#0ea5e9','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#14b8a6','#f97316','#6366f1','#84cc16','#06b6d4','#a855f7','#22c55e','#eab308','#3b82f6'];
+
+let data = null, currentTime = 0, maxTime = 0, isPlaying = false, playInterval = null;
+let ganttMode = 'batch', batchColorMap = {};
+let batchMachine = {};
+let batchOrder = {};
+let allPartsRows = [];
+let cfgOutlets = {}, cfgSprays = {}, cfgMachines = {}, cfgEdges = {}, cfgRoutes = {}, bypassStorage = false, bypassSpray = false, cfgMode = 'standard';
+// 数据源状态
+let availableDatabases = [];    // [{path, name, size_kb, material_count}]
+let selectedDb = '';            // 当前选中的 db 相对路径
+let availableBatches = [];      // [{ship, segment, program, profile_count, cut_time, part_count}]
+let selectedBatchKeys = new Set();  // 形如 "2779|323|PY" 的字符串集合
+
+async function loadData() {
+  try {
+    const resp = await fetch('output_schedule.json?t=' + Date.now());
+    if (!resp.ok) throw new Error('找不到 output_schedule.json');
+    data = await resp.json();
+    init();
+  } catch (e) {
+    document.getElementById('loadingMsg').className = 'error';
+    document.getElementById('loadingMsg').innerHTML =
+      '加载失败：' + e.message + '<br><br>请在文件夹运行 <code>python 排产_server.py</code>，访问 <code>http://localhost:8080/排产仿真.html</code>';
+  }
+}
+
+/* ------- 数据源：DB / 切割包 ------- */
+async function loadDatabases() {
+  const sel = document.getElementById('dsDatabase');
+  try {
+    const resp = await fetch('/api/databases');
+    const r = await resp.json();
+    if (!r.ok) throw new Error(r.error || '无法列出数据库');
+    availableDatabases = r.databases || [];
+    if (!availableDatabases.length) {
+      sel.innerHTML = '<option value="">(目录下未找到 .db)</option>';
+      document.getElementById('dsDbInfo').textContent = '请在排产目录下放一个 sqlite .db 文件';
+      return;
+    }
+    // 如果当前 output 里写了 data_source，就用它作为默认；否则用第一个
+    const initial = (data.meta.data_source && data.meta.data_source.db_path) || availableDatabases[0].path;
+    sel.innerHTML = availableDatabases.map(db =>
+      `<option value="${db.path}" ${db.path === initial || db.path.endsWith(initial.replace(/\\/g,'/').split('/').pop()) ? 'selected' : ''}>${db.path} (${db.material_count} 根)</option>`
+    ).join('');
+    selectedDb = sel.value;
+    updateDbInfo();
+    await loadBatches(selectedDb);
+  } catch (e) {
+    sel.innerHTML = '<option value="">加载失败</option>';
+    document.getElementById('dsDbInfo').innerHTML = `<span style="color:var(--danger)">无法访问 /api/databases：${e.message}（需启动 排产_server.py）</span>`;
+  }
+}
+
+function updateDbInfo() {
+  const db = availableDatabases.find(d => d.path === selectedDb);
+  const info = document.getElementById('dsDbInfo');
+  if (db) info.textContent = `${db.material_count} 根型材 · ${db.size_kb} KB`;
+  else info.textContent = '—';
+}
+
+async function loadBatches(dbPath) {
+  const wrap = document.getElementById('dsBatchList');
+  const summary = document.getElementById('batchSummary');
+  if (!dbPath) {
+    wrap.innerHTML = '<div class="ds-empty">请先选择数据库</div>';
+    summary.textContent = '未加载';
+    availableBatches = []; selectedBatchKeys.clear();
+    return;
+  }
+  wrap.innerHTML = '<div class="ds-empty">加载中…</div>';
+  summary.textContent = '加载中…';
+  try {
+    const resp = await fetch('/api/batches?db=' + encodeURIComponent(dbPath));
+    const r = await resp.json();
+    if (!r.ok) throw new Error(r.error || '加载切割包失败');
+    availableBatches = r.batches || [];
+    // 初始选中：如果 meta.data_source.batches 在当前列表里，就预选；否则全选
+    selectedBatchKeys.clear();
+    const fromMeta = (data.meta.data_source && data.meta.data_source.batches) || null;
+    if (fromMeta && fromMeta.length) {
+      for (const b of fromMeta) selectedBatchKeys.add(`${b[0]}|${b[1]}|${b[2]}`);
+    } else {
+      for (const b of availableBatches) selectedBatchKeys.add(`${b.ship}|${b.segment}|${b.program}`);
+    }
+    renderBatchChips();
+  } catch (e) {
+    wrap.innerHTML = `<div class="ds-empty" style="color:var(--danger)">${e.message}</div>`;
+    summary.textContent = '加载失败';
+  }
+}
+
+function renderBatchChips() {
+  const wrap = document.getElementById('dsBatchList');
+  if (!availableBatches.length) {
+    wrap.innerHTML = '<div class="ds-empty">该数据库无切割包</div>';
+    document.getElementById('batchSummary').textContent = '0 / 0';
+    return;
+  }
+  const machines = (data.meta.topology.machines || ['C1','C2','C3']);
+  wrap.innerHTML = availableBatches.map(b => {
+    const key = `${b.ship}|${b.segment}|${b.program}`;
+    const on = selectedBatchKeys.has(key);
+    const cutH = (b.cut_time / 3600).toFixed(1);
+    const cur = batchMachine[key] || 'auto';
+    const opts = ['<option value="auto">切割机:自动</option>'].concat(
+      machines.map(m=>`<option value="${m}" ${cur===m?'selected':''}>→ ${m}</option>`)).join('');
+    return `<span class="batch-chip ${on?'on':''}" data-key="${key}" title="${b.profile_count} 根型材 · ${cutH}h">
+      ${b.ship}-${b.segment}-${b.program}
+      <span class="batch-meta">(${b.profile_count}根/${cutH}h)</span>
+      <select class="batch-mach" data-key="${key}" style="margin-left:6px;font-size:11px;border-radius:4px;border:1px solid var(--border)">${opts}</select>
+    </span>`;
+  }).join('');
+  wrap.querySelectorAll('.batch-chip').forEach(c => {
+    c.addEventListener('click', (ev) => {
+      if (ev.target.classList.contains('batch-mach')) return;
+      const k = c.dataset.key;
+      if (selectedBatchKeys.has(k)) selectedBatchKeys.delete(k);
+      else selectedBatchKeys.add(k);
+      c.classList.toggle('on');
+      updateBatchSummary();
+    });
+  });
+  wrap.querySelectorAll('.batch-mach').forEach(s => {
+    s.addEventListener('click', ev => ev.stopPropagation());
+    s.addEventListener('change', () => { batchMachine[s.dataset.key] = s.value; });
+  });
+  updateBatchSummary();
+}
+
+function updateBatchSummary() {
+  const sel = selectedBatchKeys.size, tot = availableBatches.length;
+  let profiles = 0, cutTime = 0;
+  for (const b of availableBatches) {
+    if (selectedBatchKeys.has(`${b.ship}|${b.segment}|${b.program}`)) {
+      profiles += b.profile_count; cutTime += b.cut_time;
+    }
+  }
+  document.getElementById('batchSummary').textContent =
+    `已选 ${sel}/${tot} · ${profiles} 根型材 · ${(cutTime/3600).toFixed(1)}h`;
+}
+
+function fmtT(s) {
+  const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = Math.floor(s%60);
+  if (h > 0) return `${h}h${m.toString().padStart(2,'0')}m${sec.toString().padStart(2,'0')}s`;
+  return `${m}m${sec.toString().padStart(2,'0')}s`;
+}
+
+function fnameOf(profileId) {
+  for (const pkg of data.schedule) {
+    for (const mat of pkg.materials) {
+      if (mat.profile_id === profileId) return (mat.file_name || '').replace(/-g\.gen$/, '');
+    }
+  }
+  return '#' + profileId;
+}
+
+function init() {
+  document.getElementById('loadingMsg').style.display = 'none';
+  maxTime = Math.max(data.meta.makespan_sort, data.meta.makespan_cut);
+  buildDefaultConfig();
+  renderConfigPanel();
+  // 回显当前的拆包参数（DB 里存的是秒，UI 显示小时）
+  const c = data.meta.constants || {};
+  const secToHr = (s) => (s / 3600).toFixed(2);
+  if (c.split_threshold_sec != null) document.getElementById('cfgSplitThreshold').value = secToHr(c.split_threshold_sec);
+  else if (c.split_threshold != null)  document.getElementById('cfgSplitThreshold').value = secToHr(c.split_threshold);
+  if (c.max_split_machines != null)   document.getElementById('cfgMaxSplit').value = c.max_split_machines;
+  // 回显派单权重
+  if (c.dispatch_alpha != null) document.getElementById('cfgAlpha').value = c.dispatch_alpha;
+  if (c.dispatch_gamma != null) document.getElementById('cfgGamma').value = c.dispatch_gamma;
+  renderMeta();
+  renderMachineGantt();
+  renderMachineGanttLegend();
+  renderOutletGantt();
+  renderOutletGanttLegend();
+  renderMachineLoadChart();
+  renderSwapStats();
+  renderPartsTable();
+  setupControls();
+  updateCurrentTime(0);
+  loadDatabases();  // 异步拉数据库列表
+}
+
+function buildDefaultConfig() {
+  const ALL_OUTLETS=['E1','E2','EM'], ALL_SPRAYS=['S1','S2'], ALL_MACHINES=['C1','C2','C3'];
+  const legacy=[['E1','C1'],['E1','C2'],['E1','C3'],['E2','C2'],['E2','C3']];
+  const routeIds=['p1','p2','p3','p4','p5','p6','p7','em1','em2','em3','em4'];
+  for(const e of ALL_OUTLETS) cfgOutlets[e]=e==='EM'?false:data.meta.topology.outlets.includes(e);
+  for(const s of ALL_SPRAYS) cfgSprays[s]=true;
+  for(const m of ALL_MACHINES) cfgMachines[m]=data.meta.topology.machines.includes(m);
+  for(const [e,m] of legacy) cfgEdges[`${e}-${m}`]=(data.meta.topology.outlet_to_machines[e]||[]).includes(m);
+  routeIds.forEach(id=>cfgRoutes[id]=['p1','p2','p3','p4'].includes(id));
+}
+const CFG_PATHS={p1:['E1','S1','C1'],p2:['E1','S1','C2'],p3:['E2','S2','C2'],p4:['E2','S2','C3'],p5:['E1','S2','C3'],p6:['E2','S1','C1'],p7:['E2','S1','C2'],em1:['EM','S1','C1'],em2:['EM','S1','C2'],em3:['EM','S2','C2'],em4:['EM','S2','C3']};
+const CFG_POS={EM:[190,52],E1:[190,98],E2:[190,144],S1:[500,98],S2:[500,144],C1:[810,52],C2:[810,98],C3:[810,144]};
+const CFG_MODES={
+  standard:{nodes:{E1:1,E2:1,EM:0,S1:1,S2:1,C1:1,C2:1,C3:1},paths:['p1','p2','p3','p4'],note:'标准生产：E1、E2 双出库，双喷码、三台切割机和四条常规通路可用。'},
+  e1:{nodes:{E1:1,E2:0,EM:0,S1:1,S2:1,C1:1,C2:1,C3:1},paths:['p1','p2','p5'],note:'仅 E1 出库：E1 经 S1 接入 C1/C2，并经 S2 接入 C3。'},
+  e2:{nodes:{E1:0,E2:1,EM:0,S1:1,S2:1,C1:1,C2:1,C3:1},paths:['p4','p6','p7'],note:'仅 E2 出库：E2 经 S1 接入 C1/C2，并经 S2 接入 C3；E2-S2-C2 关闭。'},
+  emergency:{nodes:{E1:0,E2:0,EM:1,S1:1,S2:1,C1:1,C2:1,C3:1},paths:['em1','em2','em4'],note:'应急一拖三：应急入口经 S1→C1/C2、S2→C3，同时向三台切割机供料。'}
+};
+function cfgInfo(id){const noStore=!cfgOutlets.E1&&!cfgOutlets.E2,base=CFG_PATHS[id],src=noStore&&base[0][0]==='E'?'EM':base[0],steps=[src];if(cfgSprays[base[1]])steps.push(base[1]);steps.push(base[2]);const allowed=!!cfgOutlets[src]&&!!cfgMachines[base[2]];return {id,steps,allowed,name:steps.map(x=>x==='EM'?'应急':x).join('-')}}
+function applyCfgMode(mode){const preset=CFG_MODES[mode];if(!preset)return;Object.keys(preset.nodes).forEach(k=>{if(k==='E1'||k==='E2'||k==='EM')cfgOutlets[k]=!!preset.nodes[k];else if(k==='S1'||k==='S2')cfgSprays[k]=!!preset.nodes[k];else cfgMachines[k]=!!preset.nodes[k];});Object.keys(cfgRoutes).forEach(k=>cfgRoutes[k]=preset.paths.includes(k));bypassStorage=mode==='emergency';bypassSpray=false;cfgMode=mode;}
+function renderConfigPanel(){
+  const chip=(id,on,key,disabled=false,label=id)=>`<span class="cfg-chip ${on?'on':'off'} ${disabled?'disabled':''}" data-key="${key}" data-id="${id}" aria-disabled="${disabled}">${label}</span>`;
+  const modeNames={standard:'标准生产',e1:'仅 E1 出库',e2:'仅 E2 出库',emergency:'应急一拖三'};
+  document.getElementById('cfgModes').innerHTML=Object.keys(modeNames).map(id=>`<button class="cfg-mode ${cfgMode===id?'on':''}" data-mode="${id}">${modeNames[id]}</button>`).join('')+(cfgMode==='custom'?'<span class="cfg-mode" style="border-style:dashed;color:#8c8c8c;background:#f5f5f5">自定义</span>':'');
+  document.getElementById('cfgModeNote').textContent=cfgMode==='custom'?'自定义：已根据现场需要手动调整设备或通路。':CFG_MODES[cfgMode].note;
+  document.querySelectorAll('.cfg-mode[data-mode]').forEach(el=>el.onclick=()=>{applyCfgMode(el.dataset.mode);renderConfigPanel();});
+  document.getElementById('cfgOutlets').innerHTML=Object.keys(cfgOutlets).map(id=>chip(id,cfgOutlets[id],'outlet',false,id==='EM'?'应急':id)).join('');
+  document.getElementById('cfgSprays').innerHTML=Object.keys(cfgSprays).map(id=>chip(id,cfgSprays[id],'spray')).join('');
+  document.getElementById('cfgMachines').innerHTML=Object.keys(cfgMachines).map(id=>chip(id,cfgMachines[id],'machine')).join('');
+  const infos=Object.keys(CFG_PATHS).map(cfgInfo),seen=new Set;
+  document.getElementById('cfgEdges').innerHTML=infos.map(info=>{const duplicate=seen.has(info.name);seen.add(info.name);return `<span class="cfg-chip ${cfgRoutes[info.id]&&info.allowed?'on':'off'} ${duplicate?'hidden':''} ${!info.allowed?'disabled':''}" data-key="route" data-id="${info.id}" aria-disabled="${!info.allowed}">${info.name}</span>`}).join('');
+  document.querySelectorAll('.cfg-chip').forEach(el=>el.onclick=()=>{if(el.getAttribute('aria-disabled')==='true')return;const k=el.dataset.key,id=el.dataset.id;cfgMode='custom';if(k==='outlet')cfgOutlets[id]=!cfgOutlets[id];else if(k==='spray')cfgSprays[id]=!cfgSprays[id];else if(k==='machine')cfgMachines[id]=!cfgMachines[id];else cfgRoutes[id]=!cfgRoutes[id];renderConfigPanel();});
+  const bs=document.getElementById('bypassStorage'),bp=document.getElementById('bypassSpray');bs.checked=bypassStorage;bp.checked=bypassSpray;bs.onchange=()=>{applyCfgMode(bs.checked?'emergency':'standard');renderConfigPanel()};bp.onchange=()=>{cfgMode='custom';bypassSpray=bp.checked;cfgSprays.S1=!bypassSpray;cfgSprays.S2=!bypassSpray;renderConfigPanel()};renderConfigTopology();
+}
+function renderConfigTopology(){const host=document.getElementById('cfgTopology'),infos=Object.keys(CFG_PATHS).map(cfgInfo),segments=new Map;infos.forEach(info=>{for(let i=0;i<info.steps.length-1;i++){const a=info.steps[i],b=info.steps[i+1],key=a+'-'+b;if(!segments.has(key))segments.set(key,{a,b,active:false});if(info.allowed&&cfgRoutes[info.id])segments.get(key).active=true}});const curve=(a,b)=>{const [x1,y1]=CFG_POS[a],[x2,y2]=CFG_POS[b],m=(x1+x2)/2;return `M${x1} ${y1} C${m} ${y1},${m} ${y2},${x2} ${y2}`};const lines=[false,true].map(active=>[...segments.values()].filter(s=>s.active===active).map(s=>`<path class="route ${active?'':'off'}" d="${curve(s.a,s.b)}"/>`).join('')).join('');const card=(id,type,top,on,extra='')=>`<div class="station ${type} ${on?'':'disabled'} ${extra}" style="top:${top}px"><b>${id==='EM'?'应急':id}</b><span></span></div>`;host.innerHTML=`<span class="zone out">出料口（2）</span><span class="zone spray">喷码工位（2）</span><span class="zone cut">切割机（3）</span><svg viewBox="0 0 1000 220" preserveAspectRatio="none">${lines}</svg>${card('EM','emergency',38,cfgOutlets.EM)}${card('E1','outlet',84,cfgOutlets.E1,!cfgOutlets.E1?'skip':'')}${card('E2','outlet',130,cfgOutlets.E2,!cfgOutlets.E2?'skip':'')}${card('S1','spray',84,cfgSprays.S1,!cfgSprays.S1?'skip':'')}${card('S2','spray',130,cfgSprays.S2,!cfgSprays.S2?'skip':'')}${card('C1','machine',38,cfgMachines.C1)}${card('C2','machine',84,cfgMachines.C2)}${card('C3','machine',130,cfgMachines.C3)}`}async function doRecalc() {
+  const topology = {
+    bypass_storage: bypassStorage,
+    outlets: Object.fromEntries(Object.entries(cfgOutlets).map(([k,v])=>[k,{enabled:v}])),
+    machines: Object.fromEntries(Object.entries(cfgMachines).map(([k,v])=>[k,{enabled:v}])),
+    edges: Object.entries(cfgEdges).filter(([_,v])=>v).map(([k])=>k.split('-')),
+  };
+  const batches = [];
+  for (const b of availableBatches) {
+    if (selectedBatchKeys.has(`${b.ship}|${b.segment}|${b.program}`)) {
+      batches.push([b.ship, b.segment, b.program]);
+    }
+  }
+  if (selectedDb && batches.length === 0) {
+    document.getElementById('recalcStatus').innerHTML =
+      '<span style="color:var(--danger)">✗ 请至少选一个切割包</span>';
+    return;
+  }
+  const splitThrHr = parseFloat(document.getElementById('cfgSplitThreshold').value);
+  const maxSplit   = parseInt(document.getElementById('cfgMaxSplit').value, 10);
+  const alpha      = parseFloat(document.getElementById('cfgAlpha').value);
+  const gamma      = parseFloat(document.getElementById('cfgGamma').value);
+  const body = { topology };
+  if (selectedDb) body.db_path = selectedDb;
+  if (batches.length) body.batches = batches;
+  body.batch_machine = batchMachine;
+  if (!isNaN(splitThrHr) && splitThrHr >= 0) body.split_threshold_sec = Math.round(splitThrHr * 3600);
+  if (!isNaN(maxSplit)   && maxSplit   >= 1) body.max_split_machines  = maxSplit;
+  if (!isNaN(alpha)      && alpha      >= 0) body.dispatch_alpha      = alpha;
+  if (!isNaN(gamma)      && gamma      >= 0) body.dispatch_gamma      = gamma;
+
+  const status = document.getElementById('recalcStatus');
+  status.textContent = '正在计算...'; status.style.color = 'var(--primary)';
+  try {
+    const resp = await fetch('/api/recalc', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(body),
+    });
+    const r = await resp.json();
+    if (!r.ok) throw new Error(r.error);
+    status.textContent = `✓ 重算完成，新 makespan = ${fmtT(r.makespan_cut)}，刷新中...`;
+    status.style.color = 'var(--success)';
+    setTimeout(() => location.reload(), 800);
+  } catch (e) {
+    status.textContent = '✗ 失败：' + e.message + '（需启动 排产_server.py）';
+    status.style.color = 'var(--danger)';
+  }
+}
+
+function renderMeta() {
+  const m = data.meta;
+  const eff = (m.constants.optimal_makespan / m.makespan_cut * 100).toFixed(1);
+  const cards = [
+    ['型材数', m.num_profiles, '#1677ff'],
+    ['零件数', m.num_parts, '#722ed1'],
+    ['切割包数', m.num_packages, '#13c2c2'],
+    ['最晚切割', fmtT(m.makespan_cut), '#E85B00'],
+  ];
+  document.getElementById('meta').innerHTML = cards.map(function(c){
+    return '<div><span>'+c[0]+'</span><b style="color:'+c[2]+'">'+c[1]+'</b></div>'; }).join('');
+}
+
+function getBatchColor(b) {
+  if (!batchColorMap[b]) {
+    batchColorMap[b] = BATCH_PALETTE[Object.keys(batchColorMap).length % BATCH_PALETTE.length];
+  }
+  return batchColorMap[b];
+}
+
+function renderMachineGanttLegend() {
+  const el = document.getElementById('machineGanttLegend');
+  if (ganttMode === 'category') {
+    const cats = [['纯H','#10b981'],['纯M','#6366f1'],['纯G/R','#f59e0b'],
+                  ['混套','#8b5cf6'],['加工件','#ef4444']];
+    el.innerHTML = cats.map(([n,c]) => `<div class="legend-item"><div class="legend-color" style="background:${c}"></div>${n}</div>`).join('');
+  } else {
+    const batches = [...new Set(data.machine_timeline.map(x => x.batch_id))];
+    el.innerHTML = batches.map(b => `<div class="legend-item"><div class="legend-color" style="background:${getBatchColor(b)}"></div>${b}</div>`).join('');
+  }
+}
+
+function renderMachineGantt() {
+  const svg = document.getElementById('machineGantt');
+  const machines = data.meta.topology.machines;
+  const rowH = 30, headerH = 30, labelW = 50, width = 1400;
+  const usableW = width - labelW - 20;
+  const height = headerH + machines.length * rowH + 20;
+  svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+  svg.setAttribute('width', width); svg.setAttribute('height', height);
+  let html = '';
+  for (let i = 0; i <= 10; i++) {
+    const x = labelW + usableW * i / 10;
+    html += `<line x1="${x}" y1="${headerH}" x2="${x}" y2="${height-10}" stroke="#e8e8ed"/>`;
+    html += `<text x="${x}" y="${headerH-8}" text-anchor="middle" font-size="11" fill="#666">${fmtT(maxTime*i/10)}</text>`;
+  }
+  machines.forEach((m, i) => {
+    const y = headerH + i * rowH;
+    html += `<text x="10" y="${y+rowH/2+4}" font-size="13" font-weight="bold">${m}</text>`;
+    html += `<line x1="${labelW}" y1="${y+rowH-2}" x2="${width-10}" y2="${y+rowH-2}" stroke="#e8e8ed"/>`;
+    data.machine_timeline.filter(x => x.machine === m).forEach(item => {
+      const x = labelW + (item.start/maxTime)*usableW;
+      const w = Math.max(1, ((item.end-item.start)/maxTime)*usableW);
+      const color = ganttMode === 'batch' ? getBatchColor(item.batch_id) : (COLORS[item.category] || '#8e8e93');
+      const fname = fnameOf(item.profile_id);
+      html += `<rect class="mg-rect" data-profile-id="${item.profile_id}" x="${x}" y="${y+4}" width="${w}" height="${rowH-10}" fill="${color}" opacity="0.85" style="cursor:pointer">
+        <title>${fname}\n${item.batch_id} / ${item.category}\n[${fmtT(item.start)} - ${fmtT(item.end)}]\n（点击查看单根详情）</title></rect>`;
+    });
+  });
+  html += `<line id="nowLineMachine" class="now-line" x1="${labelW}" y1="${headerH-5}" x2="${labelW}" y2="${height-10}"/>`;
+  svg.innerHTML = html;
+  if (!svg.__profileClickBound) {
+    svg.__profileClickBound = true;
+    svg.addEventListener('click', function(ev){
+      const t = ev.target;
+      if (t && t.tagName === 'rect' && t.dataset && t.dataset.profileId) {
+        openProfileDetail(parseInt(t.dataset.profileId, 10));
+      }
+    });
+  }
+}
+
+function renderOutletGanttLegend() {
+  const el = document.getElementById('outletGanttLegend');
+  if (!el) return;
+  const p2b = {}; data.machine_timeline.forEach(x=>{ p2b[x.profile_id]=x.batch_id; });
+  const batches = [...new Set(data.outlet_timeline.map(x => p2b[x.profile_id]).filter(Boolean))];
+  el.innerHTML = batches.map(b =>
+    `<div class="legend-item"><div class="legend-color" style="background:${getBatchColor(b)}"></div>${b}</div>`
+  ).join('');
+}
+
+function renderOutletGantt() {
+  const svg = document.getElementById('outletGantt');
+  const outlets = data.meta.topology.outlets;
+  const rowH = 30, headerH = 30, labelW = 50, width = 1400;
+  const usableW = width - labelW - 20;
+  const height = headerH + outlets.length * rowH + 20;
+  svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+  svg.setAttribute('width', width); svg.setAttribute('height', height);
+  let html = '';
+  const p2b = {}; data.machine_timeline.forEach(x=>{ p2b[x.profile_id]=x.batch_id; });
+  for (let i = 0; i <= 10; i++) {
+    const x = labelW + usableW * i / 10;
+    html += `<line x1="${x}" y1="${headerH}" x2="${x}" y2="${height-10}" stroke="#e8e8ed"/>`;
+    html += `<text x="${x}" y="${headerH-8}" text-anchor="middle" font-size="11" fill="#666">${fmtT(maxTime*i/10)}</text>`;
+  }
+  outlets.forEach((e, i) => {
+    const y = headerH + i * rowH;
+    html += `<text x="10" y="${y+rowH/2+4}" font-size="13" font-weight="bold">${e}</text>`;
+    html += `<line x1="${labelW}" y1="${y+rowH-2}" x2="${width-10}" y2="${y+rowH-2}" stroke="#e8e8ed"/>`;
+    data.outlet_timeline.filter(x => x.outlet === e).forEach(item => {
+      const x = labelW + (item.start/maxTime)*usableW;
+      const w = Math.max(1, ((item.end-item.start)/maxTime)*usableW);
+      const bId = p2b[item.profile_id] || '?';
+      const color = getBatchColor(bId);
+      html += `<rect x="${x}" y="${y+4}" width="${w}" height="${rowH-10}" fill="${color}" opacity="0.78">
+        <title>${fnameOf(item.profile_id)} · ${bId} → ${item.to_machine}\n[${fmtT(item.start)}-${fmtT(item.end)}]</title></rect>`;
+    });
+  });
+  html += `<line id="nowLineOutlet" class="now-line" x1="${labelW}" y1="${headerH-5}" x2="${labelW}" y2="${height-10}"/>`;
+  svg.innerHTML = html;
+}
+
+function updateCurrentTime(t) {
+  currentTime = Math.max(0, Math.min(maxTime, t));
+  document.getElementById('currentTime').textContent = `${fmtT(currentTime)} / ${fmtT(maxTime)}`;
+  document.getElementById('timeSlider').value = (currentTime/maxTime)*1000;
+  const labelW = 50, width = 1400, usableW = width - labelW - 20;
+  const xPos = labelW + (currentTime/maxTime)*usableW;
+  for (const id of ['nowLineMachine','nowLineOutlet']) {
+    const ln = document.getElementById(id);
+    if (ln) { ln.setAttribute('x1', xPos); ln.setAttribute('x2', xPos); }
+  }
+  renderCurrentStatus();
+  renderPalletStatus();
+}
+
+function renderCurrentStatus() {
+  const machines = data.meta.topology.machines;
+  const slots = [
+    {name:'出库口',stage:'unload'},{name:'喷码',stage:'print'},
+    {name:'去底漆',stage:'paint'},{name:'切割',stage:'cut'},{name:'分拣',stage:'sort'},
+  ];
+  let html = '<div style="display:flex;gap:14px;flex-wrap:wrap">';
+  for (const m of machines) {
+    html += `<div class="pipeline-card"><div class="pipeline-card-title">${m} · 实时 pipeline</div>`;
+    for (const slot of slots) {
+      let inSlot = null;
+      for (const pkg of data.schedule) {
+        for (const mat of pkg.materials) {
+          if (mat.assigned_machine !== m) continue;
+          const tl = mat.timeline[slot.stage];
+          if (tl && currentTime >= tl[0] && currentTime < tl[1]) { inSlot = mat; break; }
+        }
+        if (inSlot) break;
+      }
+      const color = STAGE_COLORS[slot.stage];
+      if (inSlot) {
+        const tl = inSlot.timeline[slot.stage];
+        const rem = tl[1] - currentTime;
+        const fname = (inSlot.file_name||'').replace(/-g\.gen$/, '');
+        html += `<div class="slot-row">
+          <span class="slot-name">${slot.name}</span>
+          <span class="slot-chip" style="background:${color}"></span>
+          <span style="flex:1;font-family:monospace;font-size:11px;color:var(--text-1)" title="${inSlot.file_name}">${fname}</span>
+          <span style="color:var(--text-3);font-size:11px">余 ${rem.toFixed(0)}s</span>
+        </div>`;
+      } else {
+        html += `<div class="slot-row slot-empty">
+          <span class="slot-name">${slot.name}</span>
+          <span class="slot-chip" style="background:var(--border-light)"></span>
+          <span style="flex:1;color:var(--text-3)">—</span>
+        </div>`;
+      }
+    }
+    html += '</div>';
+  }
+  html += '</div>';
+  document.getElementById('currentStatus').innerHTML = html;
+}
+
+// 按道次大类给 chip 配色
+function daoColor(dc) {
+  const lei = (dc || '?')[0];
+  return {'H':'#10b981','M':'#6366f1','C':'#0ea5e9','G':'#f59e0b','R':'#fb923c',
+          'Y':'#64748b','S':'#64748b','L':'#64748b','K':'#64748b'}[lei] || '#8e8e93';
+}
+
+// 把 load_events 按到达顺序、连续相同 dao_ci 归类（细分用）
+// [{dao_ci:'H1',t:507},{dao_ci:'H1',t:965},{dao_ci:'H3',t:1100},{dao_ci:'H1',t:1500}]
+// → [{dao_ci:'H1',count:2},{dao_ci:'H3',count:1},{dao_ci:'H1',count:1}]
+function groupByArrivalDaoCi(events, upToTime) {
+  const groups = [];
+  for (const e of events) {
+    if (e.t > upToTime) break;            // events 已按 t 排序
+    const last = groups[groups.length - 1];
+    if (last && last.dao_ci === e.dao_ci) last.count++;
+    else groups.push({dao_ci: e.dao_ci, count: 1});
+  }
+  return groups;
+}
+
+// 粗分：按 dao_ci 首字母（道次大类 H/M/G/R/C 等）连续归类
+function groupByArrivalLei(events, upToTime) {
+  const groups = [];
+  for (const e of events) {
+    if (e.t > upToTime) break;
+    const lei = (e.dao_ci || '?')[0];
+    const last = groups[groups.length - 1];
+    if (last && last.lei === lei) last.count++;
+    else groups.push({lei: lei, count: 1});
+  }
+  return groups;
+}
+
+function renderPalletStatus() {
+  const machines = data.meta.topology.machines;
+  const POS_NAME = {'short-L':'短-左','short-R':'短-右','long-L':'长-左','long-R':'长-右'};
+  let html = '<div style="display:flex;gap:14px;flex-wrap:wrap">';
+  for (const m of machines) {
+    html += `<div class="pipeline-card"><div class="pipeline-card-title">${m} · 托盘</div>`;
+    for (const pos of ['short-L','short-R','long-L','long-R']) {
+      const p = data.pallet_timeline.find(x => x.pallet_id === `${m}-${pos}`);
+      if (!p) {
+        html += `<div class="pallet-row" style="opacity:0.35">
+          <div class="pallet-row-head"><span class="pallet-pos">${POS_NAME[pos]}</span>
+          <span class="pallet-empty">未使用</span></div></div>`;
+        continue;
+      }
+      const groups = groupByArrivalDaoCi(p.load_events, currentTime);
+      const totalSoFar = groups.reduce((s, g) => s + g.count, 0);
+      let chips;
+      if (groups.length === 0) {
+        chips = '<span class="pallet-empty">空</span>';
+      } else {
+        chips = groups.map(g =>
+          `<span class="dao-group" style="background:${daoColor(g.dao_ci)}" title="道次 ${g.dao_ci} 连续 ${g.count} 件">
+             ${g.dao_ci}<span class="dao-count">×${g.count}</span></span>`
+        ).join('');
+      }
+      html += `<div class="pallet-row">
+        <div class="pallet-row-head">
+          <span class="pallet-pos">${POS_NAME[pos]}</span>
+          <span style="color:var(--text-3);font-size:11px">共 ${totalSoFar} 件</span>
+        </div>
+        <div class="pallet-groups">${chips}</div>
+      </div>`;
+    }
+    html += '</div>';
+  }
+  html += '</div>';
+  document.getElementById('palletStatus').innerHTML = html;
+}
+
+function renderDispatchLog() {
+  const el = document.getElementById('dispatchLog');
+  const machines = data.meta.topology.machines;
+  const pkgs = data.schedule.filter(p => p.dispatch_log);
+  if (!pkgs.length) {
+    el.innerHTML = '<div style="color:var(--text-3);padding:12px">当前 JSON 没有 dispatch_log 字段，请用最新的 排产_v1.py 重跑一次。</div>';
+    return;
+  }
+  const renderScoreRow = (m, sc, chosen) => `
+    <tr class="${m === chosen ? 'chosen' : ''}">
+      <td>${m}</td>
+      <td style="font-family:monospace">${sc.completion_time}</td>
+      <td style="font-family:monospace;color:${sc.same_seg_bonus<0?'var(--success)':'var(--text-3)'}">${sc.same_seg_bonus}</td>
+      <td style="font-family:monospace;font-weight:600">${sc.total_score}</td>
+    </tr>`;
+
+  let html = '';
+  pkgs.forEach((pkg, idx) => {
+    const log = pkg.dispatch_log;
+    const wgt = log.weights || {};
+    if (log.mode === 'whole') {
+      const rows = machines.map(m => renderScoreRow(m, log.scores[m] || {completion_time:0, same_seg_bonus:0, total_score:0}, log.chosen)).join('');
+      html += `
+        <div class="dispatch-card">
+          <div class="dispatch-head">
+            <span class="dispatch-title">${pkg.batch_id}</span>
+            <span class="dispatch-tag whole">整包派单</span>
+            <span class="dispatch-tag">total ${fmtT(pkg.total_time)}</span>
+            <span class="dispatch-tag chosen">→ ${log.chosen}</span>
+            <span style="margin-left:auto;font-size:11px;color:var(--text-3)">α=${wgt.alpha ?? 1} · γ=${wgt.gamma ?? 100}</span>
+          </div>
+          <table class="dispatch-table">
+            <thead><tr>
+              <th>机器</th><th>α·completion (s)</th><th>同分段奖励</th><th>合计 score</th>
+            </tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+          <div style="margin-top:6px;font-size:11px;color:var(--text-3)">${log.reason || ''}</div>
+        </div>`;
+    } else if (log.mode === 'split') {
+      const pml = log.per_material || [];
+      // 简表：每根型材一行（折叠）
+      const detailRows = pml.map(item => `
+        <tr>
+          <td style="font-family:monospace;font-size:10px">${(item.file_name||'').replace(/-g\.gen$/,'') || '#'+item.profile_id}</td>
+          <td>${item.candidates.join(', ')}</td>
+          ${machines.map(m => {
+            const sc = item.scores[m];
+            if (!sc) return '<td style="color:var(--text-3)">-</td>';
+            const chosen = m === item.chosen;
+            return `<td style="font-family:monospace;${chosen?'background:#dbeafe;font-weight:600':''}">${sc.total_score}${chosen?' ✓':''}</td>`;
+          }).join('')}
+        </tr>`).join('');
+      html += `
+        <div class="dispatch-card">
+          <div class="dispatch-head">
+            <span class="dispatch-title">${pkg.batch_id}</span>
+            <span class="dispatch-tag split">拆包派单</span>
+            <span class="dispatch-tag">total ${fmtT(pkg.total_time)}</span>
+            <span class="dispatch-tag">max=${log.max_split_machines} 台</span>
+            <span class="dispatch-tag chosen">→ ${log.machines_used.join(' / ')}</span>
+            <span style="margin-left:auto;font-size:11px;color:var(--text-3)">${pml.length} 根型材独立派单</span>
+          </div>
+          <div class="dispatch-expand" data-idx="${idx}">▸ 展开每根型材详情</div>
+          <div id="dispatchDetail-${idx}" style="display:none;margin-top:8px;max-height:300px;overflow-y:auto">
+            <table class="dispatch-table">
+              <thead><tr>
+                <th>型材文件名</th><th>候选机器</th>
+                ${machines.map(m => `<th>${m} score</th>`).join('')}
+              </tr></thead>
+              <tbody>${detailRows}</tbody>
+            </table>
+          </div>
+        </div>`;
+    }
+  });
+  el.innerHTML = html;
+  // 展开/收起
+  el.querySelectorAll('.dispatch-expand').forEach(d => {
+    d.addEventListener('click', () => {
+      const idx = d.dataset.idx;
+      const det = document.getElementById('dispatchDetail-' + idx);
+      const open = det.style.display !== 'none';
+      det.style.display = open ? 'none' : 'block';
+      d.textContent = (open ? '▸' : '▾') + ' ' + d.textContent.slice(2);
+    });
+  });
+}
+
+function renderSwapStats() {
+  // 统计每个托盘的换盘次数（粗分 / 细分），还有总计
+  const rows = [];
+  let totalCoarse = 0, totalFine = 0, totalEvents = 0;
+  for (const p of data.pallet_timeline) {
+    if (!p.load_events.length) continue;
+    const coarseGroups = groupByArrivalLei(p.load_events, Infinity);
+    const fineGroups   = groupByArrivalDaoCi(p.load_events, Infinity);
+    const coarseSwaps = Math.max(0, coarseGroups.length - 1);
+    const fineSwaps   = Math.max(0, fineGroups.length - 1);
+    totalCoarse += coarseSwaps;
+    totalFine   += fineSwaps;
+    totalEvents += p.load_events.length;
+    rows.push({
+      pallet_id: p.pallet_id,
+      dao_list: p.dao_ci_list.join(','),
+      total: p.load_events.length,
+      coarseSwaps, fineSwaps,
+      coarseGroups, fineGroups,
+    });
+  }
+  // 总览
+  document.getElementById('swapSummary').innerHTML = `
+    <div><span style="color:var(--text-3);font-size:11px">总落盘零件数</span>
+         <div style="font-size:18px;font-weight:600">${totalEvents}</div></div>
+    <div><span style="color:var(--text-3);font-size:11px">粗分总换盘次数</span>
+         <div style="font-size:18px;font-weight:600;color:var(--primary)">${totalCoarse}</div></div>
+    <div><span style="color:var(--text-3);font-size:11px">细分总换盘次数</span>
+         <div style="font-size:18px;font-weight:600;color:var(--purple)">${totalFine}</div></div>
+    <div><span style="color:var(--text-3);font-size:11px">细分 / 粗分倍数</span>
+         <div style="font-size:18px;font-weight:600">${totalCoarse>0 ? (totalFine/totalCoarse).toFixed(1) : '-'}×</div></div>
+  `;
+  // 详细表格
+  const fmtSeq = (groups, key) => groups.map(g =>
+    `<span class="dao-group" style="background:${daoColor(g[key])};font-size:10px;padding:1px 6px">${g[key]}×${g.count}</span>`
+  ).join(' ');
+  document.querySelector('#swapTable tbody').innerHTML = rows.map(r => `
+    <tr>
+      <td style="font-family:monospace">${r.pallet_id}</td>
+      <td>${r.dao_list}</td>
+      <td>${r.total}</td>
+      <td style="text-align:center;font-weight:600;color:var(--primary)">${r.coarseSwaps}</td>
+      <td>${fmtSeq(r.coarseGroups, 'lei')}</td>
+      <td style="text-align:center;font-weight:600;color:var(--purple)">${r.fineSwaps}</td>
+      <td>${fmtSeq(r.fineGroups, 'dao_ci')}</td>
+    </tr>
+  `).join('');
+}
+
+function renderMachineLoadChart() {
+  const machines = data.meta.topology.machines;
+  const ml = data.meta.machine_load;
+  const maxLoad = Math.max(...Object.values(ml));
+  let html = '<div><div style="font-size:13px;font-weight:600;margin-bottom:8px">切割机负载</div>';
+  for (const m of machines) {
+    const load = ml[m], pct = (load/maxLoad*100).toFixed(1);
+    const cnt = data.meta.machine_profile_count[m];
+    html += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+      <span style="width:40px;font-weight:bold">${m}</span>
+      <div style="flex:1;background:var(--border-light);border-radius:3px;height:24px;position:relative">
+        <div style="background:linear-gradient(90deg,#0066cc,#5ac8fa);height:24px;width:${pct}%;border-radius:3px"></div>
+        <span style="position:absolute;left:8px;top:4px;color:#fff;font-weight:bold;font-size:12px">${load.toFixed(0)}s (${fmtT(load)})</span>
+      </div>
+      <span style="width:60px;text-align:right;font-size:12px;color:#666">${cnt} 根</span>
+    </div>`;
+  }
+  const catCount = {};
+  for (const pkg of data.schedule) for (const mat of pkg.materials)
+    catCount[mat.category] = (catCount[mat.category] || 0) + 1;
+  const tot = Object.values(catCount).reduce((a,b)=>a+b, 0);
+  html += '<div style="font-size:13px;font-weight:600;margin:14px 0 8px">型材类别分布</div>';
+  for (const [cat, cnt] of Object.entries(catCount).sort((a,b)=>b[1]-a[1])) {
+    const pct = (cnt/tot*100).toFixed(1);
+    html += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+      <span style="width:80px;font-size:12px">${cat}</span>
+      <div style="flex:1;background:var(--border-light);border-radius:3px;height:18px">
+        <div style="background:${COLORS[cat]||'#999'};height:18px;width:${pct}%;border-radius:3px"></div>
+      </div>
+      <span style="width:80px;text-align:right;font-size:12px;color:#666">${cnt} 根 (${pct}%)</span>
+    </div>`;
+  }
+  html += '</div>';
+  document.getElementById('machineLoadChart').innerHTML = html;
+}
+
+function buildPartsRows() {
+  const rows = [];
+  const seen = new Set();
+  for (const p of data.pallet_timeline) {
+    for (const e of p.load_events) {
+      if (seen.has(e.part_id)) continue;
+      seen.add(e.part_id);
+      let machine = '', outlet = '', batch = '', cutS = 0, cutE = e.t, unloadS = 0, unloadE = 0, fname = '';
+      outer: for (const pkg of data.schedule) {
+        for (const mat of pkg.materials) {
+          if (mat.profile_id === e.profile_id) {
+            machine = mat.assigned_machine; outlet = mat.outlet || ''; batch = pkg.batch_id;
+            cutS = mat.timeline.cut[0]; cutE = mat.timeline.cut[1];
+            unloadS = mat.timeline.unload[0]; unloadE = mat.timeline.unload[1];
+            fname = (mat.file_name||'').replace(/-g\.gen$/, '');
+            break outer;
+          }
+        }
+      }
+      rows.push({
+        part_id: e.part_id, name: '', profile_fname: fname,
+        profile_id: e.profile_id, batch_id: batch,
+        segment: e.segment, dao_ci: e.dao_ci, machine, outlet,
+        unload_start: unloadS, unload_end: unloadE,
+        cut_start: cutS, cut_end: cutE, pallet: p.pallet_id,
+      });
+    }
+  }
+  rows.sort((a,b) => a.cut_start - b.cut_start);
+  return rows;
+}
+
+function renderPartsTable() {
+  allPartsRows = buildPartsRows();
+  renderPartsRows(allPartsRows);
+  document.getElementById('partsCount').textContent = allPartsRows.length;
+  document.getElementById('parts-search').addEventListener('input', (e) => {
+    const q = e.target.value.trim().toLowerCase();
+    const f = q ? allPartsRows.filter(r =>
+      String(r.part_id).includes(q) || r.dao_ci.toLowerCase().includes(q) ||
+      r.segment.toLowerCase().includes(q) || r.batch_id.toLowerCase().includes(q) ||
+      r.machine.toLowerCase().includes(q) || (r.profile_fname||'').toLowerCase().includes(q)
+    ) : allPartsRows;
+    renderPartsRows(f);
+    document.getElementById('partsCount').textContent = f.length;
+  });
+}
+
+function renderPartsRows(rows) {
+  document.querySelector('#partsTable tbody').innerHTML = rows.map(r => `
+    <tr><td>${r.part_id}</td><td>${r.name||'-'}</td>
+      <td style="font-family:monospace;font-size:11px">${r.profile_fname||('#'+r.profile_id)}</td>
+      <td>${r.batch_id.split('-')[0]}</td><td>${r.segment}</td><td>${r.dao_ci}</td>
+      <td>${r.machine}</td><td>${fmtT(r.cut_start)}</td><td>${fmtT(r.cut_end)}</td><td>${r.pallet}</td>
+    </tr>`).join('');
+}
+
+function renderProfileTimeline(input) {
+  // input 可以是 profile_id (number) 或 file_name (string)
+  let target = null;
+  for (const pkg of data.schedule) {
+    for (const mat of pkg.materials) {
+      if (typeof input === 'number' && mat.profile_id === input) target = mat;
+      else if (typeof input === 'string') {
+        const fn = mat.file_name || '';
+        if (fn === input || fn.replace(/-g\.gen$/, '') === input || String(mat.profile_id) === input)
+          target = mat;
+      }
+      if (target) break;
+    }
+    if (target) break;
+  }
+  if (!target) {
+    document.getElementById('profileTimeline').innerHTML = `<span style="color:var(--danger)">找不到 ${input}</span>`;
+    return;
+  }
+  const tl = target.timeline;
+  const start = tl.unload[0], end = tl.sort[1], total = end - start, width = 1100;
+  const fname = (target.file_name||'').replace(/-g\.gen$/, '');
+  let html = `<div><b style="font-family:monospace">${fname}</b> | 切割机 ${target.assigned_machine} | 出料口 ${target.outlet} | 切割时间 ${target.cut_time}s</div>`;
+  html += '<svg width="' + width + '" height="60" style="margin-top:8px">';
+  // 从 meta.constants 读真实服务时间（不要硬编码）
+  const C = data.meta.constants || {};
+  const SVC = {
+    unload: C.t_unload ?? 30,
+    print:  C.t_print  ?? 60,
+    paint:  C.t_paint  ?? 20,
+    sort:   C.t_sort   ?? 30,
+    cut:    target.cut_time,
+  };
+  for (const s of STAGE_ORDER) {
+    const seg = tl[s];
+    const x = ((seg[0]-start)/total)*width;
+    const w = ((seg[1]-seg[0])/total)*width;
+    const svc = SVC[s] || 0;
+    const svcW = (svc/total)*width;
+    html += `<rect x="${x}" y="20" width="${svcW}" height="24" fill="${STAGE_COLORS[s]}" opacity="0.9">
+      <title>${STAGE_NAMES[s]} 服务 ${svc}s</title></rect>`;
+    const block = Math.max(0, (seg[1]-seg[0]) - svc);
+    if (block > 0.01) {
+      html += `<rect x="${x+svcW}" y="20" width="${w-svcW}" height="24" fill="#999" opacity="0.5">
+        <title>${STAGE_NAMES[s]} 阻塞等待 ${block.toFixed(0)}s</title></rect>`;
+    }
+    html += `<text x="${x+w/2}" y="56" text-anchor="middle" font-size="10" fill="#666">${STAGE_NAMES[s]}</text>`;
+  }
+  html += '</svg>';
+  html += '<div style="margin-top:8px;font-size:12px;color:#666">';
+  for (const s of STAGE_ORDER) {
+    const dur = tl[s][1] - tl[s][0];
+    html += `<span style="display:inline-block;margin-right:14px">${STAGE_NAMES[s]}: ${dur.toFixed(0)}s</span>`;
+  }
+  html += '</div>';
+  document.getElementById('profileTimeline').innerHTML = html;
+}
+
+function setupControls() {
+  const slider = document.getElementById('timeSlider');
+  slider.addEventListener('input', e => updateCurrentTime((e.target.value/1000)*maxTime));
+  const playBtn = document.getElementById('playBtn');
+  playBtn.addEventListener('click', () => {
+    if (isPlaying) { clearInterval(playInterval); isPlaying=false; playBtn.textContent='▶ 播放'; return; }
+    isPlaying = true; playBtn.textContent = '⏸ 暂停';
+    const speed = parseInt(document.getElementById('speedSelect').value);
+    playInterval = setInterval(() => {
+      const next = currentTime + speed*0.1;
+      if (next >= maxTime) {
+        clearInterval(playInterval); isPlaying=false; playBtn.textContent='▶ 播放';
+        updateCurrentTime(maxTime);
+      } else updateCurrentTime(next);
+    }, 100);
+  });
+  document.getElementById('resetBtn').addEventListener('click', () => {
+    if (isPlaying) { clearInterval(playInterval); isPlaying=false; playBtn.textContent='▶ 播放'; }
+    updateCurrentTime(0);
+  });
+  document.getElementById('recalcBtn').addEventListener('click', doRecalc);
+  document.querySelectorAll('.gantt-mode-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.gantt-mode-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      ganttMode = btn.dataset.mode;
+      renderMachineGantt(); renderMachineGanttLegend();
+    });
+  });
+  document.getElementById('showProfileBtn').addEventListener('click', () => {
+    const v = document.getElementById('profileSelect').value.trim();
+    if (v) renderProfileTimeline(/^\d+$/.test(v) ? parseInt(v) : v);
+  });
+  document.getElementById('profileSelect').addEventListener('keypress', e => {
+    if (e.key === 'Enter') {
+      const v = e.target.value.trim();
+      if (v) renderProfileTimeline(/^\d+$/.test(v) ? parseInt(v) : v);
+    }
+  });
+  document.getElementById('exportExcelBtn').addEventListener('click', exportExcel);
+  document.getElementById('exportCsvBtn').addEventListener('click', exportCsv);
+  // 数据源面板
+  document.getElementById('dsDatabase').addEventListener('change', async (e) => {
+    selectedDb = e.target.value;
+    updateDbInfo();
+    await loadBatches(selectedDb);
+  });
+  document.getElementById('batchSelectAll').addEventListener('click', () => {
+    for (const b of availableBatches) selectedBatchKeys.add(`${b.ship}|${b.segment}|${b.program}`);
+    renderBatchChips();
+  });
+  document.getElementById('batchSelectNone').addEventListener('click', () => {
+    selectedBatchKeys.clear();
+    renderBatchChips();
+  });
+  setTimeout(() => {
+    const first = data.schedule[0] && data.schedule[0].materials[0];
+    if (first) renderProfileTimeline(first.profile_id);
+  }, 100);
+}
+
+function exportExcel() {
+  if (!window.XLSX) { alert('XLSX 库未加载'); return; }
+  const wb = XLSX.utils.book_new();
+  const partsData = allPartsRows.map(r => ({
+    '零件 ID': r.part_id, '所属型材': r.profile_fname || r.profile_id,
+    '船号': r.batch_id.split('-')[0], '分段': r.segment, '道次': r.dao_ci,
+    '出料口': r.outlet, '切割机': r.machine,
+    '出库开始(s)': r.unload_start, '出库结束(s)': r.unload_end,
+    '出库开始': fmtT(r.unload_start), '出库结束': fmtT(r.unload_end),
+    '切割开始(s)': r.cut_start, '切割完成(s)': r.cut_end,
+    '切割开始': fmtT(r.cut_start), '切割完成': fmtT(r.cut_end),
+    '落盘托盘': r.pallet,
+  }));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(partsData), '零件统计');
+  const matData = [];
+  for (const pkg of data.schedule) for (const m of pkg.materials) {
+    matData.push({
+      'gen 文件名': (m.file_name||'').replace(/-g\.gen$/, ''),
+      '切割包': pkg.batch_id, '类别': m.category, '分段': m.internal_segment,
+      '机器': m.assigned_machine, '出料口': m.outlet, '切割时间(s)': m.cut_time,
+      '出库开始': m.timeline.unload[0], '出库结束': m.timeline.unload[1],
+      '喷码开始': m.timeline.print[0], '喷码结束': m.timeline.print[1],
+      '去底漆开始': m.timeline.paint[0], '去底漆结束': m.timeline.paint[1],
+      '切割开始': m.timeline.cut[0], '切割结束': m.timeline.cut[1],
+      '分拣开始': m.timeline.sort[0], '分拣结束': m.timeline.sort[1],
+    });
+  }
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(matData), '型材时间线');
+  const sumData = [
+    {'指标':'型材总数','值':data.meta.num_profiles},
+    {'指标':'零件总数','值':data.meta.num_parts},
+    {'指标':'最晚切割(s)','值':data.meta.makespan_cut},
+    {'指标':'理论最优(s)','值':data.meta.constants.optimal_makespan},
+    {'指标':'并行效率','值':(data.meta.constants.optimal_makespan/data.meta.makespan_cut*100).toFixed(1)+'%'},
+  ];
+  for (const m of data.meta.topology.machines) {
+    sumData.push({'指标':m+' 负载(s)','值':data.meta.machine_load[m]});
+    sumData.push({'指标':m+' 型材数','值':data.meta.machine_profile_count[m]});
+  }
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(sumData), '摘要');
+  XLSX.writeFile(wb, '排产结果_' + new Date().toISOString().slice(0,10) + '.xlsx');
+}
+
+function exportCsv() {
+  const headers = ['零件ID','所属型材(gen)','船号','分段','道次','出料口','切割机',
+                   '出库开始(s)','出库结束(s)','切割开始(s)','切割完成(s)','落盘托盘'];
+  const lines = [headers.join(',')];
+  for (const r of allPartsRows) {
+    lines.push([r.part_id, r.profile_fname||r.profile_id, r.batch_id.split('-')[0],
+      r.segment, r.dao_ci, r.outlet, r.machine,
+      r.unload_start, r.unload_end, r.cut_start, r.cut_end, r.pallet].join(','));
+  }
+  const blob = new Blob(['﻿' + lines.join('\n')], {type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = '零件统计_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+}
+
+
+/* ===== 本地化覆盖：脱离后端，直接在前端运行排产算法 ===== */
+var __layoutDone=false, __calMonth=null, __calMode='month', __schedDates={};
+var __DEFAULT_SCHEDULE_TASKS={'2026-09-01':[
+  {packageNo:'2779-301-PY',shipNo:'2779',blockNo:'301',prodShift:'2026-09-01',source:'MES下发',materialCount:26,cutTime:0},
+  {packageNo:'2779-301-PZ',shipNo:'2779',blockNo:'301',prodShift:'2026-09-01',source:'MES下发',materialCount:16,cutTime:0},
+  {packageNo:'2779-322-PY',shipNo:'2779',blockNo:'322',prodShift:'2026-09-01',source:'MES下发',materialCount:78,cutTime:0},
+  {packageNo:'2779-322-PZ',shipNo:'2779',blockNo:'322',prodShift:'2026-09-01',source:'MES下发',materialCount:12,cutTime:0},
+  {packageNo:'2779-323-PY',shipNo:'2779',blockNo:'323',prodShift:'2026-09-01',source:'MES下发',materialCount:88,cutTime:0},
+  {packageNo:'2779-324-PY',shipNo:'2779',blockNo:'324',prodShift:'2026-09-01',source:'MES下发',materialCount:92,cutTime:0},
+  {packageNo:'2779-325-PY',shipNo:'2779',blockNo:'325',prodShift:'2026-09-01',source:'MES下发',materialCount:34,cutTime:0},
+  {packageNo:'2779-325-PZ',shipNo:'2779',blockNo:'325',prodShift:'2026-09-01',source:'MES下发',materialCount:22,cutTime:0}
+]};
+function getPlanProdDateMap(){
+  var own = window.PLAN_PROD_DATE_MAP;
+  var parentMap = null;
+  try { parentMap = window.parent && window.parent.PLAN_PROD_DATE_MAP; } catch(e) {}
+  function withDemoTasks(map){
+    var copied=map||{}, current=copied['2026-09-01']||[];
+    // 仅将初始的两条演示任务扩展为完整的八条；用户后来导入的任务不受影响。
+    if(current.length===2 && current[0].packageNo==='2779-301-PY' && current[1].packageNo==='2779-301-PZ'){
+      copied=Object.assign({},copied);
+      copied['2026-09-01']=__DEFAULT_SCHEDULE_TASKS['2026-09-01'].slice();
+    }
+    return copied;
+  }
+  // 本页刚导入的数据优先用于回填左侧任务列表，父页数据仅作为初始兜底。
+  // 这样即使父页同步稍晚，点击「添加到任务列表」后也会立即显示本次选择。
+  if(own && Object.keys(own).length) return withDemoTasks(own);
+  if(parentMap && Object.keys(parentMap).length) return withDemoTasks(parentMap);
+  return __DEFAULT_SCHEDULE_TASKS;
+}
+function cardByTitle(t){ var arr=document.querySelectorAll('.card h2'); for(var i=0;i<arr.length;i++){ if(arr[i].textContent.indexOf(t)>=0) return arr[i].closest('.card'); } return null; }
+function flat(c){ if(!c) return null; c.classList.remove('card'); c.style.boxShadow='none'; c.style.border='none'; c.style.padding='0'; c.style.marginBottom='14px'; return c; }
+function updateCsDate(){ var pd=document.getElementById('planDate'); var v=pd?pd.value:''; var el=document.getElementById('csDate'); if(el) el.textContent=v||'未选择'; var td=document.getElementById('topDate'); if(td){ if(v){ var p=v.split('-'); td.textContent=(+p[0])+'年'+(+p[1])+'月'+(+p[2])+'日'; } else td.textContent='未选择日期'; } }
+function renderCalendar(){
+  var box=document.getElementById('calBox'); if(!box) return;
+  var planMap = getPlanProdDateMap();
+  if(!__calMonth) __calMonth=new Date();
+  var y=__calMonth.getFullYear(), mo=__calMonth.getMonth();
+  var sel=(document.getElementById('planDate')||{}).value||'';
+  var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var yrs=''; for(var yy=y-5; yy<=y+6; yy++) yrs+='<option value="'+yy+'"'+(yy===y?' selected':'')+'>'+yy+'</option>';
+  var mos=''; for(var mm=0;mm<12;mm++) mos+='<option value="'+mm+'"'+(mm===mo?' selected':'')+'>'+MON[mm]+'</option>';
+  var head='<div class="cal2-head"><select id="calYear">'+yrs+'</select>'+
+    '<select id="calMon"'+(__calMode==='year'?' style="display:none"':'')+'>'+mos+'</select>'+
+    '<span class="cal2-seg"><button id="calModeM" class="'+(__calMode==='month'?'on':'')+'">Month</button>'+
+    '<button id="calModeY" class="'+(__calMode==='year'?'on':'')+'">Year</button></span></div>';
+  var body='';
+  if(__calMode==='year'){
+    body='<div class="cal2-ygrid">';
+    for(var m2=0;m2<12;m2++){ body+='<div class="cal2-mcell'+(m2===mo?' sel':'')+'" data-m="'+m2+'">'+MON[m2]+'</div>'; }
+    body+='</div>';
+  } else {
+    var startDow=new Date(y,mo,1).getDay(), dim=new Date(y,mo+1,0).getDate();
+    var dow=['Su','Mo','Tu','We','Th','Fr','Sa'];
+    var td=new Date(); var todayStr=td.getFullYear()+'-'+String(td.getMonth()+1).padStart(2,'0')+'-'+String(td.getDate()).padStart(2,'0');
+    body='<div class="cal2-grid">';
+    for(var i=0;i<7;i++) body+='<div class="dow">'+dow[i]+'</div>';
+    for(var b=0;b<startDow;b++) body+='<div class="cal2-cell other"></div>';
+    for(var d=1;d<=dim;d++){
+      var ds=y+'-'+String(mo+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+      var cls='cal2-cell'+(ds===sel?' sel':'')+(ds===todayStr?' today':'');
+      var dot=(__schedDates[ds] || (planMap[ds] && planMap[ds].length))?'<span class="cal2-dot"></span>':'';
+      body+='<div class="'+cls+'" data-d="'+ds+'"><span class="num">'+d+'</span>'+dot+'</div>';
+    }
+    body+='</div>';
+  }
+  box.className='cal2'; box.innerHTML=head+body;
+  var ys=box.querySelector('#calYear'); if(ys) ys.addEventListener('change',function(){ __calMonth=new Date(+this.value, mo, 1); renderCalendar(); });
+  var ms=box.querySelector('#calMon'); if(ms) ms.addEventListener('change',function(){ __calMonth=new Date(y, +this.value, 1); renderCalendar(); });
+  box.querySelector('#calModeM').addEventListener('click',function(){ __calMode='month'; renderCalendar(); });
+  box.querySelector('#calModeY').addEventListener('click',function(){ __calMode='year'; renderCalendar(); });
+  Array.prototype.forEach.call(box.querySelectorAll('.cal2-mcell'),function(el){ el.addEventListener('click',function(){ __calMonth=new Date(y, +this.dataset.m, 1); __calMode='month'; renderCalendar(); }); });
+  Array.prototype.forEach.call(box.querySelectorAll('.cal2-cell[data-d]'),function(el){ el.addEventListener('click',function(){ var pd=document.getElementById('planDate'); if(pd) pd.value=this.dataset.d; renderCalendar(); updateCsDate(); if(typeof renderProdList==='function') renderProdList(); }); });
+}
+function buildGroupManifest(){
+  var box=document.createElement('section'); box.className='group-manifest';
+  var packages=(data&&data.schedule)||[], timeline=(data&&data.machine_timeline)||[], outletTimeline=(data&&data.outlet_timeline)||[];
+  var rawMaterials=((window.SCHED_DB||{}).materials)||[];
+  var sourceByProfile={}; rawMaterials.forEach(function(m){sourceByProfile[String(m.profile_id)]=m;});
+  function partCount(mat){
+    var source=sourceByProfile[String(mat.profile_id)]||{};
+    var value=mat.part_count!=null?mat.part_count:(mat.partsQty!=null?mat.partsQty:(mat.parts_qty!=null?mat.parts_qty:(mat.partCount!=null?mat.partCount:(Array.isArray(mat.parts)?mat.parts.length:null))));
+    if(value==null) value=source.part_count!=null?source.part_count:(Array.isArray(source.parts)?source.parts.length:0);
+    return Number(value)||0;
+  }
+  function esc(value){return String(value==null?'':value).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  var rows=packages.map(function(pkg,index){
+    var materials=pkg.materials||[], entries=timeline.filter(function(item){return item.batch_id===pkg.batch_id;});
+    var machines=[...new Set(entries.map(function(item){return item.machine;}).filter(Boolean))];
+    var parts=materials.reduce(function(total,mat){return total+partCount(mat);},0);
+    var cutTime=Math.round(entries.reduce(function(total,item){return total+Math.max(0,(item.end||0)-(item.start||0));},0));
+    var name=pkg.batch_id||pkg.packageNo||('切割工单-'+(index+1));
+    var source=(pkg.ship&&pkg.segment)?pkg.ship+'-'+pkg.segment:(pkg.packageNo||'-');
+    var details=materials.map(function(mat){
+      var fallback=sourceByProfile[String(mat.profile_id)]||{};
+      var file=mat.file_name||fallback.file_name||mat.profile_id||'-';
+      var outletEntry=outletTimeline.filter(function(item){return String(item.profile_id)===String(mat.profile_id);})[0]||{};
+      var outlet=mat.outlet||outletEntry.outlet||'-';
+      var passes=[...new Set((mat.parts||[]).map(function(part){return part.dao_ci;}).filter(Boolean))].join(' / ')||'-';
+      var cutDuration=mat.cut_time!=null?mat.cut_time:(fallback.cut_time_raw!=null?fallback.cut_time_raw:((mat.timeline&&mat.timeline.cut)?Math.max(0,mat.timeline.cut[1]-mat.timeline.cut[0]):0));
+      return '<tr><td>'+esc(file).replace(/-g\.gen$/,'')+'</td><td>'+esc(mat.section_size||fallback.section_size||'-')+'</td><td>'+esc(mat.length||fallback.length||'-')+'</td><td>'+partCount(mat)+'</td><td>'+Math.round(Number(cutDuration)||0)+'</td><td>'+esc(outlet)+'</td><td>'+esc(passes)+'</td></tr>';
+    }).join('')||'<tr><td colspan="7" style="color:var(--text-3);text-align:center">暂无型材明细</td></tr>';
+    return '<tr class="gm-summary-row" data-group-index="'+index+'"><td style="width:38px;text-align:center"><button class="gm-expand" type="button" data-group-index="'+index+'" aria-expanded="false" title="展开型材明细">＋</button></td><td><span class="gm-name">'+esc(name)+'</span></td><td>'+esc(source)+'</td><td><span class="gm-machine">'+esc(machines.join(' / ')||'-')+'</span></td><td><span class="gm-count">'+materials.length+' 根</span></td><td>'+parts+'</td><td>'+cutTime+'</td></tr><tr class="gm-detail-row" data-group-index="'+index+'" hidden><td colspan="7"><table class="gm-detail-table"><thead><tr><th>套料版图号</th><th>规格</th><th>长度(mm)</th><th>零件数</th><th>预估切割时间(s)</th><th>出库口</th><th>道次</th></tr></thead><tbody>'+details+'</tbody></table></td></tr>';
+  }).join('');
+  if(!rows) rows='<tr><td colspan="7" style="text-align:center;color:var(--text-3);padding:18px">暂无切割工单</td></tr>';
+  box.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><h3 style="margin:0">切割工单清单</h3><button type="button" class="btn-default gm-export">导出</button></div><table><thead><tr><th></th><th>切割工单名称</th><th>来源切割包</th><th>切割机</th><th>型材数</th><th>零件数</th><th>预估切割(s)</th></tr></thead><tbody>'+rows+'</tbody></table>';
+  var exportBtn=box.querySelector('.gm-export');
+  if(exportBtn) exportBtn.addEventListener('click',function(){
+    var csvRows=[['切割工单名称','来源切割包','切割机','型材数','零件数','预估切割(s)']];
+    packages.forEach(function(pkg,index){
+      var materials=pkg.materials||[], entries=timeline.filter(function(item){return item.batch_id===pkg.batch_id;});
+      var machines=[...new Set(entries.map(function(item){return item.machine;}).filter(Boolean))];
+      var parts=materials.reduce(function(total,mat){return total+partCount(mat);},0);
+      var cutTime=Math.round(entries.reduce(function(total,item){return total+Math.max(0,(item.end||0)-(item.start||0));},0));
+      var name=pkg.batch_id||pkg.packageNo||('切割工单-'+(index+1));
+      var source=(pkg.ship&&pkg.segment)?pkg.ship+'-'+pkg.segment:(pkg.packageNo||'-');
+      csvRows.push([name,source,machines.join(' / ')||'-',materials.length,parts,cutTime]);
+    });
+    var csv='\ufeff'+csvRows.map(function(row){return row.map(function(value){return '"'+String(value==null?'':value).replace(/"/g,'""')+'"';}).join(',');}).join('\r\n');
+    var url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+    var link=document.createElement('a'); link.href=url; link.download='切割工单清单.csv'; document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(url);
+  });
+  function toggleGroup(index){var detail=box.querySelector('.gm-detail-row[data-group-index="'+index+'"]'),btn=box.querySelector('.gm-expand[data-group-index="'+index+'"]');if(!detail||!btn)return;var isHidden=detail.toggleAttribute('hidden');btn.textContent=isHidden?'＋':'−';btn.setAttribute('aria-expanded',String(!isHidden));}
+  Array.prototype.forEach.call(box.querySelectorAll('.gm-expand'),function(btn){btn.addEventListener('click',function(event){event.stopPropagation();toggleGroup(btn.dataset.groupIndex);});});
+  Array.prototype.forEach.call(box.querySelectorAll('.gm-summary-row'),function(row){row.addEventListener('click',function(){toggleGroup(row.dataset.groupIndex);});});
+  return box;
+}
+function applyLayout(){
+  if(__layoutDone) return; __layoutDone=true;
+  var gmb=document.querySelector('.gantt-mode-btn'); if(gmb && gmb.parentNode) gmb.parentNode.style.display='none';
+  ['机器负载','托盘状态','完整时间线','时间控制','零件级生产统计','当前时刻 pipeline'].forEach(function(t){ var c=cardByTitle(t); if(c) c.style.display='none'; });
+  var shell=document.createElement('div'); shell.className='app-shell';
+  var side=document.createElement('aside'); side.className='side';
+  var main=document.createElement('main'); main.className='main';
+  shell.appendChild(side); shell.appendChild(main);
+  document.body.insertBefore(shell, document.body.firstChild);
+  if(!document.getElementById('pkgDrawer')){
+    var mask=document.createElement('div'); mask.id='pkgDrawerMask'; mask.className='pkg-mask';
+    var dr=document.createElement('div'); dr.id='pkgDrawer'; dr.className='pkg-drawer';
+    dr.innerHTML='<div class="pkg-drawer-head"><span id="pkgDrawerTitle">工单详情</span><span class="x" id="pkgDrawerClose">\u2715</span></div><div class="pkg-drawer-body" id="pkgDrawerBody"></div>';
+    document.body.appendChild(mask); document.body.appendChild(dr);
+    mask.addEventListener('click', closePkgDetail);
+    dr.querySelector('#pkgDrawerClose').addEventListener('click', closePkgDetail);
+  }
+  if(!document.getElementById('profileDrawer')){
+    var pmask=document.createElement('div'); pmask.id='profileDrawerMask'; pmask.className='pkg-mask';
+    var pdr=document.createElement('div'); pdr.id='profileDrawer'; pdr.className='pkg-drawer';
+    pdr.innerHTML='<div class="pkg-drawer-head"><span id="profileDrawerTitle">型材详情</span><span class="x" id="profileDrawerClose">✕</span></div><div class="pkg-drawer-body" id="profileDrawerBody"></div>';
+    document.body.appendChild(pmask); document.body.appendChild(pdr);
+    pmask.addEventListener('click', closeProfileDetail);
+    pdr.querySelector('#profileDrawerClose').addEventListener('click', closeProfileDetail);
+  }
+  function mkCard(title,cls){ var c=document.createElement('div'); c.className='card'+(cls?(' '+cls):''); if(title){ var hh=document.createElement('h2'); hh.textContent=title; c.appendChild(hh);} return c; }
+  function mkCollapse(title,open){ var c=document.createElement('div'); c.className='collapse-card'+(open?' open':''); var hd=document.createElement('div'); hd.className='collapse-head'; hd.innerHTML='<span>'+title+'</span><span class="arrow">▶</span>'; var bd=document.createElement('div'); bd.className='collapse-body'; hd.addEventListener('click',function(){ c.classList.toggle('open'); }); c.appendChild(hd); c.appendChild(bd); return {card:c,body:bd}; }
+  // 左：日历（已隐藏 · 保留 calBox 以兼容 renderCalendar 逻辑）
+  var calCard=mkCard('排产日历'); var calBox=document.createElement('div'); calBox.id='calBox'; calCard.appendChild(calBox); calCard.style.display='none'; side.appendChild(calCard);
+  var secDate=document.getElementById('secDate'); if(secDate) secDate.style.display='none';
+  // 右：顶栏（日期导航已按需求隐藏）
+  var topbarHidden = document.createElement('div'); topbarHidden.style.display='none';
+  main.appendChild(topbarHidden);
+  /*
+  // 原顶栏 date-nav（保留供参考）
+  var topbar=document.createElement('div'); topbar.className='topbar';
+  topbar.innerHTML='<div class="date-nav"><button id="topPrev" class="date-nav-btn">\u2039</button><span id="topDate" class="date-nav-label">排产</span><button id="topNext" class="date-nav-btn">\u203A</button></div><div style="flex:1"></div>';
+  function shiftDay(delta){ var pd=document.getElementById('planDate'); var v=pd&&pd.value; var d; if(v){var p=v.split('-');d=new Date(+p[0],+p[1]-1,+p[2]);} else {d=new Date();} d.setDate(d.getDate()+delta); var mm=('0'+(d.getMonth()+1)).slice(-2),dd=('0'+d.getDate()).slice(-2); if(pd) pd.value=d.getFullYear()+'-'+mm+'-'+dd; __calMonth=new Date(d.getFullYear(),d.getMonth(),1); renderCalendar(); updateCsDate(); if(typeof renderProdList==='function') renderProdList(); }
+  topbar.querySelector('#topPrev').addEventListener('click',function(){shiftDay(-1);});
+  topbar.querySelector('#topNext').addEventListener('click',function(){shiftDay(1);});
+  main.appendChild(topbar);
+  */
+  // 排产工单列表 / 通路配置：统一子面板样式（左侧栏，排产工单列表在上）
+  function mkPanel(title, subtitle, actionEl){
+    var box = document.createElement('div');
+    box.style.cssText = 'background:#fff;border:1px solid var(--border-light);border-radius:8px;padding:14px 16px;box-shadow:var(--shadow);';
+    var head = document.createElement('div');
+    head.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:10px;padding-bottom:10px;margin-bottom:12px;border-bottom:1px solid var(--border-light);';
+    var left = document.createElement('div');
+    left.style.cssText = 'display:flex;align-items:center;gap:10px;min-width:0;';
+    var t = document.createElement('div');
+    t.style.cssText = 'font-size:15px;font-weight:700;color:var(--text-1);padding-left:10px;border-left:3px solid var(--primary);line-height:1.25;';
+    t.textContent = title; left.appendChild(t);
+    if(subtitle){
+      var s = document.createElement('span');
+      s.style.cssText = 'font-size:12px;color:var(--text-3);white-space:nowrap;';
+      s.textContent = subtitle; left.appendChild(s);
+    }
+    head.appendChild(left);
+    if(actionEl) head.appendChild(actionEl);
+    box.appendChild(head);
+    var body = document.createElement('div');
+    body.style.cssText = 'min-width:0;';
+    box.appendChild(body);
+    return { box: box, body: body, head: head };
+  }
+  var stack = document.createElement('div');
+  stack.className = 'left-stack';
+  stack.style.cssText = 'display:flex;flex-direction:column;gap:12px;';
+  // 排产工单列表面板（创建工单按钮放进 header 右侧）
+  var addBtn = document.createElement('button');
+  addBtn.id = 'addTaskTopBtn'; addBtn.className = 'btn-primary';
+  addBtn.style.cssText = 'margin-left:0;padding:5px 14px;font-size:13px;';
+  addBtn.textContent = '从切割包创建工单';
+  addBtn.addEventListener('click', openAddTaskPicker);
+  var prodPanel = mkPanel('排产工单列表', '按切割包创建工单 · 从计划列表导入', addBtn);
+  prodPanel.box.classList.add('task-panel');
+  var secProd = document.getElementById('secProdList');
+  if(secProd){ secProd.style.overflowX='auto'; prodPanel.body.appendChild(secProd); }
+  stack.appendChild(prodPanel.box);
+  // 通路配置面板
+  var topoPanel = mkPanel('通路配置', '出料口 / 喷码 / 切割机 / 工艺通路', null);
+  topoPanel.box.classList.add('topology-panel');
+  var secTopo = document.getElementById('secTopo');
+  if(secTopo) topoPanel.body.appendChild(secTopo);
+  // 顶部工作台共用操作栏：任务列表与通路配置统一在此计算或重置。
+  var secRecalc = document.getElementById('secRecalc');
+  if(secRecalc){
+    secRecalc.className='top-workbench-actions';
+    secRecalc.style.cssText='';
+  }
+  stack.appendChild(topoPanel.box);
+  if(secRecalc) stack.appendChild(secRecalc);
+  var configResetBtn=document.getElementById('configResetBtn');
+  if(configResetBtn) configResetBtn.addEventListener('click',function(){
+    cfgOutlets={};cfgSprays={};cfgMachines={};cfgEdges={};cfgRoutes={};bypassStorage=false;bypassSpray=false;cfgMode='standard';
+    buildDefaultConfig();renderConfigPanel();
+  });
+  // 保存栏固定在页面底部，生产日期、排产序号与操作按钮不随两栏滚动。
+  if(secDate){
+    var saveRibbon=document.createElement('div'); saveRibbon.className='save-ribbon';
+    var saveRibbonInner=document.createElement('div'); saveRibbonInner.className='save-ribbon-inner'; saveRibbon.appendChild(saveRibbonInner);
+    var saveFields=document.createElement('div'); saveFields.className='save-ribbon-fields'; saveRibbonInner.appendChild(saveFields);
+    secDate.style.cssText='display:flex;align-items:center;gap:7px;margin:0;';
+    secDate.className='save-ribbon-field';
+    saveFields.appendChild(secDate);
+    var now=new Date();
+    var defaultSchedNo='SCH-'+now.getFullYear()+String(now.getMonth()+1).padStart(2,'0')+String(now.getDate()).padStart(2,'0')+'-'+String(Math.floor(Math.random()*900)+100);
+    var schedNoRow=document.createElement('div');
+    schedNoRow.className='save-ribbon-field';
+    schedNoRow.innerHTML='<span class="ds-label">排产序号</span><input id="scheduleNo" type="text" class="ds-select" style="width:160px" value="'+defaultSchedNo+'">';
+    saveFields.appendChild(schedNoRow);
+    var saveStatus=document.createElement('span'); saveStatus.className='save-ribbon-status'; saveStatus.innerHTML='当前为草稿，<b>尚未保存</b>'; saveRibbonInner.appendChild(saveStatus);
+    var saveActions=document.createElement('div');
+    saveActions.className='save-ribbon-actions';
+    var cancel=document.getElementById('prodCancelBtn'), sv=document.getElementById('prodSaveBtn');
+    if(cancel) saveActions.appendChild(cancel); if(sv) saveActions.appendChild(sv);
+    saveRibbonInner.appendChild(saveActions);
+    document.body.appendChild(saveRibbon);
+  }
+  side.appendChild(stack);
+  // 汇总指标 KPI（在 Gantt 上方）
+  var meta=document.getElementById('meta'); if(meta){ meta.classList.add('layout-metrics'); meta.style.marginBottom='16px'; main.appendChild(meta); }
+  // 排产详情（切割机 Gantt 常显，点击展开其余：出料口 / 时间控制 / pipeline）
+  var detCard=mkCard('排产详情');
+  detCard.classList.add('layout-schedule');
+  var gmFlat=flat(cardByTitle('切割机 Gantt')); if(gmFlat) detCard.appendChild(gmFlat);
+  var d1=mkCollapse('展开全部', false);
+  d1.body.appendChild(buildGroupManifest());
+  ['换盘'].forEach(function(t){ var c=flat(cardByTitle(t)); if(c) d1.body.appendChild(c); });
+  d1.card.style.marginTop='14px';
+  detCard.appendChild(d1.card);
+  main.appendChild(detCard);
+  // 手动分配（按切割机分组的包列表）
+  var mpCard=mkCard('手动分配');
+  mpCard.classList.add('layout-assignment');
+  var mpHint=document.createElement('div'); mpHint.style.cssText='font-size:12px;color:var(--text-3);margin-bottom:10px'; mpHint.textContent='拖拽包可调整生产顺序或更换切割机，调整后点击「重新计算」生效'; mpCard.appendChild(mpHint);
+  var mpCols=document.createElement('div'); mpCols.className='mach-cols'; mpCols.id='machPkgCols'; mpCard.appendChild(mpCols);
+  var mpRe=document.createElement('div'); mpRe.className='mp-recalc'; mpRe.innerHTML='<span class="mp-msg" id="mpMsg"></span><button id="mpRecalcBtn">\ud83d\udd04 重新计算</button>'; mpCard.appendChild(mpRe);
+  var resetDefaultBtn=document.createElement('button');
+  resetDefaultBtn.id='mpResetBtn'; resetDefaultBtn.className='btn-default'; resetDefaultBtn.textContent='重置为默认分配';
+  resetDefaultBtn.style.marginRight='8px';
+  mpRe.insertBefore(resetDefaultBtn, mpRe.querySelector('#mpRecalcBtn'));
+  main.appendChild(mpCard);
+  if(typeof renderMachPkg==='function') renderMachPkg();
+  var mpBtn=document.getElementById('mpRecalcBtn'); if(mpBtn) mpBtn.addEventListener('click',function(){ commitMachPkg(); if(typeof doRecalc==='function') doRecalc(); });
+  resetDefaultBtn.addEventListener('click',function(){
+    batchMachine={}; batchOrder={}; renderMachPkg();
+    var m=document.getElementById('mpMsg');
+    if(m){ m.textContent='已恢复默认分配'; m.style.color='var(--text-3)'; }
+  });
+  var opCard=document.getElementById('prodOpCard'); if(opCard) opCard.style.display='none';
+  var cc=document.getElementById('cardConfig'); if(cc) cc.style.display='none';
+  __calMonth=new Date(); renderCalendar(); updateCsDate();
+}
+function fkeyOfBatch(bid){
+  var s=(data&&data.schedule)||[];
+  for(var i=0;i<s.length;i++){ if(s[i].batch_id===bid) return s[i].ship+'|'+s[i].segment+'|'+s[i].program; }
+  return '';
+}
+function renderMachPkg(){
+  var el=document.getElementById('machPkgCols'); if(!el||!data) return;
+  var machines=(data.meta.topology.machines)||['C1','C2','C3'];
+  var tl=data.machine_timeline||[];
+  el.style.gridTemplateColumns='repeat('+Math.max(1,machines.length)+',1fr)';
+  el.innerHTML=machines.map(function(m){
+    var items=tl.filter(function(x){return x.machine===m;}).slice().sort(function(a,b){return a.start-b.start;});
+    var order=[], grp={};
+    items.forEach(function(it){ if(!grp[it.batch_id]){ grp[it.batch_id]={count:0}; order.push(it.batch_id); } grp[it.batch_id].count++; });
+    var rows=order.map(function(bid,idx){
+      var col=getBatchColor(bid); var fk=fkeyOfBatch(bid);
+      return '<div class="mp-item" draggable="true" data-fkey="'+fk+'" data-batch="'+bid+'" data-cnt="'+grp[bid].count+'">'+
+        '<span class="mp-grip">\u2807</span>'+
+        '<span class="mp-ord">'+(idx+1)+'</span>'+
+        '<span class="mp-dot" style="background:'+col+'"></span>'+
+        '<span class="mp-name" title="'+bid+'">'+bid+'</span>'+
+        '<span class="mp-cnt">'+grp[bid].count+' 根</span></div>';
+    }).join('');
+    if(!order.length) rows='<div class="mp-empty">— 拖拽包到此 —</div>';
+    return '<div class="mp-col" data-machine="'+m+'"><div class="mp-head"><span>'+m+'</span><span class="mp-sum" data-sum>'+items.length+' 根 / '+order.length+' 包</span></div><div class="mp-body" data-machine="'+m+'">'+rows+'</div></div>';
+  }).join('');
+  wireMachPkgDnD();
+}
+function wireMachPkgDnD(){
+  var el=document.getElementById('machPkgCols'); if(!el) return;
+  function getAfter(body, y){
+    var els=Array.prototype.slice.call(body.querySelectorAll('.mp-item:not(.dragging)'));
+    var closest=null, closestOff=-Infinity;
+    els.forEach(function(c){ var box=c.getBoundingClientRect(); var off=y-box.top-box.height/2; if(off<0&&off>closestOff){ closestOff=off; closest=c; } });
+    return closest;
+  }
+  Array.prototype.forEach.call(el.querySelectorAll('.mp-item'),function(it){
+    it.addEventListener('dragstart',function(e){ it.classList.add('dragging'); e.dataTransfer.effectAllowed='move'; try{e.dataTransfer.setData('text/plain',it.dataset.batch);}catch(_){} });
+    it.addEventListener('dragend',function(){ it.classList.remove('dragging'); Array.prototype.forEach.call(el.querySelectorAll('.mp-body'),function(b){b.classList.remove('dragover');}); renumberMachPkg(); markMpDirty(); });
+  });
+  Array.prototype.forEach.call(el.querySelectorAll('.mp-body'),function(body){
+    body.addEventListener('dragover',function(e){ e.preventDefault(); e.dataTransfer.dropEffect='move'; body.classList.add('dragover');
+      var cur=el.querySelector('.mp-item.dragging'); if(!cur) return;
+      var ph=body.querySelector('.mp-empty'); if(ph) ph.remove();
+      var after=getAfter(body, e.clientY);
+      if(after==null) body.appendChild(cur); else body.insertBefore(cur, after);
+    });
+    body.addEventListener('dragleave',function(e){ if(!body.contains(e.relatedTarget)) body.classList.remove('dragover'); });
+    body.addEventListener('drop',function(e){ e.preventDefault(); body.classList.remove('dragover'); });
+  });
+}
+function renumberMachPkg(){
+  var el=document.getElementById('machPkgCols'); if(!el) return;
+  Array.prototype.forEach.call(el.querySelectorAll('.mp-col'),function(col){
+    var items=col.querySelectorAll('.mp-body .mp-item');
+    var cnt=0;
+    Array.prototype.forEach.call(items,function(it,idx){ it.querySelector('.mp-ord').textContent=(idx+1); cnt+=parseInt(it.dataset.cnt,10)||0; });
+    var sum=col.querySelector('[data-sum]'); if(sum) sum.textContent=cnt+' 根 / '+items.length+' 包';
+    var body=col.querySelector('.mp-body'); if(body && !items.length && !body.querySelector('.mp-empty')){ var e=document.createElement('div'); e.className='mp-empty'; e.textContent='— 拖拽包到此 —'; body.appendChild(e); }
+  });
+}
+function markMpDirty(){ var m=document.getElementById('mpMsg'); if(m){ m.textContent='已调整，待重新计算'; m.style.color='var(--primary)'; } }
+function commitMachPkg(){
+  var el=document.getElementById('machPkgCols'); if(!el) return;
+  Array.prototype.forEach.call(el.querySelectorAll('.mp-col'),function(col){
+    var m=col.dataset.machine;
+    var items=col.querySelectorAll('.mp-body .mp-item');
+    Array.prototype.forEach.call(items,function(it,idx){ var fk=it.dataset.fkey; if(!fk) return; batchMachine[fk]=m; batchOrder[fk]=idx+1; });
+  });
+}
+function openPkgDetail(bid){
+  var pkg=((data&&data.schedule)||[]).filter(function(p){return p.batch_id===bid;})[0]; if(!pkg) return;
+  var n=pkg.materials.length;
+  var head='<table class="pkg-desc"><tbody>'+
+    '<tr><th>工单号</th><td>'+pkg.batch_id+'</td><th>船号</th><td>'+pkg.ship+'</td></tr>'+
+    '<tr><th>分段号</th><td>'+pkg.segment+'</td><th>程序号</th><td>'+pkg.program+'</td></tr>'+
+    '<tr><th>型材数</th><td>'+n+' 根</td><th>来源切割包</th><td>'+pkg.ship+'-'+pkg.segment+'</td></tr>'+
+    '<tr><th>实时库存</th><td colspan="3">充足 '+n+'/'+n+'</td></tr>'+
+    '</tbody></table>';
+  var mrows=pkg.materials.map(function(m){
+    var pc=(m.part_count!=null?m.part_count:(m.parts?m.parts.length:''));
+    return '<tr><td>'+(m.file_name||m.profile_id)+'</td><td>'+(m.material_type||'')+'</td><td>'+(m.section_size||'')+'</td><td>'+(m.length!=null?m.length:'')+'</td><td>'+pc+'</td><td>'+fmtT(m.cut_time||0)+'</td></tr>';
+  }).join('');
+  var body=head+'<div style="font-size:13px;font-weight:600;margin:6px 0 8px">整包型材清单</div>'+
+    '<table class="pkg-mat"><thead><tr><th>型材文件名</th><th>材质</th><th>规格</th><th>长度</th><th>零件数</th><th>切割时间</th></tr></thead><tbody>'+mrows+'</tbody></table>';
+  document.getElementById('pkgDrawerTitle').textContent='工单详情 — '+pkg.batch_id;
+  document.getElementById('pkgDrawerBody').innerHTML=body;
+  document.getElementById('pkgDrawerMask').classList.add('open');
+  document.getElementById('pkgDrawer').classList.add('open');
+}
+function closePkgDetail(){ var m=document.getElementById('pkgDrawerMask'),d=document.getElementById('pkgDrawer'); if(m)m.classList.remove('open'); if(d)d.classList.remove('open'); }
+
+// 单根型材详情抽屉：点击切割机 Gantt 中某根型材时打开
+function openProfileDetail(profileId){
+  if(!data) return;
+  // 定位所属工单与型材对象
+  var pkg=null, mat=null;
+  for (var i=0;i<data.schedule.length;i++){
+    var p=data.schedule[i];
+    for (var j=0;j<p.materials.length;j++){
+      if (p.materials[j].profile_id === profileId){ pkg=p; mat=p.materials[j]; break; }
+    }
+    if (mat) break;
+  }
+  if(!mat) return;
+  var mgItem=(data.machine_timeline||[]).find(function(x){ return x.profile_id===profileId; }) || {};
+  var otItem=(data.outlet_timeline||[]).find(function(x){ return x.profile_id===profileId; }) || {};
+  var fname=(mat.file_name||'').replace(/-g\.gen$/,'');
+
+  // Pipeline SVG（参考 renderProfileTimeline）
+  var tlSvg='';
+  var tl=mat.timeline;
+  if (tl && tl.unload && tl.sort){
+    var start=tl.unload[0], end=tl.sort[1], total=Math.max(1, end-start), width=620;
+    var C=data.meta.constants||{};
+    var SVC={ unload:(C.t_unload!=null?C.t_unload:30), print:(C.t_print!=null?C.t_print:60),
+              paint:(C.t_paint!=null?C.t_paint:20), sort:(C.t_sort!=null?C.t_sort:30), cut:mat.cut_time };
+    tlSvg='<svg width="'+width+'" height="70" style="margin-top:4px">';
+    for (var k=0;k<STAGE_ORDER.length;k++){
+      var s=STAGE_ORDER[k]; if(!tl[s]) continue;
+      var seg=tl[s];
+      var xx=((seg[0]-start)/total)*width;
+      var ww=((seg[1]-seg[0])/total)*width;
+      var svc=SVC[s]||0;
+      var svcW=(svc/total)*width;
+      tlSvg+='<rect x="'+xx+'" y="20" width="'+svcW+'" height="24" fill="'+STAGE_COLORS[s]+'" opacity="0.9"><title>'+STAGE_NAMES[s]+' 服务 '+svc+'s</title></rect>';
+      var block=Math.max(0,(seg[1]-seg[0])-svc);
+      if (block>0.01){
+        tlSvg+='<rect x="'+(xx+svcW)+'" y="20" width="'+(ww-svcW)+'" height="24" fill="#999" opacity="0.5"><title>'+STAGE_NAMES[s]+' 阻塞等待 '+block.toFixed(0)+'s</title></rect>';
+      }
+      tlSvg+='<text x="'+(xx+ww/2)+'" y="60" text-anchor="middle" font-size="10" fill="#666">'+STAGE_NAMES[s]+'</text>';
+    }
+    tlSvg+='</svg>';
+  }
+  var durRows=STAGE_ORDER.filter(function(s){ return tl&&tl[s]; }).map(function(s){
+    var d=tl[s][1]-tl[s][0];
+    return '<span style="display:inline-block;margin-right:14px;font-size:12px;color:var(--text-2)">'+STAGE_NAMES[s]+': '+d.toFixed(0)+'s</span>';
+  }).join('');
+
+  var outletName=mat.outlet||otItem.outlet||'-';
+  var sprayName=mat.sprayStation||mat.spray_station||(outletName==='E2'?'S2':(outletName==='E1'?'S1':'-'));
+  var cutName=mat.assigned_machine||mgItem.machine||'-';
+  var head='<table class="pkg-desc"><tbody>'
+    +'<tr><th>型材编码</th><td><span class="pill" style="background:#e6f4ff;color:#1677ff;font-weight:600">'+profileId+'</span></td>'
+    +'<th>文件名</th><td style="font-family:monospace">'+fname+'</td></tr>'
+    +'<tr><th>所属工单</th><td>'+(pkg?pkg.batch_id:'-')+'</td>'
+    +'<th>船号/分段</th><td>'+((pkg?pkg.ship:'')+' · '+(pkg?pkg.segment:''))+'</td></tr>'
+    +'<tr><th>切割机</th><td>'+cutName+'</td>'
+    +'<th>出料口</th><td>'+outletName+'</td></tr>'
+    +'<tr><th>喷码工位</th><td><span class="pill" style="background:#f9f0ff;color:#722ed1">'+sprayName+'</span></td>'
+    +'<th>工艺通路</th><td>'+outletName+' → '+sprayName+' → '+cutName+'</td></tr>'
+
+    +'<tr><th>规格</th><td>'+(mat.section_size||'-')+'</td>'
+    +'<th>长度</th><td>'+(mat.length!=null?mat.length+' mm':'-')+'</td></tr>'
+    +'<tr><th>零件数</th><td>'+((mat.part_count!=null?mat.part_count:(mat.parts?mat.parts.length:'-'))+' 件')+'</td>'
+    +'<th>计划切割时间</th><td>'+fmtT(mat.cut_time||0)+'</td></tr>'
+    +'<tr><th>分类</th><td>'+(mgItem.category||'-')+'</td>'
+    +'<th>切割开始 - 结束</th><td>'+(tl&&tl.cut?(fmtT(tl.cut[0])+' - '+fmtT(tl.cut[1])):'-')+'</td></tr>'
+    +'</tbody></table>';
+  var body=head
+    +'<div style="font-size:13px;font-weight:600;margin:16px 0 6px">流水线时间轴</div>'
+    +tlSvg
+    +'<div style="margin-top:8px">'+durRows+'</div>';
+  document.getElementById('profileDrawerTitle').textContent='型材详情 — '+fname;
+  document.getElementById('profileDrawerBody').innerHTML=body;
+  document.getElementById('profileDrawerMask').classList.add('open');
+  document.getElementById('profileDrawer').classList.add('open');
+}
+function closeProfileDetail(){
+  var m=document.getElementById('profileDrawerMask'),d=document.getElementById('profileDrawer');
+  if(m)m.classList.remove('open'); if(d)d.classList.remove('open');
+}
+// 内联「添加任务」选包弹窗：读取父页 PLAN_ALL_PACKAGES，样式与计划列表工单列表一致
+function openAddTaskPicker(){
+  function loadPkgs(){
+    try {
+      var p = window.parent;
+      if (p && p.PLAN_ALL_PACKAGES && p.PLAN_ALL_PACKAGES.length) {
+        return p.PLAN_ALL_PACKAGES.map(function(x,i){ return {
+          key:x.packageNo, packageNo:x.packageNo, shipNo:x.shipNo||'', blockNo:x.blockNo||'',
+          source:x.source||'', profileCount:x.profileCount||0, stockReady:x.stockReady||0,
+          cutTime:Number(x.cutTime)||0,
+          profiles:Array.isArray(x.profiles)?x.profiles:[],
+          planProgress:x.planProgress||{done:0,total:x.profileCount||0},
+          scheduleDate:x.scheduleDate||('2026-08-'+String((i%20)+1).padStart(2,'0')), prodShift:x.prodShift||''
+        }; });
+      }
+    } catch(e){}
+    var db=window.SCHED_DB||{}, out={};
+    try { out=window.runSchedule({db:db})||{}; } catch(e){ out={schedule:[]}; }
+    return (out.schedule||[]).map(function(p,i){
+      var mats=p.materials||[], ready=mats.filter(function(m){return m.in_stock!==false;}).length;
+      return { key:p.batch_id||('PKG-'+i), packageNo:p.batch_id||'', shipNo:p.ship||'',
+               blockNo:p.segment||'', source:'', profileCount:mats.length, stockReady:ready,
+               cutTime:mats.reduce(function(total,mat){return total+(Number(mat.cut_time)||0);},0),
+               profiles:mats.map(function(mat,matIndex){return {
+                 key:mat.profile_id||('MAT-'+matIndex), profileId:mat.file_name||mat.profile_id||('型材-'+(matIndex+1)),
+                 nestingLayoutNo:mat.file_name||mat.profile_id||'-', profileType:mat.section_size||'-', material:mat.material_type||'-',
+                 length:mat.length||0, partsQty:mat.part_count!=null?mat.part_count:(Array.isArray(mat.parts)?mat.parts.length:0),
+                 cutTime:Number(mat.cut_time)||0, prodShift:''
+               };}),
+               planProgress:{done:0,total:mats.length}, scheduleDate:'2026-08-'+String((i%20)+1).padStart(2,'0'), prodShift:'' };
+    });
+  }
+
+  var rows = loadPkgs();
+  var selected = new Set();
+  var today = new Date();
+  var targetDate = today.getFullYear()+'-'+('0'+(today.getMonth()+1)).slice(-2)+'-'+('0'+today.getDate()).slice(-2);
+
+  var mask = document.createElement('div');
+  mask.className = 'atk-mask';
+  mask.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;';
+  var modal = document.createElement('div');
+  modal.className = 'atk-modal';
+  modal.style.cssText = 'width:min(1180px,94vw);max-height:86vh;display:flex;flex-direction:column;background:#fff;border-radius:8px;box-shadow:0 8px 30px rgba(0,0,0,.2);overflow:hidden;';
+
+  // 头部
+  var hd = document.createElement('div');
+  hd.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border-light);';
+  hd.innerHTML = '<div style="font-size:16px;font-weight:600;color:var(--text-1)">计划列表</div>';
+  var closeX = document.createElement('button');
+  closeX.textContent = '×';
+  closeX.style.cssText = 'width:28px;height:28px;border:none;background:transparent;font-size:22px;line-height:1;cursor:pointer;color:var(--text-3);border-radius:4px;';
+  closeX.onmouseenter = function(){ closeX.style.background='#f5f5f5'; closeX.style.color='var(--text-1)'; };
+  closeX.onmouseleave = function(){ closeX.style.background='transparent'; closeX.style.color='var(--text-3)'; };
+  closeX.onclick = function(){ mask.remove(); };
+  hd.appendChild(closeX);
+  modal.appendChild(hd);
+
+  // 工具栏（筛选 + 目标生产日期）
+  var toolbar = document.createElement('div');
+  toolbar.style.cssText = 'display:flex;align-items:center;gap:10px;padding:12px 18px;flex-wrap:wrap;border-bottom:1px solid var(--border-light);background:#fafbfc;';
+  var dateLabel = document.createElement('span');
+  dateLabel.textContent = '计划日期';
+  dateLabel.style.cssText = 'font-size:12px;color:var(--text-3);';
+  toolbar.appendChild(dateLabel);
+  var dateInput = document.createElement('input');
+  dateInput.type = 'date'; dateInput.value = targetDate;
+  dateInput.style.cssText = 'padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;';
+  dateInput.onchange = function(){ targetDate = dateInput.value; };
+  toolbar.appendChild(dateInput);
+  var countTag = document.createElement('span');
+  countTag.style.cssText = 'font-size:12px;color:var(--text-3);margin-left:auto;';
+  toolbar.appendChild(countTag);
+  modal.appendChild(toolbar);
+
+  // 表格容器
+  var body = document.createElement('div');
+  body.style.cssText = 'flex:1;overflow:auto;padding:12px 18px;';
+  var tableWrap = document.createElement('div');
+  tableWrap.style.cssText = 'border:1px solid var(--border-light);border-radius:8px;overflow:hidden;';
+  var table = document.createElement('table');
+  table.className = 'prod-list';
+  table.style.cssText = 'min-width:1080px;';
+  table.innerHTML = '<thead><tr>'
+    + '<th style="width:44px;text-align:center;"><input id="atkAll" type="checkbox"/></th>'
+    + '<th>切割包号</th><th>船号</th><th>分段号</th><th>型材数</th><th>计划日期</th>'
+    + '</tr></thead><tbody id="atkBody"></tbody>';
+  tableWrap.appendChild(table); body.appendChild(tableWrap); modal.appendChild(body);
+
+  // 底部操作栏
+  var footer = document.createElement('div');
+  footer.style.cssText = 'display:flex;align-items:center;justify-content:flex-end;gap:10px;padding:12px 18px;border-top:1px solid var(--border-light);';
+  var selInfo = document.createElement('span');
+  selInfo.style.cssText = 'font-size:12px;color:var(--text-3);margin-right:auto;';
+  footer.appendChild(selInfo);
+  var cancelBtn = document.createElement('button');
+  cancelBtn.className = 'btn-default'; cancelBtn.textContent = '取消';
+  cancelBtn.onclick = function(){ mask.remove(); };
+  footer.appendChild(cancelBtn);
+  var okBtn = document.createElement('button');
+  okBtn.type = 'button'; okBtn.className = 'btn-primary'; okBtn.textContent = '创建排产工单';
+  okBtn.onclick = function(){
+    var picked = rows.filter(function(p){ return selectedProfiles(p).length>0; });
+    if(!picked.length){ alert('请先勾选需要预排产的型材'); return; }
+    var importOrders = picked.map(function(p){
+      var available=selectedProfiles(p);
+      return { packageNo:p.packageNo, shipNo:p.shipNo, blockNo:p.blockNo,
+               source:p.source, sourcePackageNo:p.packageNo, profiles:available,
+               profileCount:available.length,
+               stockReady:available.filter(function(profile){return profile.inStock!==false;}).length,
+               cutTime:available.reduce(function(total,profile){return total+(Number(profile.cutTime)||0);},0) };
+    }).filter(function(order){return order.profileCount>0;});
+    // 先写入当前 iframe 的任务数据，再同步父页；避免父页状态尚未就绪时导入无回显。
+    mergeOrdersIntoPlanMap(importOrders, targetDate);
+    renderProdList();
+    mask.remove();
+    if(window.parent && window.parent!==window){
+      // 排产任务走专用事件，由父页面作为唯一数据源保存并回传。
+      window.parent.postMessage({ type:'central-control:add-schedule-orders',
+        orders: importOrders, targetDate: targetDate }, '*');
+    }
+  };
+  footer.appendChild(okBtn);
+  modal.appendChild(footer);
+
+  mask.appendChild(modal);
+  mask.onclick = function(ev){ if(ev.target===mask) mask.remove(); };
+  document.body.appendChild(mask);
+
+  function pill(text, bg, color){
+    return '<span class="pill" style="background:'+bg+';color:'+color+';font-weight:600;">'+text+'</span>';
+  }
+  function stockCell(p){
+    var miss = (p.profileCount||0) - (p.stockReady||0);
+    if(miss<=0) return pill('充足 '+(p.stockReady||0)+'/'+(p.profileCount||0), '#f6ffed', '#389e0d');
+    var isWarn = miss<=2;
+    return pill('缺 '+miss+' 根', isWarn?'#fff7e6':'#fff1f0', isWarn?'#d46b08':'#cf1322');
+  }
+  function profileRows(p){
+    return Array.isArray(p.profiles)?p.profiles:[];
+  }
+  function profileIsScheduled(profile){
+    return !!(profile&&profile.prodShift);
+  }
+  function availableProfiles(p){
+    return profileRows(p).filter(function(profile){return !profileIsScheduled(profile);});
+  }
+  function profileSelectionKey(p,profile,index){
+    return String(p.key||p.packageNo)+'::'+String(profile.key||profile.profileId||profile.nestingLayoutNo||index);
+  }
+  function availableProfileEntries(p){
+    return profileRows(p).map(function(profile,index){return {profile:profile,index:index,key:profileSelectionKey(p,profile,index)};})
+      .filter(function(entry){return !profileIsScheduled(entry.profile);});
+  }
+  function selectedProfiles(p){
+    return availableProfileEntries(p).filter(function(entry){return selected.has(entry.key);}).map(function(entry){return entry.profile;});
+  }
+  var expandedPackages = new Set();
+  function draw(){
+    var list = rows;
+    var validKeys=new Set(); list.forEach(function(p){availableProfileEntries(p).forEach(function(entry){validKeys.add(entry.key);});});
+    Array.from(selected).forEach(function(key){if(!validKeys.has(key)) selected.delete(key);});
+    countTag.textContent = '共 '+list.length+' 个切割包';
+    var selectedPackageCount=list.filter(function(p){return selectedProfiles(p).length>0;}).length;
+    selInfo.textContent = '已勾选 '+selected.size+' 根型材 / '+selectedPackageCount+' 个切割包';
+    var tbody = table.querySelector('#atkBody');
+    if(!list.length){
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-3);padding:30px;">暂无切割包</td></tr>';
+      return;
+    }
+    tbody.innerHTML = '';
+    list.forEach(function(p){
+      var profiles=profileRows(p), availableEntries=availableProfileEntries(p), fullyScheduled=profiles.length>0&&!availableEntries.length;
+      var packageSelected=availableEntries.length>0&&availableEntries.every(function(entry){return selected.has(entry.key);});
+      var packagePartSelected=availableEntries.some(function(entry){return selected.has(entry.key);});
+      var tr = document.createElement('tr');
+      tr.className='atk-package-row';
+      // 勾选列
+      var td0 = document.createElement('td'); td0.style.textAlign='center';
+      var cb = document.createElement('input'); cb.type='checkbox'; cb.checked=packageSelected; cb.indeterminate=!packageSelected&&packagePartSelected; cb.disabled=fullyScheduled;
+      cb.title=fullyScheduled?'该切割包内型材均已预排产':'';
+      cb.onchange = function(){ availableEntries.forEach(function(entry){cb.checked?selected.add(entry.key):selected.delete(entry.key);}); draw(); };
+      td0.appendChild(cb); tr.appendChild(td0);
+      // 切割包号与型材明细展开入口
+      var tdPkg = document.createElement('td');
+      var expandBtn=document.createElement('button'); expandBtn.type='button'; expandBtn.className='atk-expand';
+      expandBtn.textContent=expandedPackages.has(p.key)?'−':'＋';
+      expandBtn.title='展开型材明细';
+      tdPkg.appendChild(expandBtn); tdPkg.appendChild(document.createTextNode(p.packageNo||'-'));
+      tr.appendChild(tdPkg);
+      // 船号 / 分段号
+      var tdShip = document.createElement('td'); tdShip.textContent = p.shipNo||'-'; tr.appendChild(tdShip);
+      var tdBlock = document.createElement('td'); tdBlock.textContent = p.blockNo||'-'; tr.appendChild(tdBlock);
+      // 型材数
+      var tdCnt = document.createElement('td'); tdCnt.textContent=(p.profileCount||profiles.length||0)+' 根'; tr.appendChild(tdCnt);
+      // 计划日期
+      var tdSd = document.createElement('td'); tdSd.textContent = p.scheduleDate || '-'; tr.appendChild(tdSd);
+      tbody.appendChild(tr);
+
+      var detailTr=document.createElement('tr'); detailTr.className='atk-profile-detail';
+      detailTr.hidden=!expandedPackages.has(p.key);
+      var detailTd=document.createElement('td'); detailTd.colSpan=6;
+      var detailTable=document.createElement('table'); detailTable.className='atk-profile-table';
+      detailTable.innerHTML='<thead><tr><th style="width:44px;text-align:center">选择</th><th>套料版图号</th><th>规格</th><th>长度(mm)</th><th>零件数</th><th>预估切割时间(s)</th><th>生产日期</th></tr></thead><tbody></tbody>';
+      var detailBody=detailTable.querySelector('tbody');
+      if(!profiles.length){
+        detailBody.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--text-3);padding:18px">暂无型材明细</td></tr>';
+      }else{
+        profiles.forEach(function(profile,profileIndex){
+          var scheduled=profileIsScheduled(profile), profileTr=document.createElement('tr');
+          if(scheduled) profileTr.className='atk-profile-scheduled';
+          var profileKey=profileSelectionKey(p,profile,profileIndex), selectTd=document.createElement('td'); selectTd.style.textAlign='center';
+          var profileCb=document.createElement('input'); profileCb.type='checkbox'; profileCb.checked=selected.has(profileKey); profileCb.disabled=scheduled;
+          profileCb.title=scheduled?'该型材已预排产':'';
+          profileCb.onchange=function(){profileCb.checked?selected.add(profileKey):selected.delete(profileKey);draw();};
+          selectTd.appendChild(profileCb); profileTr.appendChild(selectTd);
+          [profile.nestingLayoutNo||profile.profileId||'-',profile.profileType||'-',profile.length||'-',profile.partsQty==null?'-':profile.partsQty,Math.round(Number(profile.cutTime)||0),profile.prodShift||'-'].forEach(function(value){
+            var td=document.createElement('td'); td.textContent=value; profileTr.appendChild(td);
+          });
+          detailBody.appendChild(profileTr);
+        });
+      }
+      detailTd.appendChild(detailTable); detailTr.appendChild(detailTd); tbody.appendChild(detailTr);
+      expandBtn.onclick=function(event){
+        event.stopPropagation();
+        expandedPackages.has(p.key)?expandedPackages.delete(p.key):expandedPackages.add(p.key);
+        draw();
+      };
+    });
+    allCb.checked=validKeys.size>0&&Array.from(validKeys).every(function(key){return selected.has(key);});
+    allCb.indeterminate=!allCb.checked&&Array.from(validKeys).some(function(key){return selected.has(key);});
+  }
+  var allCb = table.querySelector('#atkAll');
+  allCb.onchange = function(e){
+    rows.forEach(function(p){
+      availableProfileEntries(p).forEach(function(entry){e.target.checked?selected.add(entry.key):selected.delete(entry.key);});
+    });
+    draw();
+  };
+  draw();
+}
+
+function mergeOrdersIntoPlanMap(orders, targetDate){
+  var parentWin = (window.parent && window.parent!==window) ? window.parent : null;
+  var date = targetDate || (function(){ var t=new Date(); return t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0'); })();
+  // 1) 更新父页 localStorage 中的 prodShift 记录
+  try {
+    if(!parentWin) throw new Error('no parent');
+    var key='profile_plan_prod_dates';
+    var store = JSON.parse(parentWin.localStorage.getItem(key)||'{}')||{};
+    (orders||[]).forEach(function(o){ if(o.packageNo) store[o.packageNo]=date; });
+    parentWin.localStorage.setItem(key, JSON.stringify(store));
+  } catch(e) {}
+  // 2) 当前页与父页均写入 PLAN_PROD_DATE_MAP，保证任务列表立即回显。
+  [window, parentWin].filter(Boolean).forEach(function(owner){
+    var map = owner.PLAN_PROD_DATE_MAP || {};
+    if(!map[date]) map[date] = [];
+    (orders||[]).forEach(function(o){
+      if(!o || !o.packageNo) return;
+      if(map[date].some(function(x){ return x.packageNo===o.packageNo; })) return;
+      map[date].push({
+        packageNo:o.packageNo, shipNo:o.shipNo||'', blockNo:o.blockNo||'', source:o.source||'MES下发',
+        prodShift:date, materialCount:o.profileCount||0, cutTime:Number(o.cutTime)||0,
+      });
+    });
+    owner.PLAN_PROD_DATE_MAP = map;
+  });
+  // 3) 同步父页 PLAN_ALL_PACKAGES 中对应工单的 prodShift
+  var allPkgs = parentWin && parentWin.PLAN_ALL_PACKAGES || [];
+  (orders||[]).forEach(function(o){
+    var found = allPkgs.find(function(p){ return p.packageNo===o.packageNo; });
+    if(found) found.prodShift = date;
+  });
+}
+var __prodListPage=1, __prodListPageSize=8;
+function getProdTaskCutSeconds(task){
+  var direct=Number(task&&task.cutTime);
+  if(direct>0) return Math.round(direct);
+  var packageNo=task&&(task.packageNo||task.batch_id);
+  var schedule=((data&&data.schedule)||[]);
+  var pkg=schedule.filter(function(item){return item.batch_id===packageNo;})[0];
+  if(pkg&&Array.isArray(pkg.materials)){
+    var materialTotal=pkg.materials.reduce(function(total,mat){return total+(Number(mat.cut_time)||0);},0);
+    if(materialTotal>0) return Math.round(materialTotal);
+  }
+  return Math.round(((data&&data.machine_timeline)||[]).filter(function(item){return item.batch_id===packageNo;}).reduce(function(total,item){
+    return total+Math.max(0,(Number(item.end)||0)-(Number(item.start)||0));
+  },0));
+}
+function getSourceCutPackage(task){
+  return (task&&task.sourcePackageNo)||([task&&task.shipNo,task&&task.blockNo].filter(Boolean).join('-'))||(task&&(task.packageNo||task.batch_id))||'-';
+}
+function renderProdList(){
+  var el=document.getElementById('prodList'); if(!el||!data) return;
+  // 「添加任务」按钮已迁移至任务列表面板 header，此处不再注入浮动按钮
+  // 展示所有已排产工单（跨日期汇总），不再按日历日期过滤
+  var planMap=getPlanProdDateMap();
+  var pkgs=[];
+  Object.keys(planMap).forEach(function(ds){ (planMap[ds]||[]).forEach(function(p){ pkgs.push(p); }); });
+  var pageCount=Math.max(1,Math.ceil(pkgs.length/__prodListPageSize));
+  __prodListPage=Math.min(__prodListPage,pageCount);
+  var pageStart=(__prodListPage-1)*__prodListPageSize;
+  var pagePkgs=pkgs.slice(pageStart,pageStart+__prodListPageSize);
+  var rows=pagePkgs.map(function(p){
+    var n=p.materialCount || (p.materials ? p.materials.length : 0);
+    var cutSeconds=getProdTaskCutSeconds(p);
+    return '<tr>'+
+      '<td>'+(p.taskNo||p.packageNo||p.batch_id||'-')+'</td>'+
+      '<td>'+n+' 根</td>'+
+      '<td>'+cutSeconds+' s</td>'+
+      '<td>'+getSourceCutPackage(p)+'</td>'+
+      '<td><button class="btn-default prod-task-delete" data-package-no="'+(p.packageNo||p.batch_id||'')+'" style="padding:3px 10px;color:var(--danger);border-color:#ffccc7">删除</button></td>'+
+      '</tr>';
+  }).join('');
+  if(!rows) rows='<tr><td colspan="5" style="text-align:center;color:#8c8c8c;padding:18px">暂无排产工单，可点击「从切割包创建工单」导入</td></tr>';
+  var pages=Array.from({length:pageCount},function(_,i){return i+1;}).slice(0,5).map(function(page){return '<button class="prod-page '+(page===__prodListPage?'active':'')+'" data-page="'+page+'">'+page+'</button>';}).join('');
+  var pager='<div class="prod-pagination"><span>共 '+pkgs.length+' 条</span><button class="prod-prev" '+(__prodListPage===1?'disabled':'')+'>‹</button>'+pages+(pageCount>5?'<span>…</span><button class="prod-page" data-page="'+pageCount+'">'+pageCount+'</button>':'')+'<button class="prod-next" '+(__prodListPage===pageCount?'disabled':'')+'>›</button><select class="prod-page-size"><option value="8" '+(__prodListPageSize===8?'selected':'')+'>8 / page</option><option value="16" '+(__prodListPageSize===16?'selected':'')+'>16 / page</option></select></div>';
+  el.innerHTML='<div class="prod-list-scroll"><table class="prod-list"><thead><tr><th>工单号</th><th>型材数</th><th>预估切割时间</th><th>来源切割包</th><th>操作</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+pager;
+  Array.prototype.forEach.call(el.querySelectorAll('.prod-task-delete'), function(btn){
+    btn.addEventListener('click', function(){ removeProdTask(btn.getAttribute('data-package-no')); });
+  });
+  Array.prototype.forEach.call(el.querySelectorAll('.prod-page'),function(btn){btn.addEventListener('click',function(){__prodListPage=+btn.dataset.page;renderProdList();});});
+  var prev=el.querySelector('.prod-prev'),next=el.querySelector('.prod-next'),size=el.querySelector('.prod-page-size');
+  if(prev) prev.addEventListener('click',function(){if(__prodListPage>1){__prodListPage--;renderProdList();}});
+  if(next) next.addEventListener('click',function(){if(__prodListPage<pageCount){__prodListPage++;renderProdList();}});
+  if(size) size.addEventListener('change',function(){__prodListPageSize=+size.value;__prodListPage=1;renderProdList();});
+}
+function removeProdTask(packageNo){
+  if(!packageNo) return;
+  [window, (window.parent && window.parent!==window) ? window.parent : null].filter(Boolean).forEach(function(owner){
+    var map=owner.PLAN_PROD_DATE_MAP||{};
+    Object.keys(map).forEach(function(date){
+      map[date]=(map[date]||[]).filter(function(item){ return item.packageNo!==packageNo; });
+      if(!map[date].length) delete map[date];
+    });
+    owner.PLAN_PROD_DATE_MAP=map;
+  });
+  renderProdList();
+}
+// iframe 接收父页面统一管理的排产任务，刷新或父页重渲染后仍能稳定回填。
+window.addEventListener('message', function(ev){
+  if(!ev.data || ev.data.type!=='central-control:schedule-tasks') return;
+  window.PLAN_PROD_DATE_MAP=ev.data.taskMap || {};
+  if(typeof renderProdList==='function') renderProdList();
+});
+loadData = function () {
+  try {
+    data = window.runSchedule({ db: window.SCHED_DB });
+    init();
+    applyLayout();
+    renderProdList();
+    if(window.parent && window.parent!==window) window.parent.postMessage({type:'central-control:schedule-frame-ready'}, '*');
+    var pd=document.getElementById('planDate');
+    if(pd){
+      // 若父级页面通过 ?date=YYYY-MM-DD 指定目标日期，优先使用
+      try {
+        var urlDate = new URLSearchParams(window.location.search).get('date');
+        if(urlDate && /^\d{4}-\d{2}-\d{2}$/.test(urlDate)) pd.value = urlDate;
+      } catch(e) {}
+      if(!pd.value) pd.value=new Date().toISOString().slice(0,10);
+      if(pd.value) __schedDates[pd.value]=true;
+      pd.addEventListener('change', function(){ renderProdList(); updateCsDate(); renderCalendar(); });
+    }
+    updateCsDate(); renderCalendar();
+    var st=document.getElementById('prodOpStatus');
+    var sv=document.getElementById('prodSaveBtn'), cancel=document.getElementById('prodCancelBtn');
+    function markScheduled(){ var pd=document.getElementById('planDate'); if(pd&&pd.value){ __schedDates[pd.value]=true; renderCalendar(); } }
+    function returnToSchedPlanList(){
+      if(window.parent && window.parent!==window){
+        window.parent.postMessage({type:'central-control:return-sched-plan-list'}, '*');
+      }
+    }
+    if(sv) sv.addEventListener('click', function(){ markScheduled(); returnToSchedPlanList(); });
+    if(cancel) cancel.addEventListener('click', returnToSchedPlanList);
+  } catch (e) {
+    var lm = document.getElementById('loadingMsg');
+    if (lm) { lm.className = 'error'; lm.innerHTML = '排产计算失败：' + ((e && e.message) || e); }
+    console.error(e);
+  }
+};
+loadDatabases = function () {
+  var sel = document.getElementById('dsDatabase');
+  var db = window.SCHED_DB;
+  availableDatabases = [{ path: db.db_name, name: db.db_name,
+    material_count: db.materials.length, size_kb: Math.round(JSON.stringify(db).length/1024) }];
+  selectedDb = availableDatabases[0].path;
+  sel.innerHTML = availableDatabases.map(function(d){
+    return '<option value="'+d.path+'" selected>'+d.path+' ('+d.material_count+' 根)</option>'; }).join('');
+  updateDbInfo();
+  loadBatches(selectedDb);
+};
+loadBatches = function (dbPath) {
+  availableBatches = window.listSchedBatches(window.SCHED_DB);
+  selectedBatchKeys.clear();
+  var fromMeta = (data.meta.data_source && data.meta.data_source.batches) || null;
+  if (fromMeta && fromMeta.length) {
+    fromMeta.forEach(function(b){ selectedBatchKeys.add(b[0]+'|'+b[1]+'|'+b[2]); });
+  } else {
+    availableBatches.forEach(function(c){ selectedBatchKeys.add(c.ship+'|'+c.segment+'|'+c.program); });
+  }
+  renderBatchChips();
+};
+function rerenderAll(){
+  maxTime = Math.max(data.meta.makespan_sort, data.meta.makespan_cut);
+  renderMeta(); renderMachineGantt(); renderMachineGanttLegend();
+  renderOutletGantt(); renderOutletGanttLegend();
+  renderMachineLoadChart(); renderSwapStats(); renderPartsTable();
+  updateCurrentTime(0);
+  if (typeof renderProdList==='function') renderProdList();
+  if (typeof renderMachPkg==='function') renderMachPkg();
+}
+doRecalc = function () {
+  var topology = {
+    bypass_storage: bypassStorage,
+    outlets: Object.fromEntries(Object.entries(cfgOutlets).map(function(kv){return [kv[0],{enabled:kv[1]}];})),
+    machines: Object.fromEntries(Object.entries(cfgMachines).map(function(kv){return [kv[0],{enabled:kv[1]}];})),
+    edges: Object.entries(cfgEdges).filter(function(kv){return kv[1];}).map(function(kv){return kv[0].split('-');}),
+  };
+  var batches = [];
+  availableBatches.forEach(function(b){
+    if (selectedBatchKeys.has(b.ship+'|'+b.segment+'|'+b.program)) batches.push([b.ship,b.segment,b.program]);
+  });
+  if (batches.length===0) return;
+  var cfg = { db: window.SCHED_DB, topology: topology, batches: batches, batchMachine: batchMachine, batchOrder: batchOrder };
+  var thr=parseFloat(document.getElementById('cfgSplitThreshold').value);
+  var ms =parseInt(document.getElementById('cfgMaxSplit').value,10);
+  var al =parseFloat(document.getElementById('cfgAlpha').value);
+  var ga =parseFloat(document.getElementById('cfgGamma').value);
+  if(!isNaN(thr)&&thr>=0) cfg.splitThresholdSec=Math.round(thr*3600);
+  if(!isNaN(ms)&&ms>=1)  cfg.maxSplitMachines=ms;
+  if(!isNaN(al)&&al>=0)  cfg.alpha=al;
+  if(!isNaN(ga)&&ga>=0)  cfg.gamma=ga;
+  try {
+    data = window.runSchedule(cfg);
+    rerenderAll();
+    var __pd=document.getElementById('planDate'); if(__pd&&__pd.value){ __schedDates[__pd.value]=true; renderCalendar(); }
+  } catch(e){ console.error(e); }
+};
+loadData();
+</script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+

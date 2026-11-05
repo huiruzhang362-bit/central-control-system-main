@@ -1,0 +1,571 @@
+<!-- ═══════════════════════════════════════════════════════════
+     调参抽屉（由 build-spec.py 注入到总览页末尾）
+     纯原生 JS，无依赖；样式静态写在 <style> 里，
+     JS 不执行时页面照常显示，只是抽屉不可用。
+     ═══════════════════════════════════════════════════════════ -->
+<style>
+.dj-fab {
+  position: fixed; right: 22px; bottom: 22px; z-index: 9998;
+  height: 40px; padding: 0 18px; border: 0; border-radius: 20px;
+  background: var(--brand); color: #fff; cursor: pointer;
+  font-family: inherit; font-size: 13px; font-weight: 500;
+  box-shadow: 0 4px 16px rgba(238,100,2,.30);
+  display: flex; align-items: center; gap: 7px;
+}
+.dj-fab:hover { background: var(--brand-hover); }
+.dj-fab .dj-n {
+  display: none; min-width: 18px; height: 18px; padding: 0 5px;
+  border-radius: 9px; background: #fff; color: var(--brand);
+  font-size: 11px; line-height: 18px; text-align: center; font-weight: 500;
+}
+.dj-fab.dirty .dj-n { display: inline-block; }
+
+.dj-panel {
+  position: fixed; top: 0; right: 0; bottom: 0; width: 348px; z-index: 9999;
+  background: #fff; box-shadow: -8px 0 32px rgba(0,0,0,.12);
+  transform: translateX(100%); transition: transform .24s ease;
+  display: flex; flex-direction: column; font-family: inherit;
+}
+.dj-panel.open { transform: none; }
+.dj-head {
+  display: flex; align-items: center; gap: 8px;
+  padding: 14px 16px; border-bottom: 1px solid var(--divider); flex-shrink: 0;
+}
+.dj-head h3 { margin: 0; flex: 1; font-size: 14px; font-weight: 500; color: var(--text-1); }
+.dj-head small { font-size: 12px; color: var(--text-3); font-weight: 400; }
+.dj-x {
+  width: 26px; height: 26px; border: 0; background: none; cursor: pointer;
+  color: var(--text-3); font-size: 17px; line-height: 1; border-radius: var(--radius-input);
+}
+.dj-x:hover { background: var(--brand-light); color: var(--brand); }
+.dj-body { flex: 1; overflow-y: auto; padding: 14px 16px 48px; }
+
+.dj-tip {
+  font-size: 12px; line-height: 1.7; color: var(--text-3);
+  background: var(--brand-light); border: 1px solid var(--brand-border);
+  border-radius: var(--radius-input); padding: 9px 11px; margin-bottom: 16px;
+}
+.dj-tip b { color: var(--brand); font-weight: 500; }
+
+.dj-g { margin-bottom: 20px; }
+.dj-g > h4 {
+  margin: 0 0 9px; padding-bottom: 6px; border-bottom: 1px solid var(--divider);
+  font-size: 12px; font-weight: 500; color: var(--text-3); letter-spacing: .4px;
+}
+.dj-row { display: flex; align-items: center; gap: 8px; margin-bottom: 9px; }
+.dj-row > label {
+  flex: 0 0 96px; font-size: 12px; color: var(--text-2);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.dj-row input[type=color] {
+  width: 30px; height: 26px; padding: 0; border: 1px solid var(--border);
+  border-radius: var(--radius-input); background: none; cursor: pointer; flex-shrink: 0;
+}
+.dj-row input[type=text], .dj-row input[type=number] {
+  flex: 1; min-width: 0; height: 26px; padding: 0 7px;
+  border: 1px solid var(--border); border-radius: var(--radius-input);
+  font-family: Menlo, monospace; font-size: 11px; color: var(--text-1); background: #fff;
+}
+.dj-row input:focus { outline: none; border-color: var(--brand); }
+.dj-row input[type=range] { flex: 1; min-width: 0; accent-color: var(--brand); height: 4px; }
+.dj-row .dj-v { flex: 0 0 30px; font-size: 11px; color: var(--text-3); text-align: right; font-family: Menlo, monospace; }
+.dj-dirty {
+  flex: 0 0 auto; font-size: 10px; padding: 1px 5px; border-radius: 8px;
+  background: var(--brand-light); color: var(--brand); border: 1px solid var(--brand-border);
+  visibility: hidden;
+}
+.dj-row.is-dirty .dj-dirty { visibility: visible; }
+.dj-row.is-dirty > label { color: var(--brand); }
+
+.dj-foot {
+  flex-shrink: 0; padding: 12px 16px; border-top: 1px solid var(--divider);
+  display: flex; gap: 8px; background: #fff;
+}
+.dj-btn {
+  flex: 1; height: 32px; border: 1px solid var(--border); border-radius: var(--radius-btn);
+  background: #fff; color: var(--text-1); font-family: inherit; font-size: 13px;
+  font-weight: 500; cursor: pointer;
+}
+.dj-btn:hover { color: var(--brand); border-color: var(--brand); }
+.dj-btn.primary { background: var(--brand); border-color: var(--brand); color: #fff; }
+.dj-btn.primary:hover { background: var(--brand-hover); border-color: var(--brand-hover); color: #fff; }
+
+.dj-toast {
+  position: fixed; right: 22px; bottom: 74px; z-index: 10001;
+  background: rgba(0,0,0,.85); color: #fff; font-size: 12px;
+  padding: 8px 14px; border-radius: var(--radius-btn);
+  opacity: 0; transform: translateY(6px); transition: all .18s ease; pointer-events: none;
+}
+.dj-toast.show { opacity: 1; transform: none; }
+@media (max-width: 700px) { .dj-panel { width: 100%; } }
+
+/* ── 作用域选择器 ── */
+.dj-scope {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 6px;
+}
+.dj-scope > label { flex: 0 0 auto; font-size: 12px; color: var(--text-3); }
+.dj-scope select {
+  flex: 1; min-width: 0; height: 28px; padding: 0 6px;
+  border: 1px solid var(--border); border-radius: var(--radius-input);
+  font-family: inherit; font-size: 12px; color: var(--text-1); background: #fff; cursor: pointer;
+}
+.dj-scope select:focus { outline: none; border-color: var(--brand); }
+.dj-scope-hint {
+  font-size: 11px; line-height: 1.65; color: var(--text-3); margin-bottom: 14px;
+}
+.dj-scope-hint b { color: var(--brand); font-weight: 500; }
+.dj-scope-hint code {
+  background: var(--track); padding: 1px 4px; border-radius: 2px;
+  font-family: Menlo, monospace; font-size: 10px;
+}
+/* 当前正在调哪个区块 —— 不标出来用户会分不清改的是全局还是局部 */
+[data-ds-scope].dj-active {
+  outline: 2px dashed var(--brand); outline-offset: 5px; border-radius: 4px;
+}
+</style>
+
+<button class="dj-fab" id="djFab" type="button">调参<b class="dj-n" id="djCount">0</b></button>
+<div class="dj-toast" id="djToast"></div>
+
+<aside class="dj-panel" id="djPanel" aria-label="设计 Token 调参">
+  <div class="dj-head">
+    <h3>Token 调参</h3>
+    <small id="djHint">拖动即预览</small>
+    <button class="dj-x" id="djClose" type="button" aria-label="关闭">×</button>
+  </div>
+  <div class="dj-body">
+    <div class="dj-tip">
+      这里的改动<b>只影响本页预览</b>，用来判断某个值合不合适。<br>
+      确认后点底部「保存完整 CSS」，用它替换 <code>assets/design-tokens.css</code> 即可全项目生效。
+    </div>
+
+    <div class="dj-scope">
+      <label for="djScope">调参范围</label>
+      <select id="djScope"></select>
+    </div>
+    <div class="dj-scope-hint" id="djScopeHint"></div>
+
+    <div id="djGroups"></div>
+  </div>
+  <div class="dj-foot">
+    <button class="dj-btn" id="djReset" type="button">恢复原值</button>
+    <button class="dj-btn" id="djCopy" type="button">复制 CSS</button>
+    <button class="dj-btn primary" id="djSave" type="button">保存完整 CSS</button>
+  </div>
+</aside>
+
+<script>
+(function () {
+  var src = document.getElementById('token-block-src');
+  if (!src) return;
+  var ORIGINAL_BLOCK = src.textContent;
+
+  /* 1. 从源 CSS 的 :root 原文里解析出 token，不在 JS 里重复写死值 */
+  var state = {}, order = [];
+  ORIGINAL_BLOCK.replace(/(--[a-z0-9-]+)\s*:\s*([^;]+);/gi, function (m, k, v) {
+    var key = k.slice(2);
+    if (!(key in state)) { state[key] = v.trim(); order.push(key); }
+    return m;
+  });
+
+  var GROUPS = [
+    { name: '品牌色', keys: ['brand', 'brand-hover', 'brand-light', 'brand-border', 'brand-hover-bg'] },
+    { name: '文字（透明度决定黑度）', keys: ['text-1', 'text-2', 'text-3', 'text-4'] },
+    { name: '边框与背景', keys: ['border', 'divider', 'page-bg', 'track', 'scrim'] },
+    { name: '圆角', keys: ['radius-card', 'radius-btn', 'radius-input', 'radius-square'] },
+    { name: '间距（8px 网格）', keys: ['space-card-y', 'space-card-x'] },
+    { name: '控件尺寸（原来写死在 CSS 里）', keys: ['ctl-h', 'ctl-h-lg', 'ctl-h-sm', 'ctl-px', 'ctl-px-lg', 'ctl-px-sm', 'ctl-px-input', 'cell-py', 'cell-px', 'switch-h'] },
+    { name: '弹窗 / 抽屉', keys: ['modal-w-sm', 'modal-w', 'modal-w-lg', 'modal-w-xl', 'modal-pad-x', 'modal-head-py', 'modal-body-mt', 'modal-foot-mt', 'modal-foot-gap', 'drawer-w-sm', 'drawer-w', 'drawer-w-lg', 'drawer-pad', 'drawer-bg', 'drawer-blur', 'drawer-head-h', 'drawer-head-bar'] },
+    { name: '字号阶梯', keys: ['fs-title', 'fs-body', 'fs-hint'] },
+    { name: '语义色（状态 / 图表）', keys: ['success', 'error', 'warning', 'info', 'geekblue', 'processing', 'purple'] },
+    { name: '阴影与字体', keys: ['shadow-card', 'font-family', 'font-number'] }
+  ];
+
+  /* 中文化标签：没有列进来的 token 直接显示变量名，不会漏 */
+  var LABELS = {
+    'ctl-h': '控件高度',
+    'ctl-h-lg': '大按钮高度',
+    'ctl-h-sm': '小按钮高度',
+    'ctl-px': '按钮左右内边距',
+    'ctl-px-lg': '大按钮左右',
+    'ctl-px-sm': '小按钮左右',
+    'ctl-px-input': '输入框左右内边距',
+    'cell-py': '表格格上下边距',
+    'cell-px': '表格格左右边距',
+    'switch-h': '开关高度',
+    'scrim': '遮罩底色（弹窗/抽屉）',
+    'modal-w-sm': '弹窗宽 · 确认',
+    'modal-w': '弹窗宽 · 表单',
+    'modal-w-lg': '弹窗宽 · 详情',
+    'modal-w-xl': '弹窗宽 · 大表',
+    'modal-pad-x': '弹窗左右内距',
+    'modal-head-py': '弹窗头上内距',
+    'modal-body-mt': '内容距头部',
+    'modal-foot-mt': '底部距内容',
+    'modal-foot-gap': '底部按钮间距',
+    'drawer-w-sm': '抽屉宽 · 窄',
+    'drawer-w': '抽屉宽 · 默认',
+    'drawer-w-lg': '抽屉宽 · 宽',
+    'drawer-pad': '抽屉左右内距',
+    'drawer-bg': '抽屉本体底色',
+    'drawer-blur': '本体背景模糊',
+    'drawer-head-h': '标题条高度',
+    'drawer-head-bar': '标题条橙条宽',
+    'fs-title': '标题字号',
+    'fs-body': '正文字号',
+    'fs-hint': '辅助文字号'
+  };
+
+  function typeOf(v) {
+    if (/^rgba?\(/i.test(v)) return 'rgba';
+    if (/^#[0-9a-f]{3,8}$/i.test(v)) return 'color';
+    if (/^-?[\d.]+px$/.test(v)) return 'length';
+    return 'text';
+  }
+
+  /* ── 作用域 ────────────────────────────────────────────────
+     全局 → 写到 :root；分模块 → 写到 [data-ds-scope="xx"] 子树。
+     CSS 变量天生支持级联覆盖，所以「只改某一块」不需要新机制：
+     同名变量设在容器上，子元素自然继承，外面的元素完全不受影响。
+     ───────────────────────────────────────────────────────── */
+  var GLOBAL = '__global__';
+  var curScope = GLOBAL;
+  var store = {};
+  store[GLOBAL] = {};
+
+  var SCOPES = [];
+  (function () {
+    var el = document.getElementById('scope-list');
+    if (!el) return;
+    try { SCOPES = JSON.parse(el.textContent) || []; } catch (e) { SCOPES = []; }
+  })();
+
+  function scopeEl(id) {
+    if (id === GLOBAL) return document.documentElement;
+    return document.querySelector('[data-ds-scope="' + id + '"]');
+  }
+  function scopeName(id) {
+    if (id === GLOBAL) return '全局';
+    for (var i = 0; i < SCOPES.length; i++) {
+      if (SCOPES[i].id === id) return SCOPES[i].name;
+    }
+    return id;
+  }
+  /* 该作用域下某 token 的「未改动基准」：全局改过就用全局值，否则用源文件原值 */
+  function baseVal(key) {
+    var g = store[GLOBAL];
+    return (g && key in g) ? g[key] : state[key];
+  }
+  function currentVal(key) {
+    var b = store[curScope];
+    return (b && key in b) ? b[key] : baseVal(key);
+  }
+
+  function refreshCount() {
+    var n = 0;
+    Object.keys(store).forEach(function (s) { n += Object.keys(store[s] || {}).length; });
+    document.getElementById('djCount').textContent = n;
+    document.getElementById('djFab').classList.toggle('dirty', n > 0);
+  }
+
+  function apply(key, val) {
+    var el = scopeEl(curScope);
+    if (!el) { toast('找不到该作用域容器，请重新生成页面'); return; }
+    el.style.setProperty('--' + key, val);
+    var bucket = store[curScope] || (store[curScope] = {});
+    if (val === baseVal(key)) delete bucket[key]; else bucket[key] = val;
+    refreshCount();
+  }
+
+  function row(key) {
+    var val = state[key], t = typeOf(val);
+    var el = document.createElement('div');
+    el.className = 'dj-row';
+    el.dataset.key = key;
+
+    var lb = document.createElement('label');
+    lb.textContent = LABELS[key] || key;
+    lb.title = '--' + key + ': ' + val;
+    el.appendChild(lb);
+
+    var input;
+
+    if (t === 'color') {
+      input = document.createElement('input');
+      input.type = 'color';
+      input.value = val.toLowerCase();
+    } else if (t === 'rgba') {
+      var m = val.match(/^rgba\(0,\s*0,\s*0,\s*([\d.]+)\)$/i);
+      if (m) {
+        input = document.createElement('input');
+        input.type = 'range';
+        input.min = 0; input.max = 100; input.step = 1;
+        input.value = Math.round(parseFloat(m[1]) * 100);
+        var out = document.createElement('span');
+        out.className = 'dj-v';
+        out.textContent = input.value + '%';
+        el.appendChild(out);
+        input._fmt = function (v) { return 'rgba(0,0,0,' + (v / 100).toFixed(2) + ')'; };
+        input.addEventListener('input', function () {
+          out.textContent = input.value + '%';
+          apply(key, input._fmt(+input.value));
+          el.classList.add('is-dirty');
+        });
+      } else {
+        input = document.createElement('input');
+        input.type = 'text';
+        input.value = val;
+      }
+    } else if (t === 'length') {
+      input = document.createElement('input');
+      input.type = 'number';
+      input.step = '1';
+      input.value = parseFloat(val);
+      input._unit = val.replace(/^-?[\d.]+/, '');
+    } else {
+      input = document.createElement('input');
+      input.type = 'text';
+      input.value = val;
+    }
+
+    if (!input._fmt) {
+      input.addEventListener('input', function () {
+        var v = input.value;
+        if (t === 'length') v = v + (input._unit || 'px');
+        apply(key, v);
+        el.classList.add('is-dirty');
+      });
+    }
+
+    el.appendChild(input);
+    /* 记录控件类型，切换作用域时按同一套规则回填值 */
+    input.dataset.type = (t === 'rgba' && input.type === 'range') ? 'alpha' : t;
+
+    var badge = document.createElement('span');
+    badge.className = 'dj-dirty';
+    badge.textContent = '已改';
+    el.appendChild(badge);
+
+    /* 把某个值回填到控件上（切作用域、恢复原值时用） */
+    el._set = function (val) {
+      var tt = input.dataset.type;
+      if (tt === 'alpha') {
+        var m = val.match(/^rgba\(0,\s*0,\s*0,\s*([\d.]+)\)$/i);
+        input.value = Math.round(parseFloat(m ? m[1] : 1) * 100);
+        var out = el.querySelector('.dj-v');
+        if (out) out.textContent = input.value + '%';
+      } else if (tt === 'length') {
+        input.value = parseFloat(val);
+      } else if (tt === 'color') {
+        input.value = val.toLowerCase();
+      } else {
+        input.value = val;
+      }
+      el.classList.toggle('is-dirty', val !== baseVal(key));
+    };
+    return el;
+  }
+
+  var box = document.getElementById('djGroups');
+  GROUPS.forEach(function (g) {
+    var keys = g.keys.filter(function (k) { return k in state; });
+    if (!keys.length) return;
+    var sec = document.createElement('div');
+    sec.className = 'dj-g';
+    var h = document.createElement('h4');
+    h.textContent = g.name;
+    sec.appendChild(h);
+    keys.forEach(function (k) { sec.appendChild(row(k)); });
+    box.appendChild(sec);
+  });
+
+  /* 不在预设分组里的 token（以后新增的）自动进「其他」组，不会被漏掉 */
+  var known = {};
+  GROUPS.forEach(function (g) { g.keys.forEach(function (k) { known[k] = 1; }); });
+  var rest = order.filter(function (k) { return !known[k]; });
+  if (rest.length) {
+    var sec = document.createElement('div');
+    sec.className = 'dj-g';
+    var h = document.createElement('h4');
+    h.textContent = '其他（新增 token）';
+    sec.appendChild(h);
+    rest.forEach(function (k) { sec.appendChild(row(k)); });
+    box.appendChild(sec);
+  }
+
+  /* ── 作用域选择器 ── */
+  var scopeSel = document.getElementById('djScope');
+  var hintEl = document.getElementById('djScopeHint');
+
+  var opt = document.createElement('option');
+  opt.value = GLOBAL;
+  opt.textContent = '全局 · 所有区块';
+  scopeSel.appendChild(opt);
+  SCOPES.forEach(function (s) {
+    var o = document.createElement('option');
+    o.value = s.id;
+    o.textContent = '仅 · ' + s.name;
+    scopeSel.appendChild(o);
+  });
+
+  function syncScopeUI() {
+    document.querySelectorAll('[data-ds-scope].dj-active').forEach(function (e) {
+      e.classList.remove('dj-active');
+    });
+    var el = scopeEl(curScope);
+    if (curScope !== GLOBAL) {
+      if (el) {
+        el.classList.add('dj-active');
+        el.scrollIntoView({ block: 'nearest' });
+      }
+      hintEl.innerHTML = '正在改：<b>' + scopeName(curScope) + '</b>。改动只写进 '
+        + '<code>[data-ds-scope="' + curScope + '"]</code> 子树，其它区块和全局都不受影响。';
+    } else {
+      hintEl.innerHTML = '正在改：<b>全局</b>，写进 <code>:root</code>，所有区块一起变。'
+        + '<br>只想改某一处时，把范围切到对应区块。';
+    }
+  }
+
+  scopeSel.addEventListener('change', function () {
+    curScope = scopeSel.value;
+    document.querySelectorAll('.dj-row').forEach(function (r) {
+      if (r._set) r._set(currentVal(r.dataset.key));
+    });
+    syncScopeUI();
+  });
+
+  syncScopeUI();
+
+  /* 2. 交互 */
+  var panel = document.getElementById('djPanel');
+  function openPanel() { panel.classList.add('open'); }
+  document.getElementById('djFab').addEventListener('click', openPanel);
+  var tuneLink = document.getElementById('djTuneLink');
+  if (tuneLink) tuneLink.addEventListener('click', openPanel);
+  /* 点目录跳转时顺手收起抽屉，避免挡住要看的内容 */
+  document.querySelectorAll('#djToc a').forEach(function (a) {
+    if (a.id !== 'djTuneLink') a.addEventListener('click', function () { panel.classList.remove('open'); });
+  });
+  document.getElementById('djClose').addEventListener('click', function () {
+    panel.classList.remove('open');
+  });
+
+  document.getElementById('djReset').addEventListener('click', function () {
+    var el = scopeEl(curScope);
+    if (el) order.forEach(function (k) { el.style.removeProperty('--' + k); });
+    store[curScope] = {};
+    document.querySelectorAll('.dj-row').forEach(function (r) {
+      if (r._set) r._set(currentVal(r.dataset.key));
+    });
+    refreshCount();
+    toast(curScope === GLOBAL ? '全局已恢复原值' : '「' + scopeName(curScope) + '」已恢复原值');
+  });
+
+  /* 导出：在源 CSS 原文上做值替换，格式、注释、顺序全部保留 */
+  function subVals(text, bucket) {
+    Object.keys(bucket || {}).forEach(function (k) {
+      var re = new RegExp('(--' + k + '\\s*:\\s*)([^;]+)(;)');
+      text = text.replace(re, function (m, a, b, c) { return a + bucket[k] + c; });
+    });
+    return text;
+  }
+
+  function buildRoot() {
+    return subVals(ORIGINAL_BLOCK, store[GLOBAL]).trim();
+  }
+
+  /* 分模块改动单独成段：不塞进 :root，避免「改一处动全站」 */
+  function buildScoped() {
+    var out = '';
+    Object.keys(store).forEach(function (sid) {
+      if (sid === GLOBAL) return;
+      var b = store[sid];
+      if (!b || !Object.keys(b).length) return;
+      out += '\n\n/* ── 作用域覆盖：' + scopeName(sid) + ' ──\n'
+        + '   只在该容器子树内生效。移植到项目时把 data-ds-scope 的值\n'
+        + '   改成你自己的模块名（如 data-ds-scope="processing"）即可。 */\n'
+        + '[data-ds-scope="' + sid + '"] {';
+      Object.keys(b).forEach(function (k) { out += '\n  --' + k + ': ' + b[k] + ';'; });
+      out += '\n}';
+    });
+    return out;
+  }
+
+  function buildCSS() {
+    return buildRoot() + buildScoped();
+  }
+
+  function countScoped() {
+    var n = 0;
+    Object.keys(store).forEach(function (s) {
+      if (s !== GLOBAL) n += Object.keys(store[s] || {}).length;
+    });
+    return n;
+  }
+
+  function toast(msg) {
+    var t = document.getElementById('djToast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(t._tm);
+    t._tm = setTimeout(function () { t.classList.remove('show'); }, 1800);
+  }
+
+  document.getElementById('djCopy').addEventListener('click', function () {
+    var txt = buildCSS();
+    function done() {
+      var g = Object.keys(store[GLOBAL] || {}).length, s = countScoped();
+      if (!g && !s) { toast('已复制（当前是原值）'); return; }
+      toast('已复制：全局 ' + g + ' 项 · 分模块 ' + s + ' 项');
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(txt).then(done, fallback);
+    } else { fallback(); }
+    function fallback() {
+      var ta = document.createElement('textarea');
+      ta.value = txt;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); done(); } catch (e) { toast('复制失败，请手动选中'); }
+      document.body.removeChild(ta);
+    }
+  });
+  /* 保存完整 CSS：把整份 design-tokens.css 里的 :root 换成当前值，直接下载
+     —— 这样不用回编辑器拼接，减少一次「跳出去再跳回来」 */
+  document.getElementById('djSave').addEventListener('click', function () {
+    var srcEl = document.getElementById('tokens-file-src');
+    if (!srcEl) { toast('缺少源文件副本，请用「复制 :root」'); return; }
+    var src = srcEl.textContent;
+    var rootTxt = buildRoot();
+    var out = src.replace(ORIGINAL_BLOCK, rootTxt);
+    if (out.indexOf(rootTxt) === -1) { toast('替换失败，请用「复制」'); return; }
+
+    /* 分模块覆盖追加到文件末尾，作为独立的一节 */
+    var scoped = buildScoped();
+    if (scoped) {
+      out = out.trimEnd()
+        + '\n\n/* ═══════════════════════════════════════════════════════\n'
+        + '   作用域覆盖（由调参抽屉生成）\n'
+        + '   用法：给页面里某个模块的根容器加上对应 data-ds-scope 属性，\n'
+        + '        该模块内部按这里的值渲染，页面其它部分仍用上面的全局值。\n'
+        + '   不需要时整段删掉即可，不影响 :root。\n'
+        + '   ═══════════════════════════════════════════════════════ */'
+        + scoped
+        + '\n';
+    }
+
+    var blob = new Blob([out], { type: 'text/css;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'design-tokens.css';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 3000);
+    toast('已下载 design-tokens.css，替换 assets 里同名文件即可');
+  });
+})();
+</script>
