@@ -6,7 +6,7 @@
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <title>型材立库中控系统 · v10.12-116</title>
+  <title>型材立库中控系统 · v10.12-126</title>
   <link rel="stylesheet" href="antd.min.css">
   <style>
     * { box-sizing: border-box; }
@@ -173,7 +173,8 @@
        向导内两处（wz-mode-body/wz-calc-tabs）有专属 0 规则不受影响 */
     .ant-tabs-top > .ant-tabs-nav { margin-bottom:8px; }
     /* ── 新建排产：原生上下工作台（由排产仿真页面迁入，不再依赖 iframe） ── */
-    .ns-page { padding:16px 16px 72px; }
+    /* v123（向导第1条）：左右留白 16→8 加大内容宽度，配合去掉甘特行 900px 强制最小宽（横向滚动条根因） */
+    .ns-page { padding:16px 8px 72px; }
     .ns-top { min-height:650px; margin-bottom:14px; border-color:#f0f0f0; border-radius:6px; }
     .ns-top > .ant-card-body { min-height:648px; padding:0 24px 14px; display:grid; grid-template-columns:560px minmax(0,1fr); grid-template-rows:1fr auto; gap:0; }
     .ns-route { min-width:0; padding-left:14px; }
@@ -194,7 +195,11 @@
     .ns-chip.off { color:#A6AEBA!important; background:#ECEEF1!important; border-color:#ECEEF1!important; font-weight:500!important; }
     .ns-chip.off:hover { background:#E2E5E9!important; color:#8C96A2!important; }
     .ns-chip.em.off { color:#E0565E!important; }
-    .ns-chip.em.off:hover { background:#F7E9EA!important; color:#D6454D!important; }
+    /* v126（用户图四红框/第4·5条）：移除应急芯片红色 hover（对齐普通 off 态灰色 hover）；
+       focus/键盘聚焦不再出现主橙描边环（C1 上的橙圈）；选中态任何时刻文字强制白色 */
+    .ns-chip.em.off:hover { background:#E2E5E9!important; color:#8C96A2!important; }
+    .ns-chip:focus, .ns-chip:focus-visible { outline:none !important; box-shadow:none !important; }
+    .ns-chip.on, .ns-chip.on:hover, .ns-chip.on:focus, .ns-chip.on:focus-visible { color:#fff !important; }
     .ns-config-controls { display:flex; align-items:center; gap:16px; flex-wrap:wrap; padding:10px 12px; margin-bottom:12px; border:1px solid #f0f0f0; border-radius:6px; background:#fafafa; }
     .ns-device-row { display:flex; gap:28px; flex-wrap:wrap; margin-bottom:10px; }
     /* v99：自动配置左右并排（用户图二红框）—— 左列=运行模式+开关，右列=设备启停+工艺通路+连线图 */
@@ -230,7 +235,7 @@
     /* 标题字号/字重与全站卡片头统一(16px/Medium),仅保留本卡片的行高与上下留白 */
     .ns-profile-scheduled > td { color:#bfbfbf!important; background:#fafafa!important; }
     .ns-gantt { overflow-x:auto; padding:10px 8px; border:1px solid #f0f0f0; border-radius:6px; background:#fafbfc; }
-    .ns-gantt-row { min-width:900px; display:grid; grid-template-columns:38px 1fr; align-items:center; gap:8px; margin:10px 0; }
+    .ns-gantt-row { min-width:0; display:grid; grid-template-columns:38px 1fr; align-items:center; gap:8px; margin:10px 0; } /* v123：900px 强制最小宽删除 —— 容器不足 900 时它是横向滚动条的唯一来源，甘特段宽按容器比例自适应 */
     .ns-gantt-label { font-weight:700; font-size:13px; }
     .ns-gantt-track { height:22px; display:flex; overflow:hidden; background:#f0f0f0; }
     .ns-gantt-seg { height:100%; border-right:1px solid rgba(255,255,255,.4); }
@@ -426,6 +431,8 @@
     .wz-tree-pkg { display:inline-flex; align-items:center; gap:8px; min-width:0; white-space:nowrap; } /* v111：树节点字段单行展示不换行（用户第8条） */
     .wz-tree-pkg-tag { flex:none; font-size:12px; line-height:20px; color:#8c8c8c; background:#f5f5f5; padding:0 6px; border-radius:2px; }
     .wz-tree-pkg-id { font-size:14px; color:rgba(0,0,0,.85); }
+    /* v118（用户第9条）：父级行元信息字段组 —— 与标签同款样式，组间 10px 间隔 */
+    .wz-tree-meta { display:inline-flex; align-items:center; gap:6px; margin-left:10px; }
     .page-form .wz-tree-pkg-id { font-weight:600 !important; }
     /* 工单中间层节点：常规字重，与父级区分 */
     .wz-tree-task { font-size:14px; color:rgba(0,0,0,.78); }
@@ -455,16 +462,21 @@
     .page-form .wz-queue-item { display:flex; align-items:center; gap:10px; padding:8px 12px; border:1px solid #f0f0f0; border-radius:6px; background:#fff; cursor:grab; font-size:13px !important; color:rgba(0,0,0,.85) !important; }
     .page-form .wz-queue-item:active { cursor:grabbing; }
     .wz-queue-item .wz-queue-route { margin-left:auto; color:#8c8c8c; font-size:12px; white-space:nowrap; }
-    .wz-queue-item.is-dragging { opacity:.55; background:rgba(22,119,255,.08) !important; outline:1px dashed rgba(22,119,255,.45); outline-offset:-1px; }
-    .wz-queue-item.is-dropover { background:rgba(22,119,255,.06) !important; box-shadow:inset 0 2px 0 rgba(22,119,255,.45); }
-    .wz-adjust-group.is-dropover { background:rgba(22,119,255,.06); box-shadow:inset 0 0 0 1px rgba(22,119,255,.35); }
-    .wz-adjust-item.is-dragging { opacity:.55; background:rgba(22,119,255,.08); outline:1px dashed rgba(22,119,255,.45); outline-offset:-1px; }
+    /* v123（向导第4/6条）：拖拽中 = 规范浅橙 #FFF7E6 且整个拖拽过程保持（不再半透明执行蓝）；
+       悬停落点 = 浅灰 #F5F5F5（原低透明执行蓝按用户要求改浅灰），描边同步转灰 */
+    .wz-queue-item.is-dragging { opacity:1; background:#FFF7E6 !important; outline:1px dashed rgba(238,100,2,.45); outline-offset:-1px; }
+    .wz-queue-item.is-dropover { background:#f5f5f5 !important; box-shadow:inset 0 2px 0 #d9d9d9; }
+    .wz-adjust-group.is-dropover { background:#f5f5f5; box-shadow:inset 0 0 0 1px #d9d9d9; }
+    .wz-adjust-item.is-dragging { opacity:1; background:#FFF7E6; outline:1px dashed rgba(238,100,2,.45); outline-offset:-1px; }
     /* ④ 预览与确认：上「生产日期 + 排产编号」，下左右分栏 */
-    .wz-confirm-head { display:flex; align-items:center; gap:10px; padding:12px 20px; }
-    /* v109（图三第1条）：第三步顶部卡被 v107 的 .wz-page > section.wz-card:last-of-type { flex:1 }
-       拉高后内容贴顶 —— 卡内改为纵向 flex，内容行 flex:1 撑满后由 align-items:center 垂直居中 */
+    /* v123（向导第3条）：生产日期行上下内边距 12→16px，且不再被 last-of-type flex:1 拉高 —— 背景高度收紧为内容高 */
+    .wz-confirm-head { display:flex; align-items:center; gap:10px; padding:16px 20px; }
     .wz-confirm-card { display:flex; flex-direction:column; }
-    .wz-confirm-card > .wz-confirm-head { flex:1 1 auto; }
+    /* v125（用户图一）：卡片区恢复 flex:1 填满页脚上方留白 —— 生产日期行仍由 head flex:0 0 auto 保持紧凑，
+       富余高度给 wz-split（左右卡随行高拉伸） */
+    .wz-page > section.wz-card.wz-confirm-card { flex:1 1 auto; }
+    .wz-confirm-card > .wz-confirm-head { flex:0 0 auto; }
+    .wz-confirm-card > .wz-split { flex:1 1 auto; min-height:0; }
     /* v109（图三第2/3条）：生产日期必填星号；排产编号置灰只读 */
     .wz-fl-req::before { content:'*'; display:inline-block; margin-right:4px; color:#ff4d4f; font-family:SimSun,sans-serif; line-height:1; }
     .page-form .wz-confirm-head input.wz-ro-input { background:#f5f5f5 !important; color:#8c8c8c !important; cursor:not-allowed; }
@@ -472,7 +484,10 @@
     .wz-fl { font-size:14px; line-height:22px; color:#8c8c8c; }
     .wz-confirm-head .ant-picker { margin-right:14px; }
     .wz-draft { font-size:14px; color:#8c8c8c; }
-    .wz-split { display:grid; grid-template-columns:minmax(0,1fr) 340px; gap:12px; align-items:start; }
+    /* v123（向导第4条）：手动调整卡拉伸至与左侧卡片等高（align-items:stretch + 卡体纵向 flex） */
+    .wz-split { display:grid; grid-template-columns:minmax(0,1fr) 340px; gap:12px; align-items:stretch; }
+    .wz-split > .wz-card { display:flex; flex-direction:column; }
+    .wz-split > .wz-card > .wz-card-body { flex:1 1 auto; }
     .wz-metrics { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin-bottom:14px; }
     .wz-metric { display:flex; flex-direction:column; gap:2px; padding:10px 14px; border:1px solid #f0f0f0; border-radius:6px; background:#fafafa; }
     .wz-metric-l { font-size:13px; line-height:20px; color:#8c8c8c; }
@@ -631,7 +646,8 @@
     .kbq-gc-status { flex:none; font-size:12px; line-height:1; color:#0958D9; background:#E6F2FF; border-radius:2px; padding:4px 8px; white-space:nowrap; }
     .kbq-gc-status.is-done { color:#52c41a; background:#f6ffed; }
     .kbq-cut-item.kbq-group-card.is-running .kbq-gc-prog { background:#fff; } /* v81：内层 1px #CFE4FF 蓝框删除 */
-    .kbq-cut-item.kbq-group-card.is-running .kbq-gc-seg { background:#D9E8F8; }
+    /* v125（用户图三）：未加载段 浅蓝 #D9E8F8 → 规范浅灰 #F5F5F5（+1px 内描边与排队卡一致） */
+    .kbq-cut-item.kbq-group-card.is-running .kbq-gc-seg { background:#F5F5F5; outline:1px solid #E9E9E7; outline-offset:-1px; }
     .kbq-cut-item.kbq-group-card.is-running .kbq-gc-seg.is-done { background:#EE6402; }
     .kbq-cut-item.kbq-group-card.is-running .kbq-gc-seg.is-next { background:#FF7A45; }
     .kbq-cut-item.kbq-group-card.is-pending .kbq-gc-seg { background:#F5F5F5; outline:1px solid #E9E9E7; outline-offset:-1px; }
@@ -949,7 +965,9 @@
        光写 font-size 会被压回 14/normal —— 这就是之前标题一直是 14px 的原因，
        故此处必须双层选择器 + !important（与 .kb-head-title / .inb-status-label 同做法）。 */
     .page-form .plan-head-title, .plan-head-title { flex:0 0 auto; width:80px; font-size:16px !important; line-height:24px; font-weight:500 !important; color:#262626; white-space:nowrap; }
-    .plan-head-gap { flex:1; min-width:8px; }
+    /* v122（用户图一）：两页工具栏一律恢复「标题 → 按钮 → 竖线 → 筛选/查询」左连排（v120 口径）；
+       唯一保留的右侧改动 = 排产列表页「工艺规划队列」按钮（JSX 内 margin-left:auto 推到卡片最右端） */
+    .plan-head-gap { flex:0 0 auto; width:0; min-width:0; }
     /* v42 分割式布局：设计稿把工具栏拆成「计划时间 | 筛选区」两段，
        中间插了一个 21 宽的分组框（`1552:413253`：p-[10px] 里放一条 1px×28 的 #d9d9d9 竖线），
        于是它右侧所有筛选项整体右移 29（21 + gap8）：
@@ -971,7 +989,7 @@
        排序区与筛选区成为同一个表单流：sorter 间距 8、sorter→竖线 8、竖线→下拉 8。
        代价是竖线及其后所有控件整体左移 7px（竖线 534→527、下拉 563→556、
        计划时间 428→421）；这是「统一」的必然结果，位置不再逐个补偿。 */
-    .plan-sorter { display:inline-flex; align-items:center; justify-content:flex-start; gap:4px; box-sizing:border-box; width:98px; height:30px; padding:0 9px; border:1px solid var(--plan-line); border-radius:2px; background:#fff; color:rgba(0,0,0,.85); font-size:14px; line-height:28px; cursor:pointer; user-select:none; white-space:nowrap; transition:border-color .15s,color .15s; }
+    .plan-sorter { display:inline-flex; align-items:center; justify-content:flex-start; gap:4px; box-sizing:border-box; width:auto; height:30px; padding:0 9px; border:1px solid var(--plan-line); border-radius:2px; background:#fff; color:rgba(0,0,0,.85); font-size:14px; line-height:28px; cursor:pointer; user-select:none; white-space:nowrap; transition:border-color .15s,color .15s; } /* v120：宽 98 → auto，容纳「创建时间排序」六字文案（V1.0.3 设计稿 1836:410769 形态） */
     .plan-sorter:hover { border-color:var(--plan-brand); color:var(--plan-brand); }
     .plan-sorter.is-active { border-color:var(--plan-brand); color:var(--plan-brand); }
     /* 排序箭头（设计稿 1543:53119 `_sorter`：11 宽 × 22 高的相对容器里，
@@ -1019,12 +1037,18 @@
        .plan-scroll 这个壳**保留** —— 它现在只承担布局：承接 margin-top 10（已完成页签 12）、
        用 flex 撑满剩余高度，并靠 align-items:flex-start 让 .plan-cards 维持 421 宽
        （被 stretch 会变 424，把滚动条挤偏 3px）。 */
-    .plan-scroll { position:relative; flex:1 1 auto; min-height:0; margin-top:10px; display:flex; flex-direction:column; align-items:flex-start; }
+    /* v125（用户图二）：列表顶部留白对齐 —— 排序行 padding-top 8 = 卡片流 margin-top 8（原 10 底部偏大） */
+    .plan-scroll { position:relative; flex:1 1 auto; min-height:0; margin-top:8px; display:flex; flex-direction:column; align-items:flex-start; }
     /* 页签：两段各 200×31，左缩进 10（设计稿 1540:48704 在左栏内 x=10）；
        v54：新稿 1552:413399 里页签**没有描边** —— 整条是白底圆角 4 + 投影 0 2px 2px rgba(0,0,0,.04)，
        选中段 #EE6402 实底、未选段白底 #8C8C8C 字（tab context 里两个段都没有 border）。
        投影挂在 .plan-tabs 容器上（overflow:hidden 裁掉段与段之间的直角接缝）。 */
     .plan-tabs { flex:0 0 auto; display:flex; width:400px; height:31px; margin-left:10px; border-radius:4px; box-shadow:var(--card-shadow); overflow:hidden; }
+    /* v118（用户第6条）：排序/筛选行 —— 移入卡片列表内部（页签下、卡片流上），左对齐紧凑排布 */
+    /* v123（用户图一）：左「共N条…」+ 右排序组 —— space-between 会把两个 sorter 拆到两端
+       （间距永远不是 2px），改 count margin-right:auto 顶开、sorter 组贴右相邻 gap:2px */
+    .plan-list-tools { flex:0 0 auto; display:flex; align-items:center; justify-content:flex-start; gap:2px; padding:8px 10px 0; width:421px; box-sizing:border-box; flex-wrap:wrap; }
+    .plan-count { flex:0 0 auto; margin-right:auto; font-size:12px; line-height:30px; color:rgba(0,0,0,0.45); white-space:nowrap; }
     .plan-tab { box-sizing:border-box; flex:0 0 200px; width:200px; height:31px; display:flex; align-items:center; justify-content:center; background:#fff; border:0; color:#8c8c8c; font-size:14px; line-height:21px; cursor:pointer; transition:background .15s,color .15s; }
     .plan-tab:first-child { border-radius:4px 0 0 4px; }
     .plan-tab:last-child { border-radius:0 4px 4px 0; }
@@ -1072,11 +1096,13 @@
        下发任务 = 主橙实底白图标，hover #FF7A45；禁用灰底灰图标。
        原 70×30 文字按钮（.plan-card-edit / .plan-card-dispatch）整套删除 */
     .sched-page .plan-card-foot .plan-ibtn {
-      width:24px; height:24px; display:inline-flex; align-items:center; justify-content:center;
-      padding:0; border-radius:4px; cursor:pointer; flex:none;
+      width:auto; height:24px; display:inline-flex; align-items:center; justify-content:center; gap:4px;
+      padding:0 8px; border-radius:4px; cursor:pointer; flex:none;
       background:#fff; border:1px solid #d9d9d9; color:rgba(0,0,0,0.85);
       transition:all .15s ease; user-select:none;
     }
+    /* v117：图标+文字形态 —— 文字 12px，色随按钮态 */
+    .sched-page .plan-card-foot .plan-ibtn .plan-ibtn-txt { font-size:12px; line-height:1; white-space:nowrap; }
     .sched-page .plan-card-foot .plan-ibtn:hover { border-color:#EE6402; color:#EE6402; }
     .sched-page .plan-card-foot .plan-ibtn.is-primary { background:#EE6402; border-color:#EE6402; color:#fff; }
     .sched-page .plan-card-foot .plan-ibtn.is-primary:hover { background:#FF7A45; border-color:#FF7A45; }
@@ -1094,13 +1120,11 @@
     .plan-card.is-active .plan-card-folder { color:var(--plan-brand); }
     .plan-card-k { flex:0 0 auto; font-size:14px; line-height:24px; font-weight:500; color:rgba(0,0,0,.85); white-space:nowrap; }
     .plan-card-no { flex:0 1 auto; min-width:0; font-size:14px; line-height:24px; font-weight:500; color:rgba(0,0,0,.85); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .plan-card-stamp { flex:0 1 auto; min-width:0; font-size:14px; line-height:24px; font-weight:500; color:rgba(140,140,140,.85); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     /* v41：卡头三处文字与面板头是**同一套设计稿字重**（1543:426935 / 1543:426936 / 1543:426937、
        1549:409410 / 1549:409411 / 1549:409412 全是 Source_Han_Sans_CN:Medium），
        但同样被 `.page-form *` 压成 400 —— 与面板头一起统一修回 500。 */
     .page-form .plan-card-k, .plan-card-k,
-    .page-form .plan-card-no, .plan-card-no,
-    .page-form .plan-card-stamp, .plan-card-stamp { font-weight:500 !important; }
+    .page-form .plan-card-no, .plan-card-no { font-weight:500 !important; }
     /* 卡头右端操作区：40 宽、图标右贴（设计稿 1551:410688 = w40 + justify-end，
        垃圾桶 1551:410689 落 x=25..40 ⇒ 距内容框右缘 0，即绝对 624..639 / 中心 631.5）。
        v39 换成了 Figma 新替换的 `carbon:trash-can`（asset 79afc98e…，viewBox 15×16.25）。
@@ -1158,6 +1182,8 @@
        靠字重 + 颜色双层拉开层次。同样被 `.page-form *` 压成 400，这里一并修回。 */
     .page-form .plan-card-lb, .plan-card-lb { font-weight:400 !important; }
     .plan-card-vl { overflow:hidden; text-overflow:ellipsis; color:rgba(0,0,0,.85); }
+    /* v118（用户第3条）：入库状态数字 xx/50 —— 设计规范主色橙 */
+    .sched-page .plan-card-inb, .page-form .sched-page .plan-card-inb { color:#EE6402 !important; font-weight:500 !important; font-variant-numeric:tabular-nums; }
     /* 右格在 v40 设计稿里两个页签**同一条左基线 240/241**：
        1543:426944 组 249 + 标签 -8 ⇒ 242、Tag 334..384；
        1549:409419 组 249 + 标签 -8 ⇒ 242、Tag 334..384（已完成稿）。
@@ -1227,10 +1253,13 @@
        必须双层选择器 + !important，与 .plan-head-title 同做法。 */
     .plan-detail-title, .plan-detail-no { font-size:14px; line-height:24px; font-weight:500; color:rgba(0,0,0,.85); white-space:nowrap; }
     .plan-detail-no { overflow:hidden; text-overflow:ellipsis; }
+    /* v119（用户第2条）：面板头创建时间恢复（v118 曾删） */
     .plan-detail-stamp { font-size:14px; line-height:24px; font-weight:500; color:rgba(140,140,140,.85); white-space:nowrap; }
     .page-form .plan-detail-title, .plan-detail-title,
     .page-form .plan-detail-no, .plan-detail-no,
     .page-form .plan-detail-stamp, .plan-detail-stamp { font-weight:500 !important; }
+    .page-form .plan-detail-inb, .plan-detail-inb { font-weight:500 !important; }
+    .page-form .plan-detail-inb, .plan-detail-inb { font-weight:500 !important; }
     /* 表体：**直角**（v42）。v41 之前这里是 11 圆角，会把表头左上/右上角裁出弧形，
        在面板头与表头交界那条接缝上显得「圆一下」，用户 v42 第 2 项要求改直角。
        面板本身的 12 圆角由 .plan-detail 的 overflow:hidden 负责，与这里无关。 */
@@ -1271,11 +1300,27 @@
        v38 按需求改为「在面板底→白板底的留白条里居中」：容器高 71（= 原间距 17 + 54），
        控件 32 高 ⇒ 上下各 19.5，不再出现「上面 28、下面 11」的偏下观感。
        容器右缘仍与面板右缘对齐（1888），故 padding-right 归零，别再多留 16。 */
-    /* v68：分页对齐排产列表规范 —— 54 高 + 1px #F0F0F0 上分隔线 */
-    .plan-pager { flex:0 0 54px; display:flex; align-items:center; justify-content:flex-end; padding:0; border-top:1px solid #f0f0f0; }
-    /* v71：计划列表页码的描边容器（对齐排产列表卡片式分页区） */
-    .plan-pager-card { flex:0 0 54px; border:1px solid #f0f0f0; background:#fff; }
-    .plan-pager-card .plan-pager { border-top:none; height:100%; }
+    /* v120：V1.0.3 设计稿（1836:410249）分页行上下无分隔线、右面板内直接落在白底上 ——
+       v121（用户图二）撤销 v120：描边补回（此前误删），并按 Figma 口径为**所有**分页行
+       顶部加向上投影；页码右对齐（v121 图三，v120 左栏居中作废） */
+    .plan-pager { flex:0 0 54px; display:flex; align-items:center; justify-content:flex-end; padding:0; border-top:1px solid #f0f0f0; box-shadow:0 -2px 4px rgba(0,0,0,.04); position:relative; z-index:1; }
+    /* v122（用户图一需求3）：恢复计划列表页右侧页码的描边容器（v71+v112 口径：1px #F0F0F0 + 圆角 12 + 白底），
+       v120 的透明无边框作废；卡内分页行不再叠加 border-top/投影（避免双线） */
+    /* v123（用户图一蓝框）：分页卡四角直角（圆角 12 作废） */
+    /* v124（用户图一）：分页卡四角恢复圆角 12；页码上方投影与排产列表页码完全一致（0 -2px 4px .04） */
+    /* v125（用户图五蓝框）：分页卡四角直角（v124 圆角 12 作废） */
+    /* v126（用户图二红框）：投影改挂分页卡本体（原挂在卡内分页行、且分页控件自带上边距
+       把投影与表底拉开一条白带）—— 卡顶投影紧贴表底，与排产列表分页投影一致 */
+    .plan-pager-card { flex:0 0 54px; border:1px solid #f0f0f0; background:#fff; border-radius:0; overflow:hidden; box-shadow:0 -2px 4px rgba(0,0,0,.04); }
+    .plan-pager-card .plan-pager { height:100%; border-top:0; }
+    .plan-pager-card .ant-pagination { margin:0 !important; }
+    /* v121：左栏底部分页 —— 灰底、右对齐（与卡片右缘对齐）、只投影不画线（线在灰底上过重） */
+    .plan-col-pager { flex:0 0 54px; display:flex; align-items:center; justify-content:flex-end; padding-right:10px; }
+    .plan-col-pager .plan-pager { flex:0 0 auto; height:100%; border-top:0; }
+    /* v124（用户图一）：入库任务表分页 —— 对齐列表页页码规范（右对齐 + 上分隔线 + 向上投影 + 10/页） */
+    .inb-tables .ant-table-pagination.ant-pagination { margin:0 !important; min-height:54px; padding:0 8px; display:flex; align-items:center; justify-content:flex-end; border-top:1px solid #f0f0f0; box-shadow:0 -2px 4px rgba(0,0,0,.04); position:relative; z-index:1; }
+    /* 页容量选择器（10/页）与页码同高同圆角 */
+    .plan-pager .ant-pagination-options .ant-select-selector { border-radius:2px !important; }
     .plan-pager .ant-pagination { margin:0; }
     .plan-pager .ant-pagination-item,
     .plan-pager .ant-pagination-prev,
@@ -1379,8 +1424,7 @@
     .sched-page .plan-card-row.is-split > :nth-child(2) { padding-left:22px; }
     /* v112（用户第1条）：计划列表页 .plan-body 内边距统一 16px（仅该页，排产列表不受影响） */
     .plan-page:not(.sched-page) .plan-body { padding:16px; }
-    /* v112（用户第2条）：计划列表页右下分页卡圆角 12px */
-    .plan-page:not(.sched-page) .plan-pager-card { border-radius:12px; }
+    /* v120：v112 的「分页卡圆角 12px」随分页卡改透明无边框一并作废（V1.0.3 设计稿分页直接落白底） */
     /* v96：v95 的三联行间距规则（.plan-card-cell + .plan-card-cell margin-left）随
        三联行布局一起删除 —— 卡片回归设计稿 2×2（见 planCardOf 注释） */
     /* 套料总数：**纯文字**，没有 Tag 底（v50 修正）。设计稿 fig_card_selonly 里「29根」
@@ -1484,7 +1528,9 @@
     }
     /* 按钮文字规范:14px / Regular / Source Han Sans CN;默认按钮文字 85% 黑,实色主按钮白字;含按钮内部文字节点 */
     /* v89：全站按钮文字字重 400→350（用户第1条） */
-    .ant-btn, .ant-btn * { font-size:14px !important; font-weight:350 !important; font-family:'Source Han Sans CN','Source Han Sans SC','Noto Sans CJK SC',sans-serif !important; }
+    /* v118（用户第4条）：按钮文字 16px —— 原先这里 14px 会命中按钮内层 span（含文字的），
+       压掉外层 16px 规则；表单/输入框样式与按钮样式各自独立选择器，不复用 */
+    .ant-btn, .ant-btn * { font-size:16px !important; font-weight:350 !important; font-family:'Source Han Sans CN','Source Han Sans SC','Noto Sans CJK SC',sans-serif !important; }
     /* v99：全站标签（Tag）统一删除描边（用户图五红框，要求全站覆盖）——
        双层类 + !important 压过 antd 5.29 的 css-var border 规则；底色/文字色不变 */
     /* v105：全站标签统一 14px + 固定宽 64px 水平居中（用户第7条）——不随文字多少收缩扩展；
@@ -1560,11 +1606,33 @@
     .ant-drawer .ant-drawer-footer { background:transparent; border-top:1px solid #F0F0F0; padding:12px 24px 16px; text-align:right; }
     .ant-drawer .ant-drawer-footer .ant-btn + .ant-btn { margin-left:12px; }
 
+    /* ── v117：输入框 / 检索框 / 按钮 文字统一 16px（用户蓝框标准）──
+       .page-form * 等旧规则是 0,1,0 同权 !important，这里全部用双类/两层选择器反压 */
+    .ant-btn.ant-btn, .page-form .ant-btn.ant-btn { font-size:16px !important; }
+    .ant-input.ant-input, .page-form .ant-input.ant-input,
+    textarea.ant-input, .page-form textarea.ant-input { font-size:16px !important; }
+    .ant-select .ant-select-selector, .page-form .ant-select .ant-select-selector,
+    .ant-select-item .ant-select-item-option-content,
+    .ant-picker.ant-picker, .ant-picker-input > input,
+    .ant-input-number .ant-input-number-input,
+    .ant-cascader-picker .ant-cascader-input,
+    .ant-input-affix-wrapper .ant-input { font-size:16px !important; }
+    .ant-select-selection-placeholder { font-size:16px !important; }
+    /* v117：模块释义一行 —— 12px 辅助灰，紧贴面包屑下方，不占卡片空间 */
+    /* v118：page-intro 独立行已废，释义并入面包屑行（.crumb-intro） */
+
     /* ── modal.confirm（dangerConfirm 等）：420 档、橙警示图标、按钮间距 12 ── */
     .ant-modal.ant-modal-confirm { width:420px !important; }
     .ant-modal.ant-modal-confirm .ant-modal-confirm-body > .anticon { color:#EE6402 !important; }
     .ant-modal.ant-modal-confirm .ant-modal-confirm-btns .ant-btn + .ant-btn { margin-left:12px; }
     .ant-btn-default, .ant-btn-dashed, .ant-btn-text, .ant-btn-color-default { color:rgba(0,0,0,0.85) !important; }
+    /* v125（用户图一）：「取消新建排产」icon+文字主色橙 —— 上行 .ant-btn-default color !important
+       会压过 JSX 内联色（实测文字/图标黑），须同类级 !important 反压 */
+    .ant-btn.kb-cancel-wizard { color:#EE6402 !important; border-color:#EE6402 !important; background:#fff !important; }
+    /* v126（用户图三/第4·5条）：hover = 实色橙填充 + 白字白icon（原 #FF7A45 红橙描边 hover 移除） */
+    .ant-btn.kb-cancel-wizard:not(:disabled):hover,
+    .ant-btn.kb-cancel-wizard:not(:disabled):focus-visible {
+      background:#EE6402 !important; border-color:#EE6402 !important; color:#fff !important; box-shadow:none !important; outline:none !important; }
     .ant-btn-primary, .ant-btn-color-primary { color:#fff !important; }
     .ant-btn-link, .ant-btn-color-link { color:#EE6402 !important; }
     /* 文字链接按钮 hover:浅橙 #FF7A45(禁用态除外,禁用保持置灰无 hover) */
@@ -1660,6 +1728,10 @@
     .header-bar { background:#F3F3F5; }
     /* 面包屑栏:内容容器内顶部,融入页面背景(Figma 浅灰03:距顶12、行高42、左24) */
     .crumb-bar { height:42px; display:flex; align-items:center; padding:0 24px; margin-top:12px; background:transparent; flex:none; }
+    /* v118（用户第5条）：释义与面包屑同行，贴右侧；保留「模块名：」映射标题 */
+    .crumb-bar-with-intro { justify-content:space-between; }
+    /* v125（用户图四）：顶部释义字号 12→14px，文案前缀「xxx：」已在 KB_PAGE_INTROS 删除 */
+    .crumb-intro { flex:1 1 auto; min-width:0; text-align:right; font-size:14px; font-weight:400 !important; color:#8c8c8c; line-height:1.6; margin-left:24px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     /* Figma layout/Breadcrumb:16px/行高22;父级 Regular rgba(0,0,0,.45),末级 Medium rgba(0,0,0,.85),分隔符 icon 18px 两侧4px */
     .crumb-bar .ant-breadcrumb { font-size:14px; line-height:22px; }
     .crumb-bar .ant-breadcrumb-link { color:rgba(0,0,0,0.45); font-weight:400 !important; }
@@ -1676,8 +1748,11 @@
     .header-brand-mark svg { display:block; width:24px; height:30px; }
     /* 标题规范:Source Han Sans CN Bold 18px / rgba(0,0,0,0.85) / 行高24(Figma TopBar_MES) */
     .header-brand-name { color:rgba(0,0,0,0.85); font-size:18px; font-weight:700; line-height:24px; white-space:nowrap; }
-    /* 弹框:圆角 12px(全站 Modal 统一) */
-    .ant-modal .ant-modal-content { border-radius:12px; }
+    /* 弹框:圆角 12px(全站 Modal 统一)
+       v122（用户图二需求4）：加 !important + overflow:hidden 全面走查 —— antd 5.29 的
+       css-in-hash 规则与头部出血元素会把顶角压成直角，这里强制四角一致 12px，
+       overflow:hidden 裁掉任何超宽子元素（kb-confirm 头部分隔线出血）保证顶部不出现直角 */
+    .ant-modal .ant-modal-content { border-radius:12px !important; overflow:hidden; }
     /* v101：旧「56px 通栏头 + 自绘关闭图标」弹窗页头规则整体删除（与新版
        dajie-orange-design-spec 弹窗规范冲突），统一走样式表末尾 v101 全局块 */
     /* 弹窗正文与页头/弹框顶部的间距统一 20px(Figma「弹窗-加工设置」规范),含确认类弹框 */
@@ -1687,7 +1762,7 @@
     .ant-modal .ant-btn-primary.ant-btn-dangerous,
     .ant-modal .ant-btn-dangerous.ant-btn-primary { background:#EE6402 !important; border-color:#EE6402 !important; color:#fff !important; }
     .ant-modal .ant-btn-primary.ant-btn-dangerous:hover,
-    .ant-modal .ant-btn-dangerous.ant-btn-primary:hover { background:#FA7E2D !important; border-color:#FA7E2D !important; color:#fff !important; }
+    .ant-modal .ant-btn-dangerous.ant-btn-primary:hover { background:#FF7A45 !important; border-color:#FF7A45 !important; color:#fff !important; }
     /* 所有弹框/弹窗相对整个网页(视口)居中显示(Figma 规范) */
     /* v79：flex-start + margin:auto 取代 align-items:center —— 原 center 在弹框比视口高时
        整体居中，顶部（关闭按钮）被推出视口外（实测 y=-41、关闭按钮 hit 不到）⇒ 用户报
@@ -1848,6 +1923,46 @@
     /* 表单字号:全部 14px(Figma 规范) */
     .page-form, .page-form * { font-size:14px !important; }
     .ant-modal, .ant-modal * { font-size:14px !important; }
+    /* v119（用户第4条）：按钮 16px 最终反压 —— 上面两条 (0,1,1) 同权后置会压掉前方的
+       .ant-btn * 16px 规则（按钮内 span 变 14px 的真根因）；这里用更高特异性反压，
+       表单/输入框文字仍 14px，与按钮样式相互独立 */
+    .ant-btn, .ant-btn *,
+    .page-form .ant-btn, .page-form .ant-btn *,
+    .ant-modal .ant-btn, .ant-modal .ant-btn * { font-size:16px !important; }
+    /* ═══ v120：确认/提示类弹窗对齐 dajie-orange-design-spec（components.md 弹窗三形态）═══
+       ① 标题 16px Medium 85% 黑 —— 原 `.ant-modal *` 的 (0,1,1)!important 14px 规则把
+          confirm 标题压成 14px/400，这里用更高特异性反压（与按钮 16px 反压同一手法）；
+       ② 警示图标 16px（原被压成 14px）、margin-top:3px（规范值，替换 v? 的 4px）；
+       ③ 说明文字 85% 黑（antd 默认 colorText 88%）；
+       ④ 关闭按钮 24×24 热区、图标 14px 45% 黑、hover 主橙 + 8% 橙底（antd 默认更大且无橙 hover） */
+    .ant-modal .ant-modal-confirm-title { font-size:16px !important; font-weight:500 !important; color:rgba(0,0,0,0.85) !important; }
+    .ant-modal .ant-modal-confirm-body > .anticon { font-size:16px !important; margin-top:3px; }
+    .ant-modal .ant-modal-confirm-content { color:rgba(0,0,0,0.85) !important; }
+    .ant-modal .ant-modal-close { width:24px; height:24px; border-radius:4px; }
+    .ant-modal .ant-modal-close .ant-modal-close-x { width:24px; height:24px; display:flex; align-items:center; justify-content:center; font-size:14px; color:rgba(0,0,0,0.45); }
+    .ant-modal .ant-modal-close:hover { background:rgba(238,100,2,0.08); }
+    .ant-modal .ant-modal-close:hover .ant-modal-close-x { color:#EE6402; }
+    /* ═══ v121（用户图四）：确认/提示弹框按规范整体重建（.kb-confirm 作用域）═══
+       modal.confirm 的 confirm-title 在线站上不渲染（用户两次反馈缺标题）且结构无法完全
+       对齐规范 —— 弃用 modal.confirm，改为 App 树内受控 Modal（KBConfirmHost）承载：
+       头部 = 标题 16px Medium 85% 黑 + 下接 1px #F0F0F0 分隔线（两端不留白）+ 右上 24×24 关闭；
+       内容 = 橙警示图标 16px + 85% 黑说明（距头部 20px）；footer = 取消（描边）左 + 主操作（橙实底）右，
+       间距 12px、距内容 24px；宽度固定 420 档（--modal-w-sm），提示类 footer 只留「知道了」。 */
+    .ant-modal .ant-modal-footer .ant-btn + .ant-btn { margin-left:12px; }
+    /* v124（用户图五）：弹窗结构规范全站统一 —— 原 .kb-confirm 作用域规则提升为 .ant-modal 全局，
+       22 处 Modal 全部对齐撤回/删除弹框规范：头部标题 16 Medium + 出血分隔线 + body 顶距 20 + footer 间距 24。
+       （v103 撤销的是「flex 列 + max-height + close 重定位」那组旧全局块，本组仅 padding/分隔线/字号，无冲突） */
+    .ant-modal .ant-modal-content { padding:0 24px 24px; }
+    .ant-modal .ant-modal-header { margin:0 -24px; padding:16px 56px 16px 24px; border-bottom:1px solid #f0f0f0; }
+    .ant-modal .ant-modal-title { font-size:16px !important; font-weight:500 !important; color:rgba(0,0,0,0.85) !important; line-height:24px; }
+    .ant-modal .ant-modal-body { margin-top:20px; padding:0; }
+    .ant-modal .ant-modal-footer { margin-top:24px; }
+    .kb-confirm-body { display:flex; align-items:flex-start; gap:8px; }
+    .kb-confirm-body .kb-confirm-ico { flex:0 0 auto; display:block; width:16px; height:16px; margin-top:3px; }
+    .kb-confirm-body .kb-confirm-text { flex:1 1 auto; min-width:0; font-size:14px; line-height:22px; color:rgba(0,0,0,0.85); font-weight:400 !important; }
+    /* v125（用户图二）：全站表格禁省略号 —— 列头/单元格不再截成「xx…」，
+       内容溢出由表格既有横向滚动（scroll.x + 列宽触底 + 固定列）承载 */
+    .ant-table-cell.ant-table-cell-ellipsis { overflow:visible !important; text-overflow:clip !important; }
     /* 表单表格:行内容不换行,一行自适应铺满 */
     .page-form .ant-table-tbody > tr > td, .page-form .ant-table-thead > tr > th,
     .ant-modal .ant-table-tbody > tr > td, .ant-modal .ant-table-thead > tr > th { white-space:nowrap; }
@@ -2047,13 +2162,121 @@ const { Header, Sider, Content } = Layout;
 const { Title, Text, Paragraph } = Typography;
 const { Option } = Select;
 
+/* ═══ v117：全站按钮统一「左侧线性图标」═══
+   KButton 包一层 antd Button：按按钮文字匹配 KB_ICON_RULES 注入左侧 14px 线性图标（stroke 1.4，
+   currentColor 跟随按钮字色）。已带 icon prop 或 children 内含 svg 的按钮不重复注入；
+   任务/队列视图切换是 Radio.Button（非 Button），天然不注入（用户图二对应位置不加）。
+   内部统一用 KB_BASE 引用原始 Button，避免批量替换 createElement(Button, 时递归。 */
+const KB_BASE = Button;
+const KB_LINE_ICON = (d) => React.createElement('svg', { width:14, height:14, viewBox:'0 0 16 16', fill:'none', 'aria-hidden':true },
+  React.createElement('path', { d, stroke:'currentColor', strokeWidth:1.4, strokeLinecap:'round', strokeLinejoin:'round' }));
+const KB_ICON_RULES = [
+  [/^查询$/,        KB_LINE_ICON('M7 12.2A5.2 5.2 0 1 0 7 1.8a5.2 5.2 0 0 0 0 10.4Zm7.2 2.2-4.4-4.4')],
+  [/^(重置|恢复默认)$/, KB_LINE_ICON('M2.7 6.5A5.5 5.5 0 1 1 2.5 9.8M2.5 3v3.5H6')],
+  [/^导入$/,        KB_LINE_ICON('M8 2v8m0 0L5 7m3 3 3-3M2.5 11v2.5h11V11')],
+  [/^导出/,         KB_LINE_ICON('M8 10V2m0 0L5 5m3-3 3 3M2.5 11v2.5h11V11')],
+  [/^(详情|查看)/,  KB_LINE_ICON('M1.8 8S4 3.5 8 3.5 14.2 8 14.2 8 12 12.5 8 12.5 1.8 8 1.8 8Zm6.2 1.6A1.6 1.6 0 1 0 8 6.4a1.6 1.6 0 0 0 0 3.2Z')],
+  [/^(删除|移除)/,  KB_LINE_ICON('M2.5 4h11M6.5 4V2.5h3V4m-6 0 .6 9.5h6.8L13 4M6.5 7v4m3-4v4')],
+  [/^(编辑|修改)/,  KB_LINE_ICON('M11.3 2.2l2.5 2.5L6 12.5l-3.2.7.7-3.2 7.8-7.8Z')],
+  [/撤回/,          KB_LINE_ICON('M2.5 6.5H9a4 4 0 1 1 0 8H6M2.5 6.5 5.5 3.5M2.5 6.5l3 3')],
+  [/下发/,          KB_LINE_ICON('M8 1.5v8.5m0 0L4.8 6.8M8 10l3.2-3.2M2.5 12.5l1.2 2h8.6l1.2-2')],
+  [/^(新建|新增|创建|添加)/, KB_LINE_ICON('M8 3v10M3 8h10')],
+  [/^应用/,         KB_LINE_ICON('M2.5 8.5l3.5 3.5 7.5-8')],
+  [/^全选/,         KB_LINE_ICON('M2.5 8.5l3.5 3.5 7.5-8')],
+  [/^清空/,         KB_LINE_ICON('M4 4l8 8M12 4l-8 8')],
+  [/(配置|设置)/,   KB_LINE_ICON('M2.5 4.5h6m3 0h2m-11 7h2m3 0h7M8.5 4.5a1.5 1.5 0 1 0 3 0 1.5 1.5 0 0 0-3 0Zm-4 7a1.5 1.5 0 1 0 3 0 1.5 1.5 0 0 0-3 0Z')],
+  [/(计算|排产)/,   KB_LINE_ICON('M9 1.5 4 9h4l-1 5.5L12 7H8l1-5.5Z')],
+  [/^库存同步/,     KB_LINE_ICON('M13.5 8a5.5 5.5 0 1 1-1.6-3.9M13.5 1.5v3h-3')],
+  [/(规划|队列)/,   KB_LINE_ICON('M2.5 4h11M2.5 8h11M2.5 12h7')],
+  [/^取消$/,        KB_LINE_ICON('M8 14.5A6.5 6.5 0 1 0 8 1.5a6.5 6.5 0 0 0 0 13ZM5.5 5.5l5 5m0-5-5 5')],
+];
+const KButton = (props) => {
+  const p = props || {};
+  /* v118（用户第2条）：type:'link' = 下划线文字按钮，不加图标（用户明确要求删掉） */
+  if (p.type === 'link') return React.createElement(KB_BASE, p);
+  const kids = p.children == null ? [] : (Array.isArray(p.children) ? p.children : [p.children]);
+  /* 已显式传 icon，或 children 里已有 svg（页面自带图标的按钮）→ 不再注入 */
+  let hasSvg = false, text = '';
+  const walk = (c) => {
+    if (c == null || typeof c === 'boolean') return;
+    if (typeof c === 'string' || typeof c === 'number') { text += String(c); return; }
+    if (Array.isArray(c)) { c.forEach(walk); return; }
+    if (c.type === 'svg' || (c.props && c.props.className && String(c.props.className).includes('anticon'))) hasSvg = true;
+    if (c.props && c.props.children) walk(c.props.children);
+  };
+  if (!p.icon) kids.forEach(walk);
+  if (!p.icon && !hasSvg && text) {
+    const hit = KB_ICON_RULES.find(([re]) => re.test(text));
+    if (hit) return React.createElement(KB_BASE, { ...p, icon: hit[1] });
+  }
+  return React.createElement(KB_BASE, p);
+};
+
+/* ═══ v117：主要功能模块释义（用户第4条）——一句话讲作用/结果/关联，只覆盖大方向功能
+   v118：键名修正 —— 排产列表=sched-plan-list、加工任务=outbound（与菜单路由一致，走查补全）═══ */
+const KB_PAGE_INTROS = {
+  /* v125（用户图四）：删除「xxx：」提示前缀（模块名在面包屑已可见），只留说明文案 */
+  'plan':        '汇总全部生产计划及其排产状态，可从这里发起新建预排产，排产结果在「排产列表」中管理。',
+  'sched-plan-list':'查看预排产与已下发的排产，可编辑、下发（生成出库任务）或撤回；下发后任务进入「加工任务」执行。',
+  'new-sched-plan':'三步完成一次排产 —— 选工单、配置加工通路、核对计算结果；保存后排产进入「排产列表」待下发。',
+  'inbound':     '跟踪每根型材从叫料到入库的校验与推送，异常任务在此人工核对后恢复产线。',
+  'outbound':    '查看排产下发后的实时执行队列与已完成历史，可在队列中调整切割顺序或撤回任务。',
+  'dashboard':   '实时展示各库位/巷道的存货分布与余量，为排产与出库提供库存依据。',
+  'outbound-report':'管理按排产生成的出库与报工记录，可查看母材/零件报工明细并撤回到排产。',
+  'bin-maint':   '维护库区、库位的基础信息与启停用状态，改动会影响库存看板与入库分配。',
+  'user-mgmt':   '维护系统账号与启用状态，可分配角色决定其可访问的功能。',
+  'role-mgmt':   '维护角色及其功能权限，权限变更立即对绑定该角色的用户生效。',
+  'shift-mgmt':  '维护产线班次安排，排产与报工按班次统计。',
+  'log-mgmt':    '集中查询系统操作与设备事件日志，用于追溯问题。',
+};
+
 /* ═══ v113：型材入库视觉检测图（图四/图五红框）═══
    「校验异常 · 人工确认」弹窗 与 任务详情「校验结果」页签共用 —— 相机实拍示意卡：
    深蓝底 + 型材截面示意 + 标准参数清单 + 红色「检测异常」章 + 条码/时间戳。 */
-/* 统一危险操作确认弹框(Figma 规范,全站一致):警示图标 + 标题 + 说明文案 + 取消/主操作(品牌橙 #EE6402) */
+/* ═══ v121（用户图四）：统一确认/提示弹框 —— 按 dajie 规范「弹窗三形态」重建 ═══
+   原 modal.confirm 的 confirm-title 在线站不渲染且结构压不过全局 14px 规则（用户两次反馈
+   「弹框被压缩、缺标题」），整体弃用：改为 App 树内受控 Modal（KBConfirmHost），
+   经 window.__kbConfirm / window.__kbAlert 命令式调用（App 树内渲染 ⇒ 主题 token 正确）。
+   确认类：标题 + 橙警示图标 16px + 85% 黑说明 + 取消（描边）/主操作（橙实底），宽 420；
+   提示类：同结构，footer 只留一个主操作「知道了」。 */
+function KBConfirmHost(){
+  const [dlg, setDlg] = useState(null);
+  useEffect(()=>{
+    window.__kbConfirm = (opts) => new Promise(res => setDlg({...opts, mode:'confirm', resolve:res}));
+    window.__kbAlert   = (opts) => new Promise(res => setDlg({...opts, mode:'alert',   resolve:res}));
+    return ()=>{ delete window.__kbConfirm; delete window.__kbAlert; };
+  },[]);
+  if(!dlg) return null;
+  const finish = (val) => { if(dlg.resolve) dlg.resolve(val); setDlg(null); };
+  const handleOk = () => {
+    const r = dlg.onOk && dlg.onOk();
+    if(r && typeof r.then === 'function') r.then(()=>finish(true)).catch(()=>finish(true));
+    else finish(true);
+  };
+  /* 橙色警示图标：圆形实底 #EE6402 + 白色感叹号（规范 16px，margin-top:3px 与首行 22px 行高对齐） */
+  const warnIco = React.createElement('svg',{className:'kb-confirm-ico',viewBox:'0 0 16 16','aria-hidden':true},
+    React.createElement('circle',{cx:8,cy:8,r:8,fill:'#EE6402'}),
+    React.createElement('rect',{x:7.1,y:3.4,width:1.8,height:5.8,rx:0.9,fill:'#fff'}),
+    React.createElement('circle',{cx:8,cy:11.6,r:1.15,fill:'#fff'}));
+  const btns = [];
+  if(dlg.mode !== 'alert')
+    btns.push(React.createElement(Button,{key:'cancel',onClick:()=>finish(false)},dlg.cancelText||'取消'));
+  btns.push(React.createElement(Button,{key:'ok',type:'primary',danger:!!dlg.danger,onClick:handleOk},
+    dlg.okText || (dlg.mode==='alert' ? '知道了' : '确认')));
+  return React.createElement(Modal,{
+    className:'kb-confirm', open:true, width:420, title:dlg.title,
+    maskClosable:false, closable:true, onCancel:()=>finish(false), footer:btns,
+  }, React.createElement('div',{className:'kb-confirm-body'},
+    warnIco,
+    React.createElement('div',{className:'kb-confirm-text'}, dlg.content)));
+}
+
+/* 统一危险操作确认弹框(Figma 规范,全站一致):警示图标 + 标题 + 说明文案 + 取消/主操作(品牌橙 #EE6402)
+   v121:改走 KBConfirmHost 受控弹框（规范结构、标题必渲染）；modal 参数保留兼容旧签名 */
 function dangerConfirm(modal, {title, content, okText='删除', onOk}){
+  if(window.__kbConfirm){ window.__kbConfirm({title, content, okText, onOk, danger:true}); return; }
   modal.confirm({
-    title, content, closable:true,
+    title, content, closable:true, maskClosable:false,
     okText, cancelText:'取消', okButtonProps:{danger:true},
     onOk,
   });
@@ -2451,6 +2674,7 @@ const InventoryDashboard = ({gridData, inventoryData}) => {
     setMatchBins(new Set());
     setActiveAreaKey(null);
     setSelected(null);
+    msg.info('已恢复全部库存数据');
   };
 
   // 库存明细导出:导出模式下勾选范围为选中行,未勾选则导出当前列表全部;Excel 输出 .xls(表格),CSV 输出 .csv(带 BOM)
@@ -2509,7 +2733,7 @@ const InventoryDashboard = ({gridData, inventoryData}) => {
     {title:'长度(mm)', dataIndex:'length', width:100},
     {title:'炉批号', dataIndex:'heatNumber', width:120},
     {title:'操作', key:'op', width:80, fixed:'right',
-      render:(_,r)=>React.createElement(Button,{
+      render:(_,r)=>React.createElement(KButton,{
         size:'small',type:'link',
         disabled:!canEditBin(r.binStatus),
         onClick:()=>openEditModal(r)
@@ -2573,14 +2797,14 @@ const InventoryDashboard = ({gridData, inventoryData}) => {
         ),
         React.createElement(Form.Item,{style:{marginBottom:0}},
           React.createElement(Space,null,
-            React.createElement(Button,{onClick:handleSearch},'查询'),
-            React.createElement(Button,{onClick:handleReset,disabled:!canReset},'重置'),
+            React.createElement(KButton,{onClick:handleSearch},'查询'),
+            React.createElement(KButton,{onClick:handleReset,disabled:!canReset},'重置'),
           )
         ),
         React.createElement(Form.Item,{style:{marginBottom:0, marginLeft:'auto'}},
           React.createElement(Space,{size:10},
             React.createElement(Text,{type:'secondary',style:{fontSize:12}},'数据更新于 2026-05-17 14:32:15'),
-            React.createElement(Button,{size:'small',type:'link',style:{padding:0,color:'#EE6402',textDecoration:'underline'},onClick:()=>msg.success('库存数据已刷新',{keep:true})},'立即刷新'),
+            React.createElement(KButton,{size:'small',type:'link',style:{padding:0,color:'#EE6402',textDecoration:'underline'},onClick:()=>msg.success('库存数据已刷新',{keep:true})},'立即刷新'),
           )
         ),
       )
@@ -2612,10 +2836,10 @@ const InventoryDashboard = ({gridData, inventoryData}) => {
       extra: exportMode
         ? React.createElement(Space,{size:8},
             React.createElement('span',{style:{fontSize:12,color:'rgba(0,0,0,0.85)'}},'已选 ',React.createElement('span',{style:{color:'#EE6402'}},`${exportSel.length}`),' 项'),
-            React.createElement(Button,{size:'small',type:'primary',onClick:()=>exportInv('excel')},'导出 Excel'),
-            React.createElement(Button,{size:'small',onClick:()=>exportInv('csv')},'导出 CSV'),
-            React.createElement(Button,{size:'small',onClick:()=>{setExportMode(false);setExportSel([]);}},'取消'))
-        : React.createElement(Button,{size:'small',style:{borderColor:'#d9d9d9',color:'rgba(0,0,0,0.85)'},onClick:()=>setExportMode(true)},'导出'),
+            React.createElement(KButton,{size:'small',type:'primary',onClick:()=>exportInv('excel')},'导出 Excel'),
+            React.createElement(KButton,{size:'small',onClick:()=>exportInv('csv')},'导出 CSV'),
+            React.createElement(KButton,{size:'small',onClick:()=>{setExportMode(false);setExportSel([]);}},'取消'))
+        : React.createElement(KButton,{size:'small',style:{borderColor:'#d9d9d9',color:'rgba(0,0,0,0.85)'},onClick:()=>setExportMode(true)},'导出'),
     },
       React.createElement(Table,{
         columns:invCols,
@@ -2816,7 +3040,7 @@ const InboundPage = ({data, planData, onNavigate}) => {
     }
     setAdv(null);
   };
-  const detailBtn = (r) => React.createElement(Button,{size:'small',type:'link',onClick:()=>{setDetailRow(r);setDetailOpen(true);}},'详情');
+  const detailBtn = (r) => React.createElement(KButton,{size:'small',type:'link',onClick:()=>{setDetailRow(r);setDetailOpen(true);}},'详情');
   const openTaskEdit = (r) => { setTaskEditRow(r); setTaskEditFields({...r}); };
   const setTaskField = (key, value) => setTaskEditFields(prev=>({...prev,[key]:value}));
   const saveTaskEdit = () => {
@@ -2832,7 +3056,7 @@ const InboundPage = ({data, planData, onNavigate}) => {
     msg.success(`任务 ${next.taskNo} 已更新`);
     setTaskEditRow(null); setTaskEditFields({});
   };
-  const editBtn = (r) => React.createElement(Button,{size:'small',type:'link',onClick:()=>openTaskEdit(r)},'编辑');
+  const editBtn = (r) => React.createElement(KButton,{size:'small',type:'link',onClick:()=>openTaskEdit(r)},'编辑');
 
   const baseCols = [
     {title:'型材唯一编码', dataIndex:'profileUid', width:150, fixed:'left', ellipsis:true,
@@ -2865,11 +3089,19 @@ const InboundPage = ({data, planData, onNavigate}) => {
   const curOpCol = {title:'操作', key:'op', width:140, fixed:'right',
     render:(_,r)=>React.createElement(Space,{size:4},
       detailBtn(r),
-      canRevoke(r.status) && React.createElement(Button,{size:'small',type:'link',danger:true,
+      canRevoke(r.status) && React.createElement(KButton,{size:'small',type:'link',danger:true,
         onClick:()=>setAdv({type:'revoke',row:r})},'撤回'),
       r.status==='NOT_STARTED' && React.createElement(React.Fragment,null,
         editBtn(r),
-        React.createElement(Button,{size:'small',type:'link',danger:true,onClick:()=>msg.info('删除功能暂未实现')},'删除')))};
+        /* v125（用户第3条）：删除功能开放 —— 规范确认弹框（KBConfirmHost：标题+橙警示图标+说明+取消/删除） */
+        React.createElement(KButton,{size:'small',type:'link',danger:true,onClick:()=>{
+          window.__kbConfirm({
+            title:'删除入库任务',
+            content:`确认删除入库任务 ${r.taskNo}（型材 ${r.profileUid}）？删除后不可恢复。`,
+            okText:'删除', danger:true,
+            onOk:()=>{ setTasks(prev=>prev.filter(t=>t.key!==r.key)); msg.success(`入库任务 ${r.taskNo} 已删除`); },
+          });
+        }},'删除')))};
   const historyCols = [...baseCols, zoneCol, binCol,
     {title:'开始时间', dataIndex:'startTime', width:190, ellipsis:true},
     {title:'结束时间', dataIndex:'endTime', width:190, ellipsis:true},
@@ -2904,14 +3136,14 @@ const InboundPage = ({data, planData, onNavigate}) => {
       type:'error', showIcon:true, className:'section-gap alert-exception',
       message:'校验异常 · 产线已停线',
       description:`相机 CK-01 检测到型材 ${anomaly.profileUid} 异常，需人工确认后恢复产线。`,
-      action: React.createElement(Button, { size:'small', type:'primary', style:{padding:'0 15px'},
+      action: React.createElement(KButton, { size:'small', type:'primary', style:{padding:'0 15px'},
         onClick:()=>openConfirm(anomaly) }, '人工确认'),
     }),
     // 操作按钮放入卡片头 extra(全站统一卡片头机制:48px 行内垂直居中),页签在卡片体内;卡片头无下划线(参考立库「加工详情」布局)
-    React.createElement(Card,{ size:'small', className:'card-no-head-border', title:'入库任务',
+    React.createElement(Card,{ size:'small', className:'card-no-head-border inb-tables', title:'入库任务',
       /* v113（图一）：「新建入库任务」按钮删除；「卡片字段配置」改名「参数字段配置」并移到其原位置 */
       extra: React.createElement(Space,{size:10},
-        React.createElement(Button,{onClick:()=>msg.info('库存同步请求已发送')},'库存同步'),
+        React.createElement(KButton,{onClick:()=>msg.info('库存同步请求已发送')},'库存同步'),
         React.createElement(Popover,{
             open:cfgOpen, onOpenChange:setCfgOpen, trigger:'click', placement:'bottomRight',
             content:React.createElement('div',{style:{minWidth:420}},
@@ -2926,7 +3158,7 @@ const InboundPage = ({data, planData, onNavigate}) => {
                   /* v110：锁定字段 checkbox 置灰不可取消 */
                   disabled:INB_LOCKED_COLS.includes(f.key)}))}))
           },
-          React.createElement(Button,{size:'small'},React.createElement('span',null,'参数字段配置'))),
+          React.createElement(KButton,{size:'small'},React.createElement('span',null,'参数字段配置'))),
       ),
     },
       React.createElement(Tabs,{
@@ -2937,11 +3169,11 @@ const InboundPage = ({data, planData, onNavigate}) => {
           { key:'current', label:`当前任务 (${curList.length})`,
             children: React.createElement(Table,{ columns:colVisible([...baseCols, createTimeCol, zoneCol, binCol, curOpCol]),
               dataSource:curList, rowKey:'key', size:'small',
-              scroll:{x:1620}, pagination:{hideOnSinglePage:true,pageSize:10}, locale:{emptyText:'暂无当前任务'} }) },
+              scroll:{x:1620}, pagination:{pageSize:10, showSizeChanger:true}, locale:{emptyText:'暂无当前任务'} }) },
           { key:'history', label:`历史任务 (${histList.length})`,
             children: React.createElement(Table,{ columns:colVisible(historyCols),
               dataSource:histList, rowKey:'key', size:'small',
-              scroll:{x:1780}, pagination:{hideOnSinglePage:true,pageSize:10}, locale:{emptyText:'暂无历史记录'} }) },
+              scroll:{x:1780}, pagination:{pageSize:10, showSizeChanger:true}, locale:{emptyText:'暂无历史记录'} }) },
         ],
       })
     ),
@@ -3075,6 +3307,8 @@ const InboundPage = ({data, planData, onNavigate}) => {
     React.createElement(Modal,{
       title:`任务详情 — ${detailRow?.profileUid}`,
       open:detailOpen, footer:null, width:640,
+      /* v124（用户图五）：按最高页签（校验结果图）定高 body，切页签不再抖动 */
+      styles:{body:{height:520, overflowY:'auto'}},
       onCancel:()=>setDetailOpen(false),
     },
       detailRow && React.createElement(Tabs,{defaultActiveKey:'info', items:[
@@ -3614,7 +3848,7 @@ const ProcessingQueueGantt = ({ tasks, histTasks=[], queueTab='queue', onQueueTa
                 React.createElement('span',{className:'kbq-gc-lb kbq-gc-no',title:group.groupNo},group.groupNo),
                 running&&React.createElement('span',{className:'kbq-gc-status'},'执行中')
               ),
-              React.createElement(Button,{size:'small',className:'kbq-recall-btn',
+              React.createElement(KButton,{size:'small',className:'kbq-recall-btn',
                 title:'撤回该切割工单',
                 onClick:e=>{e.stopPropagation();onRecallGroup?.(group);}},'撤回')
             ),
@@ -3679,8 +3913,8 @@ const ProcessingQueueGantt = ({ tasks, histTasks=[], queueTab='queue', onQueueTa
       React.createElement('div',{style:{fontSize:13,fontWeight:600}},'套料执行列表（按顺序串行执行）'),
       selectedProfileKeys.length>0&&React.createElement(React.Fragment,null,
         React.createElement('span',{style:{fontSize:12,color:'rgba(0,0,0,0.85)',marginRight:8}},'已选 ',React.createElement('span',{style:{color:'#EE6402'}},`${selectedProfileKeys.length}`),' 项'),
-        React.createElement(Button,{size:'small',type:'primary',onClick:()=>onRecallProfiles?.(cutGroupDetail,selectedProfileKeys)},'批量撤回'),
-        React.createElement(Button,{size:'small',style:{marginLeft:8},onClick:()=>setSelectedProfileKeys([])},'清空'))
+        React.createElement(KButton,{size:'small',type:'primary',onClick:()=>onRecallProfiles?.(cutGroupDetail,selectedProfileKeys)},'批量撤回'),
+        React.createElement(KButton,{size:'small',style:{marginLeft:8},onClick:()=>setSelectedProfileKeys([])},'清空'))
       ),
       React.createElement('div',{style:{borderTop:'1px solid #f0f0f0'}},cutGroupDetail.profileEntries.map(({profile,task},index)=>{
       const profileStatus=cutGroupDetail.profileStatuses?.[index] || '排队中';
@@ -3709,7 +3943,7 @@ const ProcessingQueueGantt = ({ tasks, histTasks=[], queueTab='queue', onQueueTa
            无描边只底色+文字；未命中映射的状态回退中性灰 */
         React.createElement(Space,{size:8},
           React.createElement(Tag,{bordered:false,style:{margin:0,...(KB_STATUS_TAG_STYLE[kbDisplayStatus(profileStatus)]||{background:'#f5f5f5',color:'#595959'})}},kbDisplayStatus(profileStatus)),
-          React.createElement(Button,{size:'small',type:'link',style:{textDecoration:'underline'},onClick:()=>onViewProfile?.(task,profile)},'详情')
+          React.createElement(KButton,{size:'small',type:'link',style:{textDecoration:'underline'},onClick:()=>onViewProfile?.(task,profile)},'详情')
         )
       )
       );
@@ -3770,10 +4004,10 @@ const ProcessingQueueGantt = ({ tasks, histTasks=[], queueTab='queue', onQueueTa
         React.createElement('div',{className:'kb-head-right',style:{minHeight:32}},
           selectedGroupIds.length>0 && React.createElement(React.Fragment,null,
             React.createElement('span',{style:{fontSize:12,color:'rgba(0,0,0,0.85)',marginRight:8}},'已选 ',React.createElement('span',{style:{color:'#EE6402'}},`${selectedGroupIds.length}`),' 项'),
-            React.createElement(Button,{size:'small',type:'primary',onClick:()=>onRecallGroup?.({
+            React.createElement(KButton,{size:'small',type:'primary',onClick:()=>onRecallGroup?.({
               groupNo:`已选 ${selectedGroupIds.length} 个切割工单`,tasks:tasks.filter(task=>selectedGroupIds.includes(task.profileGroupId||task.profileGroupNo||task.id))
             },{stayOnPage:true})},'批量撤回'),
-            React.createElement(Button,{size:'small',style:{marginLeft:8},onClick:()=>setSelectedGroupIds([])},'清空'))
+            React.createElement(KButton,{size:'small',style:{marginLeft:8},onClick:()=>setSelectedGroupIds([])},'清空'))
         )
       ),
       /* v83：kb-head-divider 下划线删除（只删线、保留 v82 投影）——两模式卡同形态一并删 */
@@ -3834,7 +4068,6 @@ const OutboundPage = ({onRecallToSchedule}) => {
   // 列表可见字段（用户可勾选）：持久化到 localStorage，未勾选的字段从「详情」进入查看
   const [visibleCols, setVisibleCols] = useState(loadVisibleCols);
   const [colCfgOpen, setColCfgOpen] = useState(false);
-  const [colDraft, setColDraft] = useState(OUT_COL_DEFAULT);
   // 加工任务提供两种独立工作视图：明细列表用于筛选和批量操作，队列用于现场实时排产。
   const [taskView, setTaskView] = useState(()=>{
     try { return localStorage.getItem('central-control:outbound-task-view') === 'queue' ? 'queue' : 'list'; }
@@ -4011,10 +4244,10 @@ const OutboundPage = ({onRecallToSchedule}) => {
       msg.success(`${item.id} ${meta.label} → ${next}（推送${pkLabel}重置为未推送）`);
       return;
     }
-    modal.confirm({
+    window.__kbConfirm({
       title: '请确认产线停止',
       content: `修改${meta.label}为 ${next} 将影响在产产线，请确认产线已停止后继续。`,
-      okText: '已停止，确认修改', cancelText: '取消', closable:true,
+      okText: '已停止，确认修改', cancelText: '取消', closable:true, maskClosable:false,
       onOk: () => {
         patchBoth(item.id, { [di]: next });
         msg.success(`${item.id} ${meta.label} → ${next}（强制修改），正在重新推送${pkLabel}`);
@@ -4072,9 +4305,9 @@ const OutboundPage = ({onRecallToSchedule}) => {
 
   const doRecall = (item) => {
     if (item.status === '未叫料') {
-      modal.confirm({
+      window.__kbConfirm({
         title:'撤回加工任务', content:`确认撤回任务 ${item.taskNo}？撤回后将回到排产任务，并跳转至“预排产”页面。`,
-        okText:'确认撤回', cancelText:'取消', closable:true,
+        okText:'确认撤回', cancelText:'取消', closable:true, maskClosable:false,
         onOk:()=>{
           setItems(prev=>prev.filter(it=>it.id!==item.id));
           onRecallToSchedule?.(item);
@@ -4096,10 +4329,10 @@ const OutboundPage = ({onRecallToSchedule}) => {
     if (!groupItems.length) return;
     /* v104：撤回加二次确认（用户第4条，此前是低等级直接执行）；
        成功后停留当前页 —— recallToSchedule 传 stayOnPage:true，不再跳排产列表 */
-    modal.confirm({
+    window.__kbConfirm({
       title:'撤回切割工单',
       content:`确认撤回切割工单 ${group.groupNo}？撤回后将回到排产任务。`,
-      okText:'确认撤回', cancelText:'取消', closable:true,
+      okText:'确认撤回', cancelText:'取消', closable:true, maskClosable:false,
       onOk:()=>{
         setItems(prev=>prev.filter(item=>!groupItems.some(target=>target.id===item.id)));
         groupItems.forEach(item=>onRecallToSchedule?.(item,{...opts,stayOnPage:true}));
@@ -4163,10 +4396,10 @@ const OutboundPage = ({onRecallToSchedule}) => {
       setBatchPickerOpen(false);
     };
     if (targets.some(t => t.status !== '未叫料')) {
-      modal.confirm({
+      window.__kbConfirm({
         title: '请确认产线停止',
         content: `批量修改 ${targets.length} 项${meta.label}为 ${station} 将影响在产产线，请确认产线已停止后继续。`,
-        okText: '已停止，确认修改', cancelText: '取消', closable:true, onOk: applyBatch,
+        okText: '已停止，确认修改', cancelText: '取消', closable:true, maskClosable:false, onOk: applyBatch,
       });
     } else { applyBatch(); }
   };
@@ -4200,9 +4433,9 @@ const OutboundPage = ({onRecallToSchedule}) => {
   const renderAction = (row) => {
     const item = row.__parent || row;
     const els = [
-      React.createElement(Button, { key:'detail', size:'small', type:'link', className:'row-link',
+      React.createElement(KButton, { key:'detail', size:'small', type:'link', className:'row-link',
         onClick:()=>openProfileDetail(item, row) }, '详情'),
-      React.createElement(Button, { key:'recall', size:'small', type:'link', className:'row-link', disabled:item.status!=='未叫料',
+      React.createElement(KButton, { key:'recall', size:'small', type:'link', className:'row-link', disabled:item.status!=='未叫料',
         onClick:()=>doRecall(item) }, '撤回'),
     ];
     if (item.status === '未叫料') {
@@ -4214,7 +4447,7 @@ const OutboundPage = ({onRecallToSchedule}) => {
         els.push(React.createElement(Text,{key:'gate',type:'warning',style:{fontSize:12}},'推送失败·下发未完成（详情内重推）'));
       } else {
       }
-      els.push(React.createElement(Button, { key:'del', size:'small', type:'link', danger:true, className:'row-link', onClick:()=>doDelete(item) }, '删除'));
+      els.push(React.createElement(KButton, { key:'del', size:'small', type:'link', danger:true, className:'row-link', onClick:()=>doDelete(item) }, '删除'));
     }
     return React.createElement(Space, { size:4 }, els);
   };
@@ -4360,7 +4593,7 @@ const OutboundPage = ({onRecallToSchedule}) => {
       React.createElement('div', { key:g.field, style:{marginBottom:8} },
         React.createElement('div', { style:{fontSize:11,color:'#6b7280',marginBottom:4} }, `${g.label} → 可选`),
         React.createElement(Space, { wrap:true, size:6 },
-          KB_STATION_FIELDS[g.field].pool.map(s => React.createElement(Button, { key:s, size:'small', onClick:()=>doBatchChangeNext(g.field, s) }, s))
+          KB_STATION_FIELDS[g.field].pool.map(s => React.createElement(KButton, { key:s, size:'small', onClick:()=>doBatchChangeNext(g.field, s) }, s))
         )
       )
     )
@@ -4379,25 +4612,37 @@ const OutboundPage = ({onRecallToSchedule}) => {
       onChange:setSourceFilterInput, style:{ width:130 },
       options:[{value:'',label:'全部'},{value:'PLAN',label:'计划'},{value:'LOCAL',label:'创建'}],
     }),
-    React.createElement(Button, {
+    React.createElement(KButton, {
       onClick:()=>{ setPkgFilter(pkgFilterInput); setSourceFilter(sourceFilterInput); },
     }, '查询'),
-    React.createElement(Button, {
+    React.createElement(KButton, {
       disabled: !pkgFilterInput && !sourceFilterInput,
       onClick:()=>{ setPkgFilterInput(''); setSourceFilterInput(''); setPkgFilter(''); setSourceFilter(''); },
     }, '重置')
   );
   // 卡片头右侧操作区：字段自助配置入口（新建工单入口已按需求移除）
-  const openColCfg = () => { setColDraft(visibleCols.slice()); setColCfgOpen(true); };
-  const saveColCfg = () => {
-    setVisibleCols(colDraft.slice());
-    try { localStorage.setItem(OUT_COL_STORE_KEY, JSON.stringify(colDraft)); } catch (_) { /* 隐私模式忽略 */ }
-    setColCfgOpen(false);
-    msg.success(`字段配置已保存，当前显示 ${colDraft.length + 1} 列`);
+  /* v126（用户第6条）：「字段显示配置」由 Modal 改为 Popover（与入库任务「参数字段配置」同一展现形式：
+     卡头按钮锚定浮层 + 已选提示 + 三列勾选网格，勾选即时生效并落盘） */
+  const applyCols = (list) => {
+    setVisibleCols(list);
+    try { localStorage.setItem(OUT_COL_STORE_KEY, JSON.stringify(list)); } catch (_) { /* 隐私模式忽略 */ }
   };
-  const resetColCfg = () => setColDraft(OUT_COL_DEFAULT.slice());
+  const resetColCfg = () => { applyCols(OUT_COL_DEFAULT.slice()); msg.success('字段配置已恢复默认'); };
   const listExtra = taskView === 'list'
-    ? React.createElement(Button, { size:'small', onClick:openColCfg }, '字段显示配置')
+    ? React.createElement(Popover, {
+        open:colCfgOpen, onOpenChange:setColCfgOpen, trigger:'click', placement:'bottomRight',
+        content: React.createElement('div', { style:{minWidth:420} },
+          React.createElement('div', { className:'kb-colfg-head' },
+            React.createElement('span', { className:'kb-colfg-hint' },
+              `已选 ${visibleCols.length} / ${OUT_COL_META.length} 项，未勾选的字段可在「详情」中查看`),
+            React.createElement(KButton, { type:'link', size:'small', onClick:resetColCfg }, '恢复默认')),
+          React.createElement(Checkbox.Group, {
+            className:'kb-colfg-grid', value:visibleCols,
+            onChange: applyCols,
+            options: OUT_COL_META.map(m => ({ label:m.title, value:m.key })),
+          })),
+      },
+      React.createElement(KButton, { size:'small' }, React.createElement('span', null, '字段显示配置')))
     : null;
   // 批量操作（放在 Tab 行右侧，仅有选中时显示）
   const startProduction = () => {
@@ -4408,11 +4653,11 @@ const OutboundPage = ({onRecallToSchedule}) => {
     productionRunningRef.current = false; setProductionRunning(false); msg.warning('生产已暂停，暂停推送和立库叫料');
   };
   const batchOps = React.createElement(Space, { size:8 },
-      activeTab==='pending' && React.createElement(Button, { size:'small', type:'primary', onClick:startProduction, disabled:productionRunning }, '开始下发'),
-      activeTab==='pending' && React.createElement(Button, { size:'small', danger:true, onClick:pauseProduction, disabled:!productionRunning }, '暂停下发'),
+      activeTab==='pending' && React.createElement(KButton, { size:'small', type:'primary', onClick:startProduction, disabled:productionRunning }, '开始下发'),
+      activeTab==='pending' && React.createElement(KButton, { size:'small', danger:true, onClick:pauseProduction, disabled:!productionRunning }, '暂停下发'),
       selectedRowKeys.length > 0 && React.createElement('span', { style:{ fontSize:12, color:'rgba(0,0,0,0.85)' } }, '已选 ',React.createElement('span', { style:{ color:'#EE6402' } }, `${selectedRowKeys.length}`), ' 项'),
-      selectedRowKeys.length > 0 && React.createElement(Button, { size:'small', type:'primary', onClick:doBatchRecall }, '批量撤回'),
-      selectedRowKeys.length > 0 && React.createElement(Button, { size:'small', style:{ marginLeft:8 }, onClick:()=>setSelectedRowKeys([]) }, '清空')
+      selectedRowKeys.length > 0 && React.createElement(KButton, { size:'small', type:'primary', onClick:doBatchRecall }, '批量撤回'),
+      selectedRowKeys.length > 0 && React.createElement(KButton, { size:'small', style:{ marginLeft:8 }, onClick:()=>setSelectedRowKeys([]) }, '清空')
     );
 
   // 步骤标签配色（详情「各步骤开报工时间」表用）
@@ -4421,6 +4666,9 @@ const OutboundPage = ({onRecallToSchedule}) => {
   const detailModal = React.createElement(Modal, {
     title: detailRow?.isProfileDetail ? `加工详情 — ${detailRow?.profileId || ''}` : `加工任务详情 — ${detailRow?.taskNo || ''}`,
     open: detailOpen, footer: null, width: 780, key: detailRow?.id,
+    /* v119（用户第7条）：body 按**最高页签**定高（报工表 10 行 + 分页 ≈ 580），
+       高度固定 + 内部滚动，切页签零抖动；内容最大宽固定防拉伸 */
+    styles:{ body:{ height:580, maxHeight:580, overflowY:'auto', maxWidth:732 } },
     onCancel: () => setDetailOpen(false),
   },
     detailRow && (function(){
@@ -4469,7 +4717,7 @@ const OutboundPage = ({onRecallToSchedule}) => {
             React.createElement(Space, { key:key, size:6 },
               React.createElement(Text, { type:'secondary' }, nm + '：'),
               React.createElement(Tag, { color:KB_PUSH_COLOR[detailRow[key]]||'default', style:{margin:0} }, detailRow[key]||'-'),
-              React.createElement(Button, { size:'small', type:'link', danger:detailRow[key]==='失败',
+              React.createElement(KButton, { size:'small', type:'link', danger:detailRow[key]==='失败',
                 disabled: detailRow[key]==='推送中',
                 onClick:()=>repushTarget(detailRow, key, nm) }, '重新推送')
             )
@@ -4589,29 +4837,6 @@ const OutboundPage = ({onRecallToSchedule}) => {
       {key:'queue',label:'任务队列'},
       {key:'hist',label:'历史队列'},
     ]});
-  // 卡片字段配置弹窗：勾选即显示，未勾选的字段从「详情」查看；footer 仅「取消 + 保存配置」两按钮
-  const colCfgModal = React.createElement(Modal, {
-    title:'字段显示配置', open:colCfgOpen, width:640, destroyOnClose:true,
-    okText:'保存配置', cancelText:'取消',
-    onOk:saveColCfg, onCancel:()=>setColCfgOpen(false),
-  },
-    React.createElement('div',{className:'kb-colfg-head'},
-      React.createElement('span',{className:'kb-colfg-hint'},
-        `已选 ${colDraft.length} / ${OUT_COL_META.length} 项，未勾选的字段可在「详情」中查看`),
-      React.createElement(Button,{type:'link',size:'small',onClick:resetColCfg},'恢复默认')
-    ),
-    React.createElement(Checkbox.Group,{
-      className:'kb-colfg-grid', value:colDraft,
-      onChange:list => setColDraft(list),
-      options: OUT_COL_META.map(m => ({ label:m.title, value:m.key })),
-    }),
-    // 固定列单列一块：永远勾选且不可取消，只是为了让清单与列表实际列数对得上
-    React.createElement('div',{className:'kb-colfg-fixed'},
-      React.createElement('span',{className:'kb-colfg-hint'},'固定显示'),
-      OUT_COL_FIXED.map(m =>
-        React.createElement(Checkbox,{key:m.key, checked:true, disabled:true}, m.label))
-    )
-  );
   return React.createElement('div', { className:'page-content' },
     // v112：视图切换条恢复原位（卡片外的独立居中工具行）
     React.createElement('div',{className:'kb-switch-bar'}, viewSwitcher),
@@ -4644,7 +4869,6 @@ const OutboundPage = ({onRecallToSchedule}) => {
             onViewProfile:openProfileDetail,
           })
         ),
-    colCfgModal,
     detailModal,
     React.createElement(Modal, {
       title:'新建工单（从工单列表选择）', open:newOrderOpen, okText:'创建并放入待下发', cancelText:'取消',
@@ -4752,7 +4976,7 @@ const NativeRouteConfig = ({value,onChange}) => {
   }));
   const chipGroup=(group,ids,labelOf=id=>id)=>React.createElement('div',{className:'ns-device-block'},
     React.createElement('div',{className:'ns-label'},group==='outlets'?'出料口启停':group==='sprays'?'喷码启停':'切割机启停'),
-    React.createElement('div',{className:'ns-chip-group'},ids.map(id=>React.createElement(Button,{key:id,size:'small',className:`ns-chip ${value[group][id]?'on':'off'}${id==='EM'?' em':''}`,onClick:()=>toggleNode(group,id)},labelOf(id))))
+    React.createElement('div',{className:'ns-chip-group'},ids.map(id=>React.createElement(KButton,{key:id,size:'small',className:`ns-chip ${value[group][id]?'on':'off'}${id==='EM'?' em':''}`,onClick:()=>toggleNode(group,id)},labelOf(id))))
   );
   const station=(id,type)=>{
     const [x,y]=NS_TOPO_POS[id],enabled=type==='spray'?value.sprays[id]:type==='machine'?value.machines[id]:value.outlets[id];
@@ -4765,7 +4989,7 @@ const NativeRouteConfig = ({value,onChange}) => {
       React.createElement('div',{className:'ns-split-left'},
         React.createElement('div',{className:'ns-mode-row'},React.createElement(Text,{strong:true},'运行模式'),
           React.createElement('div',{className:'ns-mode-btns'},
-            Object.entries(NS_ROUTE_MODES).map(([id,mode])=>React.createElement(Button,{key:id,size:'small',type:value.mode===id?'primary':'default',onClick:()=>applyMode(id)},mode.label))),
+            Object.entries(NS_ROUTE_MODES).map(([id,mode])=>React.createElement(KButton,{key:id,size:'small',type:value.mode===id?'primary':'default',onClick:()=>applyMode(id)},mode.label))),
           React.createElement('div',{className:'ns-mode-note'},value.mode==='custom'?'自定义：已根据现场需要手动调整设备或通路。':NS_ROUTE_MODES[value.mode].note)
         ),
         React.createElement('div',{className:'ns-config-controls'},
@@ -4775,7 +4999,7 @@ const NativeRouteConfig = ({value,onChange}) => {
       ),
       React.createElement('div',{className:'ns-split-right'},
         React.createElement('div',{className:'ns-device-row'},chipGroup('outlets',['E1','E2','EM'],id=>id==='EM'?'应急':id),chipGroup('sprays',['S1','S2']),chipGroup('machines',['C1','C2','C3'])),
-        React.createElement('div',{className:'ns-routes'},React.createElement('div',{className:'ns-label'},'工艺通路'),React.createElement('div',{className:'ns-chip-group'},visibleInfos.map(info=>React.createElement(Button,{key:info.id,size:'small',disabled:!info.allowed,className:`ns-chip ${info.active?'on':'off'}${info.name.includes('应急')?' em':''}`,onClick:()=>onChange({...value,mode:'custom',routes:value.routes.includes(info.id)?value.routes.filter(x=>x!==info.id):[...value.routes,info.id]})},info.name)))),
+        React.createElement('div',{className:'ns-routes'},React.createElement('div',{className:'ns-label'},'工艺通路'),React.createElement('div',{className:'ns-chip-group'},visibleInfos.map(info=>React.createElement(KButton,{key:info.id,size:'small',disabled:!info.allowed,className:`ns-chip ${info.active?'on':'off'}${info.name.includes('应急')?' em':''}`,onClick:()=>onChange({...value,mode:'custom',routes:value.routes.includes(info.id)?value.routes.filter(x=>x!==info.id):[...value.routes,info.id]})},info.name)))),
         React.createElement('div',{className:'ns-topology'},
           React.createElement('span',{className:'ns-zone out'},`出料口（${Object.values(value.outlets).filter(Boolean).length}）`),React.createElement('span',{className:'ns-zone spray'},`喷码工位（${Object.values(value.sprays).filter(Boolean).length}）`),React.createElement('span',{className:'ns-zone cut'},`切割机（${Object.values(value.machines).filter(Boolean).length}）`),
           React.createElement('svg',{viewBox:'0 0 1000 220',preserveAspectRatio:'none'},[...segmentMap.values()].sort((a,b)=>Number(a.active)-Number(b.active)).map(seg=>{const [x1,y1]=NS_TOPO_POS[seg.a],[x2,y2]=NS_TOPO_POS[seg.b],mid=(x1+x2)/2;return React.createElement('path',{key:`${seg.a}-${seg.b}`,className:seg.active?'':'off',d:`M${x1} ${y1} C${mid} ${y1},${mid} ${y2},${x2} ${y2}`});})),
@@ -4899,28 +5123,57 @@ const SchedulePage = ({targetDate,dispatchConfirm,onConfirmDispatch,onCancelDisp
     }));
   };
   /* 导入面板树：父级 = 切割包号（纯号，v99 用户要求），子级 = 套料版图（版图号·规格·长度·预估切割）。
-     勾父级=整包导入；scope 模式候选=全部，manual 模式=第一步已勾选的工单。 */
+     勾父级=整包导入；scope 模式候选=全部，manual 模式=第一步已勾选的工单。
+     v118（用户第9条）：① 父级行增加 计划时间 / 工艺规划状态 / 来源 三字段（与子级同款标签样式，一行展示）；
+     ② 弹框加 计划时间筛选 + 层级筛选 + 分页（右对齐、单页隐藏）；③ 内容宽固定防抖动 */
+  const [importPlanDate, setImportPlanDate] = useState('');
+  const [importDateInput, setImportDateInput] = useState(''); /* v124：输入暂存，点「查询」才生效 */
+  const [importPage, setImportPage] = useState(1);
+  const IMPORT_PAGE_SIZE = 8;
   const scopedPool=useMemo(()=>tasks.filter(t=>scopeKeys.includes(t.key)),[tasks,scopeKeys]);
   const importPool=importOpen==='manual' ? scopedPool : tasks;
-  const importTreeData=useMemo(()=>{
+  const importPkgEntries=useMemo(()=>{
     const byPkg={};
     importPool.forEach(t=>{ const pkg=t.sourcePackageNo||t.packageNo||'-'; (byPkg[pkg]=byPkg[pkg]||[]).push(t); });
-    /* v101：两级树（用户澄清）—— 切割包（父，带灰色「切割包」标签）→ 套料版图（子）；
-       v100 的「切割工单」中间层撤销（该调整针对手动配置，见 manualAssign）
-       v110（图五）：子级左侧加「套料版图号」标签，复用父级 wz-tree-pkg-tag 同款样式 */
-    return Object.entries(byPkg).map(([pkg,list])=>({
-      title:React.createElement('span',{className:'wz-tree-pkg'},
-        React.createElement('span',{className:'wz-tree-pkg-tag'},'切割包'),
-        React.createElement('span',{className:'wz-tree-pkg-id'},pkg)),
-      key:`pkg:${pkg}`,
-      children:list.flatMap(t=>nestListOf(t).map(n=>({
+    let entries=Object.entries(byPkg);
+    /* 计划时间筛选（取包内首个工单的 prodShift / 计划时间字段） */
+    if(importPlanDate) entries=entries.filter(([,list])=>(list[0].prodShift||list[0].scheduleDate||list[0].planDate||'').slice(0,10)===importPlanDate);
+    return entries;
+  },[importPool,importPlanDate]);
+  const importPageEntries=useMemo(()=>{
+    const start=(importPage-1)*IMPORT_PAGE_SIZE;
+    return importPkgEntries.slice(start,start+IMPORT_PAGE_SIZE);
+  },[importPkgEntries,importPage]);
+  useEffect(()=>{ setImportPage(1); },[importPlanDate,importOpen]);
+  const importTreeData=useMemo(()=>{
+    const meta=(t)=>({ date:(t.prodShift||t.scheduleDate||t.planDate||'-').toString().slice(0,10),
+      plan:t.planningStatus||t.planStatus||'-', src:t.source||t.sourceType||'-' });
+    const planLabel=(v)=>({NOT_STARTED:'未开始',PROCESSING:'进行中',PROCESS_DONE_WAIT_PLAN:'待规划',PLANNING:'规划中',PLAN_DONE_WAIT_MIGRATE:'待迁移',MIGRATING:'迁移中',MIGRATED:'已完成'}[v]||v);
+    /* v101：两级树 —— 切割包（父）→ 套料版图（子）；父级行带 计划时间/工艺规划状态/来源（v118） */
+    const rows=importPageEntries.map(([pkg,list])=>{
+      const m=meta(list[0]||{});
+      const parent={
+        title:React.createElement('span',{className:'wz-tree-pkg'},
+          React.createElement('span',{className:'wz-tree-pkg-tag'},'切割包'),
+          React.createElement('span',{className:'wz-tree-pkg-id'},pkg),
+          React.createElement('span',{className:'wz-tree-meta'},
+            React.createElement('span',{className:'wz-tree-pkg-tag'},'计划时间'),
+            React.createElement('span',{className:'wz-tree-pkg-id'},m.date),
+            React.createElement('span',{className:'wz-tree-pkg-tag'},'工艺规划状态'),
+            React.createElement('span',{className:'wz-tree-pkg-id'},planLabel(m.plan)),
+            React.createElement('span',{className:'wz-tree-pkg-tag'},'来源'),
+            React.createElement('span',{className:'wz-tree-pkg-id'},m.src))),
+        key:`pkg:${pkg}`,
+      };
+      return {...parent, children:list.flatMap(t=>nestListOf(t).map(n=>({
         title:React.createElement('span',{className:'wz-tree-pkg'},
           React.createElement('span',{className:'wz-tree-pkg-tag'},'套料版图号'),
           React.createElement('span',{className:'wz-tree-pkg-id'},`${n.nestNo} · ${n.spec} · ${n.length} mm · ${n.cutTime}s`)),
         key:`nest:${n.key}`,
-      }))),
-    }));
-  },[importPool]);
+      })))};
+    });
+    return rows;
+  },[importPageEntries]);
   const nestLeaves=importChecked.filter(k=>String(k).startsWith('nest:'));
   /* nest: key → taskKey（`${taskKey}::nestX` 的前段） */
   const nestTaskKeyOf=k=>String(k).slice(5).split('::')[0];
@@ -5055,7 +5308,7 @@ const SchedulePage = ({targetDate,dispatchConfirm,onConfirmDispatch,onCancelDisp
     {title:'套料总数',dataIndex:'materialCount',width:100,align:'center',render:v=>`${v} 根`},
     {title:'预估切割时间',dataIndex:'cutTime',width:120,render:v=>`${Math.round(v)} s`},
     /* v79：删除走二次确认（SchedulePage 本轮已补 modal hook） */
-    {title:'操作',width:52,render:(_,task)=>React.createElement(Button,{size:'small',type:'link',danger:true,
+    {title:'操作',width:52,render:(_,task)=>React.createElement(KButton,{size:'small',type:'link',danger:true,
       onClick:()=>dangerConfirm(modal,{title:'删除工单',content:`确定删除 ${task.taskNo} 吗？删除后不可恢复。`,
         /* v112：删除补 toast（全站关键操作反馈统一） */
         onOk:()=>{setTasks(prev=>prev.filter(item=>item.key!==task.key));msg.success(`工单 ${task.taskNo} 已删除`);}})},'删除')},
@@ -5080,9 +5333,28 @@ const SchedulePage = ({targetDate,dispatchConfirm,onConfirmDispatch,onCancelDisp
     })),
     React.createElement('div',{className:'ns-gantt-legend'},scopedTasks.map((task,index)=>React.createElement('span',{key:task.key},React.createElement('i',{style:{background:wizColorMap[task.taskNo]}}),task.taskNo)))
   );
+  /* v119（用户第4条）：库区分配独立区域（甘特图下方）—— 展示各目标库区已分配根数；
+     演示口径：按排产套料总数 45%/55% 拆分到 库区2/库区3，格式「库区N:xx根」 */
+  const zoneAlloc = (() => {
+    const total = Math.max(1, Math.round(totalProfiles));
+    const a = Math.round(total*0.45);
+    return [{ name:'库区2', count:a }, { name:'库区3', count:total-a }];
+  })();
+  const zoneAllocBlock = React.createElement('div',{style:{marginTop:16}},
+    React.createElement('div',{className:'ns-expanded-heading is-secondary'},
+      React.createElement('span',null,'库区分配')),
+    React.createElement('div',{style:{display:'flex',gap:12,flexWrap:'wrap'}},
+      zoneAlloc.map(z=>React.createElement('div',{key:z.name,
+          style:{flex:'0 0 auto',minWidth:200,padding:'12px 16px',background:'#fafafa',
+            border:'1px solid #f0f0f0',borderRadius:8,display:'flex',alignItems:'baseline',gap:10}},
+        React.createElement('span',{style:{fontSize:14,color:'rgba(0,0,0,0.65)'}},z.name),
+        React.createElement('span',{style:{fontSize:20,fontWeight:600,color:'#EE6402',fontVariantNumeric:'tabular-nums'}},
+          `${z.count}`),
+        React.createElement('span',{style:{fontSize:14,color:'rgba(0,0,0,0.45)'}},'根'))))
+  );
   const swapRows=['C1-long-L','C1-long-R','C2-long-L','C2-long-R','C3-long-L','C3-long-R'].map((pallet,index)=>({key:pallet,pallet,pass:index%2?'H1,H3':'G1,H1,H3',parts:[62,55,65,27,74,46][index],rough:[2,0,1,0,0,0][index],fine:[2,2,1,0,0,0][index]}));
   const expanded=React.createElement('div',null,
-    React.createElement('div',{className:'ns-expanded-heading'},React.createElement('span',null,'切割工单清单'),React.createElement(Button,{onClick:exportOrders},'导出')),
+    React.createElement('div',{className:'ns-expanded-heading'},React.createElement('span',null,'切割工单清单'),React.createElement(KButton,{onClick:exportOrders},'导出')),
     orderTable,
     React.createElement('div',{className:'ns-expanded-heading is-secondary'},React.createElement('span',null,'换盘次数统计')),
     React.createElement(Row,{gutter:12,style:{marginBottom:12}},[{l:'总套盘零件数',v:Math.round(totalProfiles*1.06)},{l:'粗分总换盘次数',v:3},{l:'细分总换盘次数',v:5},{l:'细分 / 粗分倍数',v:'1.7×'}].map(item=>React.createElement(Col,{span:6,key:item.l},React.createElement(Statistic,{title:item.l,value:item.v,valueStyle:{fontSize:18}})))),
@@ -5193,7 +5465,7 @@ const SchedulePage = ({targetDate,dispatchConfirm,onConfirmDispatch,onCancelDisp
     {title:'零件数', dataIndex:'partsTotal', width:90, align:'center'},
     {title:'预估切割(s)', dataIndex:'cutTotal', width:120, align:'right'},
     {title:'操作', width:70,
-      render:(_,row)=>React.createElement(Button,{size:'small',type:'link',danger:true,
+      render:(_,row)=>React.createElement(KButton,{size:'small',type:'link',danger:true,
         onClick:e=>{ e.stopPropagation(); removeScopeOrder(row.key); }},'移除')},
   ];
   const step0=React.createElement('section',{className:'wz-card'},
@@ -5203,7 +5475,7 @@ const SchedulePage = ({targetDate,dispatchConfirm,onConfirmDispatch,onCancelDisp
         React.createElement('span',{className:'wz-card-title'},'选择本次排产的切割工单'),
         React.createElement('span',{className:'wz-card-sub'},`共 ${importedKeys.length} 个工单 · 已选 ${scopeKeys.length} 个 · ${totalProfiles} 根型材`)
       ),
-      React.createElement(Button,{type:'primary',onClick:()=>{
+      React.createElement(KButton,{type:'primary',onClick:()=>{
         setImportChecked(scopeKeys); setImportOpen('scope');
       }},'创建工单')
     ),
@@ -5277,9 +5549,9 @@ const SchedulePage = ({targetDate,dispatchConfirm,onConfirmDispatch,onCancelDisp
                   : React.createElement('span',{className:'cnt'},`${doneCount}/${profs.length}`));
             }),
             React.createElement('span',{className:'wz-count-links'},
-              React.createElement(Button,{size:'small',type:'link',
+              React.createElement(KButton,{size:'small',type:'link',
                 onClick:()=>setMPicked(prev=>[...new Set([...prev,...mVisible.map(r=>r.key)])])},'全选当前列表'),
-              React.createElement(Button,{size:'small',type:'link',disabled:!mPicked.length,
+              React.createElement(KButton,{size:'small',type:'link',disabled:!mPicked.length,
                 onClick:()=>{const vis=new Set(mVisible.map(r=>r.key));setMPicked(prev=>prev.filter(k=>!vis.has(k)));}},'清空选择'))),
           mVisible.length ? React.createElement('div',{className:'wz-pool-rows'},
               mVisible.map(r=>React.createElement('div',{key:r.key,
@@ -5328,7 +5600,7 @@ const SchedulePage = ({targetDate,dispatchConfirm,onConfirmDispatch,onCancelDisp
         React.createElement(Checkbox,{style:{marginTop:12},
           checked:mSkipRoute,
           onChange:e=>{setMSkipRoute(e.target.checked);if(e.target.checked){setMRoute({outlet:'',spray:'',machine:''});}}},'不指定工位'),
-        React.createElement(Button,{block:true,style:{marginTop:12},type:'primary',
+        React.createElement(KButton,{block:true,style:{marginTop:12},type:'primary',
           /* v107：默认始终可点击（0 根时点击由 mApplyRoute 内部兜底 return），
              仅当全部型材配置完成后才置灰（用户图三红框） */
           disabled:allRoutesDone,onClick:mApplyRoute},`应用到 ${mPicked.length} 根型材`)
@@ -5443,7 +5715,7 @@ const SchedulePage = ({targetDate,dispatchConfirm,onConfirmDispatch,onCancelDisp
               ]})
           ),
           /* v112（用户第4条图五）：「导出」为三个 Tab 共用，切换 Tab 始终显示 */
-          React.createElement(Button,{onClick:exportOrders},React.createElement('span',null,'导出'))
+          React.createElement(KButton,{onClick:exportOrders},React.createElement('span',null,'导出'))
         ),
         React.createElement('div',{className:'wz-card-body'},
           calcTab==='calc' && React.createElement(React.Fragment,null,
@@ -5454,7 +5726,9 @@ const SchedulePage = ({targetDate,dispatchConfirm,onConfirmDispatch,onCancelDisp
               ))
             ),
             React.createElement('div',{className:'wz-sub-title'},'切割机甘特'),
-            gantt
+            gantt,
+            /* v119（用户第4条）：库区分配独立区域（甘特图下方红框处） */
+            zoneAllocBlock
           ),
           /* 切割工单清单：字段口径与设计稿一致（名称/来源切割包/切割机/型材数/零件数/预估切割）
              v109（图一）：节标题行「切割工单清单 + 导出」删除 —— 标题与首个 Tab 重名，导出已上移卡头 */
@@ -5483,7 +5757,7 @@ const SchedulePage = ({targetDate,dispatchConfirm,onConfirmDispatch,onCancelDisp
         ),
         React.createElement('div',{className:'wz-card-body'},
           ...adjustGroups,
-          React.createElement(Button,{
+          React.createElement(KButton,{
             className:'wz-recalc', block:true,
             onClick:()=>msg.success('已按手动调整结果重新排产'),
           },React.createElement('span',null,'重新计算'))
@@ -5492,13 +5766,14 @@ const SchedulePage = ({targetDate,dispatchConfirm,onConfirmDispatch,onCancelDisp
     )
   );
 
+  /* v123（向导第2条）：「取消」按钮整体上移到面包屑位置（文案改「取消新建排产」、橙实底 + 向左线性图标），
+     footer 只保留 步骤提示 / 上一步 / 主按钮 */
   const wzFooter=React.createElement('div',{className:'wz-footer'},
-    React.createElement(Button,{onClick:()=>onNavigate&&onNavigate('sched-plan-list')},React.createElement('span',null,'取消')),
     React.createElement('div',{style:{flex:'1 1 auto'}}),
     React.createElement('span',{className:'wz-step-hint'},`第 ${step+1} 步，共 3 步`),
-    step>0 && React.createElement(Button,{onClick:()=>setStep(step-1)},React.createElement('span',null,'上一步')),
+    step>0 && React.createElement(KButton,{onClick:()=>setStep(step-1)},React.createElement('span',null,'上一步')),
     step<2
-      ? React.createElement(Button,{type:'primary',disabled:step===0&&!scopeKeys.length,onClick:()=>{
+      ? React.createElement(KButton,{type:'primary',disabled:step===0&&!scopeKeys.length,onClick:()=>{
           if(step===0&&!scopeKeys.length){ msg.warning('请至少选择一个切割工单'); return; }
           /* v111（用户第4条）：第二步配置未完成时禁止进入第三步，并给出明确提示 */
           if(step===1&&planMode==='manual'&&mProfiles.length&&mAssignedCount<mProfiles.length){
@@ -5508,13 +5783,13 @@ const SchedulePage = ({targetDate,dispatchConfirm,onConfirmDispatch,onCancelDisp
           if(step===1){ msg.success('已按当前配置计算完成，请核对结果'); }
           setStep(step+1);
         }},React.createElement('span',null, step===1?'计算排产':'下一步'))
-      : React.createElement(Button,{type:'primary',onClick:()=>{
+      : React.createElement(KButton,{type:'primary',onClick:()=>{
           msg.success(`排产 ${scheduleNo} 已保存`);
           if(onNavigate) setTimeout(()=>onNavigate('sched-plan-list'),420);
         }},React.createElement('span',null,'保存'))
   );
 
-  const dispatchAlert=dispatchConfirm&&React.createElement(Alert,{type:'info',showIcon:true,style:{marginBottom:10},message:`已选择 ${dispatchConfirm.orders.length} 个切割工单，可继续调整后确认下发。`,action:React.createElement(Space,null,React.createElement(Button,{onClick:onCancelDispatch},'取消'),React.createElement(Button,{type:'primary',onClick:()=>onConfirmDispatch?.(dispatchConfirm)},'确认下发'))});
+  const dispatchAlert=dispatchConfirm&&React.createElement(Alert,{type:'info',showIcon:true,style:{marginBottom:10},message:`已选择 ${dispatchConfirm.orders.length} 个切割工单，可继续调整后确认下发。`,action:React.createElement(Space,null,React.createElement(KButton,{onClick:onCancelDispatch},'取消'),React.createElement(KButton,{type:'primary',onClick:()=>onConfirmDispatch?.(dispatchConfirm)},'确认下发'))});
   /* v63：导入工单面板 —— 父级（切割包）/ 子级（切割工单）树形多选；
      勾父级 = 整包导入，跨包可多选。scope=第一步勾选范围，manual=第二步导入型材。 */
   const importModal=React.createElement(Modal,{
@@ -5527,12 +5802,36 @@ const SchedulePage = ({targetDate,dispatchConfirm,onConfirmDispatch,onCancelDisp
     /* v100：标题下方动态备注（用户第2条）——底部原提示文字段删除 */
     React.createElement('div',{style:{marginBottom:10,fontSize:13,color:'rgba(0,0,0,0.65)'}},
       '已选中 ',React.createElement('span',{style:{color:'#EE6402',fontWeight:600}},`${nestLeaves.length}`),' 条'),
-    /* v101：树容器固定高度（用户第1条）—— 展开收起高度不变，超出滚动 */
+    /* v118（用户第9条）筛选行；v124（用户图三）：「全部层级」控件删除，改规范「查询/重置」按钮组 ——
+       输入暂存 importDateInput，点查询才提交（与列表页工具栏同交互），重置双清 */
+    React.createElement('div',{style:{display:'flex',alignItems:'center',gap:10,marginBottom:10}},
+      React.createElement(DatePicker,{
+        value: importDateInput ? dayjs(importDateInput) : null, allowClear:true,
+        format:'YYYY-MM-DD', placeholder:'按计划时间筛选', style:{width:180},
+        onChange: d => setImportDateInput(d ? d.format('YYYY-MM-DD') : ''),
+      }),
+      React.createElement(KButton,{size:'small',style:{width:90},onClick:()=>{
+        if(!importDateInput){ msg.warning('请先选择计划时间后再查询'); return; }
+        setImportPlanDate(importDateInput);
+      }},React.createElement('span',null,'查询')),
+      React.createElement(KButton,{size:'small',style:{width:62},
+        disabled: !importDateInput && !importPlanDate,
+        onClick:()=>{ setImportDateInput(''); setImportPlanDate(''); },
+      },React.createElement('span',null,'重置'))
+    ),
+    /* v101：树容器固定高度（防抖动） */
     React.createElement('div',{style:{border:'1px solid #f0f0f0', borderRadius:6, padding:'8px 12px', height:340, overflowY:'auto', overflowX:'auto'}},
       React.createElement(Tree,{
         checkable:true, selectable:false,
+        key: 'imp'+importPage+':'+importPlanDate,   /* 翻页/查询后重挂，展开态一致防抖 */
         treeData:importTreeData, checkedKeys:importChecked,
         onCheck:keys=>setImportChecked(keys),
+      })),
+    /* v118（用户第9条）：分页 —— 右对齐、单页隐藏（规范） */
+    React.createElement('div',{style:{display:'flex',justifyContent:'flex-end',marginTop:12}},
+      React.createElement(Pagination,{
+        current:importPage, pageSize:IMPORT_PAGE_SIZE, total:importPkgEntries.length,
+        onChange:p=>setImportPage(p), hideOnSinglePage:true, showSizeChanger:false,
       }))
   );
   return React.createElement('div',{className:'page-content ns-page wz-page'},
@@ -5813,6 +6112,12 @@ const SchedPlanListPage = ({onNavigate, onOpenDispatchConfirm}) => {
   const [editForm] = Form.useForm();
   const [prodDateFilter, setProdDateFilter] = useState('');
   const [prodDateInput, setProdDateInput] = useState('');
+  /* v120（V1.0.3 设计稿 1836:409833）：工具栏双时间查询 —— 创建时间（createdAt 日期部分）
+     与生产时间（prodDate）各一框；卡片流分页（左栏底部分页行） */
+  const [createdDateFilter, setCreatedDateFilter] = useState('');
+  const [createdDateInput, setCreatedDateInput] = useState('');
+  const [cardPage, setCardPage] = useState(1);
+  const [cardSize, setCardSize] = useState(10);
   /* ── v46 双栏布局新增状态（与计划列表同名同义，便于对照维护）──
      activePlanKey = 左侧当前「查看」的排产（点卡片切换，右侧显示它的切割工单）
      （v67：pickKeys 已随复选框功能一并删除）
@@ -5889,9 +6194,12 @@ const SchedPlanListPage = ({onNavigate, onOpenDispatchConfirm}) => {
     ));
   }, [detailData]);
   useEffect(()=>{ window.__SCHED_PLAN_LIST=list; },[list]);
-  const dateFilteredList = useMemo(() => prodDateFilter
-    ? list.filter(item => (item.packages||[]).some(pkg=>(pkg.profileGroups||[]).some(group=>group.prodDate===prodDateFilter)))
-    : list, [list, prodDateFilter]);
+  /* v120：创建时间（createdAt 前 10 位日期）+ 生产时间（prodDate）双筛选，两者叠加生效 */
+  const dateFilteredList = useMemo(() => list.filter(item => {
+    if (createdDateFilter && String(item.createdAt || '').slice(0,10) !== createdDateFilter) return false;
+    if (prodDateFilter && !(item.packages||[]).some(pkg=>(pkg.profileGroups||[]).some(group=>group.prodDate===prodDateFilter))) return false;
+    return true;
+  }), [list, createdDateFilter, prodDateFilter]);
   /* v46：页签 + 顶部筛选的合并结果在下方 visiblePlans 里算（要再叠加切割机 / 来源筛选与排序），
      原来只看页签的 filteredList 已并入其中，不再单独保留一份 */
   const deleteRow = (r) => {
@@ -5925,10 +6233,10 @@ const SchedPlanListPage = ({onNavigate, onOpenDispatchConfirm}) => {
   };
   const showProductionStatus = (r) => {
     const cfg = SCHED_PRODUCTION_STATUS[r.productionStatus] || SCHED_PRODUCTION_STATUS.PENDING;
-    modal.info({
+    /* v121：提示类弹框改走 KBConfirmHost（footer 只留一个主操作「知道了」，规范结构） */
+    window.__kbAlert({
       title:`生产状态 — ${r.schedNo}`,
       content:React.createElement(Tag,{color:cfg.color},cfg.label),
-      okText:'关闭', closable:true,
     });
   };
   const saveEdit = () => {
@@ -5949,16 +6257,8 @@ const SchedPlanListPage = ({onNavigate, onOpenDispatchConfirm}) => {
     const dates = (plan.packages||[]).flatMap(pkg=>(pkg.profileGroups||[]).map(g=>g.prodDate)).filter(Boolean);
     return dates.length ? dates.slice().sort()[0] : '';
   };
-    /* v98：入库状态改 Tag 四态（未开始=灰 / 未完成=橙 / 已完成=绿 / 异常=红，antd Tag 语义色规范）。
-       v108：随「入库状态」字段恢复（用户第2条）；v115：bordered:false 全站状态标签去描边 */
-  const inboundTagOf = (plan) => {
-    if (plan.inboundAbnormal) return React.createElement(Tag,{color:'error',bordered:false,style:{margin:0}},'异常');
-    const done = Number(plan.stockReady) || 0;
-    const total = Number(plan.profileCount) || 0;
-    const label = done<=0 ? '未开始' : (done<total ? '未完成' : '已完成');
-    const color = label==='已完成' ? 'success' : (label==='未完成' ? 'warning' : 'default');
-    return React.createElement(Tag,{color, bordered:false, style:{margin:0}}, label);
-  };
+  /* v118：入库状态 Tag 四态（inboundTagOf）已删 —— 卡片改数字 xx/50（用户第3条），
+     右面板头改 已入库/未入库 文本（用户第8条），两处均为纯文本渲染 */
   const machineOptions = useMemo(()=>[...new Set(list.flatMap(p=>p.machines||[]))].sort(), [list]);
   const sourceOptions  = useMemo(()=>[...new Set(list.map(p=>p.source).filter(Boolean))], [list]);
   /* 页签 → 切割机 → 来源 → 排序，四步都只作用在展示层，不动 list 原始数据 */
@@ -5973,6 +6273,13 @@ const SchedPlanListPage = ({onNavigate, onOpenDispatchConfirm}) => {
     const sorted = [...tabList].sort((a,b)=>String(keyOf(a)).localeCompare(String(keyOf(b))));
     return sortAsc ? sorted : sorted.reverse();
   }, [tabList, sortField, sortAsc]);
+  /* v120：页签计数（V1.0.3 设计稿 Tab 文案自带「（N）」）+ 卡片流分页切片 */
+  const readyCount = dateFilteredList.filter(i=>i.status==='READY').length;
+  const dispatchedCount = dateFilteredList.filter(i=>i.status==='DISPATCHED').length;
+  const pagedPlans = useMemo(() =>
+    visiblePlans.slice((cardPage-1)*cardSize, cardPage*cardSize),
+    [visiblePlans, cardPage, cardSize]);
+  useEffect(() => { setCardPage(1); }, [schedTab, sortField, sortAsc, createdDateFilter, prodDateFilter, machineFilter, sourceFilter]);
   /* 当前查看的排产：点左卡片切换；切页签 / 筛选后自动落到首个 */
   const activePlan = visiblePlans.find(p => p.key === activePlanKey) || visiblePlans[0] || null;
   /* 右侧表格的行 = 当前排产下的切割工单（图二 7 列 + 复选列）；
@@ -6089,11 +6396,11 @@ const SchedPlanListPage = ({onNavigate, onOpenDispatchConfirm}) => {
      现就地弹确认，OK 后复制 confirmDispatch(mode:'full') 的落库逻辑
      （__PENDING_PROCESSING_ORDERS + __SCHED_PLAN_LIST）+ 本地 list 同步，不再切页。 */
   const revokePlan = (plan) => {
-    modal.confirm({
-      /* v111（用户第5条）：标题 = 排产编号 + 撤回 */
-      title:`${plan.schedNo} 撤回`,
+    window.__kbConfirm({
+      /* v117（用户图三）：撤回确认弹框统一标题「撤回」，编号保留在说明文案里 */
+      title:'撤回',
       content:`确认撤回排产 ${plan.schedNo}？撤回后将回到预排产状态。`,
-      okText:'确认撤回', cancelText:'取消', closable:true,
+      okText:'确认撤回', cancelText:'取消', closable:true, maskClosable:false,
       onOk:()=>{
         window.__SCHED_PLAN_LIST=(window.__SCHED_PLAN_LIST||[]).map(p=>p.key===plan.key?{...p,status:'READY',productionStatus:'PENDING'}:p);
         setList(prev=>prev.map(p=>p.key===plan.key?{...p,status:'READY',productionStatus:'PENDING'}:p));
@@ -6103,10 +6410,10 @@ const SchedPlanListPage = ({onNavigate, onOpenDispatchConfirm}) => {
   };
   const dispatchPlan = (plan) => {
     if (!plan || plan.status !== 'READY') { msg.warning('该排产已下发，不能重复下发'); return; }
-    modal.confirm({
+    window.__kbConfirm({
       title:'下发任务',
       content:`确认下发排产 ${plan.schedNo}？下发后将生成出库任务。`,
-      okText:'确认下发', cancelText:'取消', closable:true,
+      okText:'确认下发', cancelText:'取消', closable:true, maskClosable:false,
       onOk:()=>{
         window.__PENDING_PROCESSING_ORDERS=[...(window.__PENDING_PROCESSING_ORDERS||[]),...(plan.packages||[])];
         window.__SCHED_PLAN_LIST=(window.__SCHED_PLAN_LIST||[]).map(item=>item.key===plan.key?{...item,status:'DISPATCHED',productionStatus:'PENDING'}:item);
@@ -6146,13 +6453,14 @@ const SchedPlanListPage = ({onNavigate, onOpenDispatchConfirm}) => {
   /* v85：操作列从比例列改为**固定宽**（对齐计划列表 opColW 固定 112 的做法）——
      两个 antd 链接按钮（14px 字 + 7px 按钮内边距 = 70/个）+ Space 间距 4 = 144 内容宽，
      比例列 121 连单元格内边距都装不下，曾把两入口挤成两行。其余 7 列按原设计稿比例分摊。 */
-  const DESIGN_COL_SUM = 1093;   /* 其余 7 列合计（原 1214 − 操作列 121） */
-  const DESIGN_COLS = { name:247, pkg:127, date:153, machine:168, queue:146, total:112, cut:140 };
+  const DESIGN_COL_SUM = 1225;   /* 其余 8 列合计（v125 inb 100→132：原 1193 − 100 + 132） */
+  /* v119（用户第3条）：入库状态列加入工单表 —— DESIGN_COLS/MIN_COLS/SUM 同步扩展 */
+  const DESIGN_COLS = { name:247, pkg:127, date:153, machine:168, queue:146, total:112, cut:140, inb:132 }; /* v125：inb 100→132（标签「已入库」+表头完整放下） */
   /* v96：每列最小可读宽 —— 窄视口下比例压缩的触底值（再压表头就截成「预估切割时…」，
      用户红框）。触底后不再硬压，总宽超出容器即横向滚动、操作列固定右侧
      （对齐 L6736 套料详情表「保留 1000px 可读下限」的既有策略）；
      操作列钉住时 antd 会在其左缘自动渲染分隔投影（.ant-table-ping-right）。 */
-  const MIN_COLS = { name:150, pkg:104, date:95, machine:70, queue:90, total:90, cut:132 };
+  const MIN_COLS = { name:150, pkg:104, date:95, machine:70, queue:90, total:90, cut:132, inb:96 }; /* v125：76→96 */
   const OP_COL_W = 164;          /* 操作列固定宽：144 内容 + 左右 8×2 内边距 + 余量 */
   /* antd 在「有竖向滚动条」时会追加一列 8px 的 .ant-table-cell-scrollbar，
      这 8px 也算在表格总宽里 —— 不扣掉的话列宽合计会比表体多 8，冒出一条横向滚动条 */
@@ -6232,6 +6540,19 @@ const SchedPlanListPage = ({onNavigate, onOpenDispatchConfirm}) => {
     /* 表头已经带了 (s)，单元格只放数字 —— 与设计稿一致（原来写「365 s」会重复单位） */
     { title:'预估切割时间(s)', dataIndex:'cutTime', width:colW('cut'), ellipsis:{showTitle:false},
       render:v => v==null ? '-' : `${Math.round(Number(v)||0)}` },
+    /* v119（用户第3条）：入库状态列 —— 每行 已入库/未入库（按该工单 stockReady 是否达到 profileCount）；
+       补位行沿用基准行值 */
+    /* v119（用户第3条）：入库状态列入工单表；v125（用户图二）：改规范状态标签 ——
+       已入库 = 绿 #f6ffed/#52c41a、未入库 = 灰 #f5f5f5/#595959，均 bordered:false 无描边 */
+    { title:'入库状态', key:'inb', width:colW('inb'),
+      render:(_,row)=>{
+        const done=(Number(row.stockReady)||0), total=(Number(row.profileCount)||0);
+        const inb = total>0 && done>=total;
+        if(String(row.key||'').includes('#fill')) return null;
+        return React.createElement(Tag,{bordered:false, style: inb
+          ? {background:'#f6ffed', color:'#52c41a', marginInlineEnd:0}
+          : {background:'#f5f5f5', color:'#595959', marginInlineEnd:0}}, inb?'已入库':'未入库');
+      } },
     /* 操作列（设计要求保留）：点开只展示这一条切割工单下的套料/零件。
        补位行（key 带 #fill）没有真实工单，不给入口，避免点出一张空抽屉。
        v85：样式对齐计划列表操作列 —— antd 链接按钮（size small + type link，
@@ -6241,7 +6562,7 @@ const SchedPlanListPage = ({onNavigate, onOpenDispatchConfirm}) => {
        antd 自动在钉住列左缘显示分隔投影。补位行（key 带 #fill）没有真实工单，不给入口。 */
     { title:'操作', key:'op', width:OP_COL_W, fixed:'right', className:'sched-op-col',
       render:(_,row)=> String(row.key||'').includes('#fill') ? null
-    : React.createElement(Button,{size:'small',type:'link',onClick:()=>openGroupDetail(row)},
+    : React.createElement(KButton,{size:'small',type:'link',onClick:()=>openGroupDetail(row)},
         React.createElement('span',null,'详情')) },
   ];
   /* v83：表头 th 的原生 title（悬停列名出黑色气泡）一并清除 —— ellipsis:{showTitle:false}
@@ -6268,8 +6589,8 @@ const SchedPlanListPage = ({onNavigate, onOpenDispatchConfirm}) => {
           React.createElement('div',{className:'plan-card-info'},
             React.createElement('span',{className:'plan-card-folder'}, isActive ? folderIcon : folderClosedIcon),
             React.createElement('span',{className:'plan-card-k'},'排产编号'),
-            React.createElement('span',{className:'plan-card-no',title:plan.schedNo},plan.schedNo),
-            React.createElement('span',{className:'plan-card-stamp',title:plan.createdAt||''},plan.createdAt || '-')
+            React.createElement('span',{className:'plan-card-no',title:plan.schedNo},plan.schedNo)
+            /* v119（用户第2条）：卡片头创建时间删除（恢复右面板头时间展示） */
           ),
           React.createElement('span',{className:'plan-card-acts'},
             React.createElement(Tooltip,{
@@ -6302,7 +6623,8 @@ const SchedPlanListPage = ({onNavigate, onOpenDispatchConfirm}) => {
           ),
           React.createElement('span',{className:'plan-card-cell'},
             React.createElement('span',{className:'plan-card-lb'},'入库状态'),
-            React.createElement('span',{className:'plan-card-vl'},inboundTagOf(plan))
+            /* v118（用户第3条）：入库状态改数字形式「xx/50」（xx=已入库根数），主色橙 #EE6402 */
+            React.createElement('span',{className:'plan-card-vl plan-card-inb'},`${Number(plan.stockReady)||0}/${Number(plan.profileCount)||0}`)
           )
         ),
         React.createElement('div',{className:'plan-card-row is-split'},
@@ -6327,27 +6649,26 @@ const SchedPlanListPage = ({onNavigate, onOpenDispatchConfirm}) => {
            编辑=铅笔描边 / 下发任务=纸飞机橙实底 / 撤回=回退箭头描边；
            仅替换按钮样式，点击行为与卡片其余样式不变；提示走全站 Tooltip（不用原生 title） */
       React.createElement('div',{className:'plan-card-foot'},
+        /* v117（用户红框）：卡片操作钮由纯图标 24×24 改为「图标+文字」（撤回/编辑/下发），
+           文字 12px 跟随图标色；Tooltip 随文字展示一并移除 */
         plan.status==='DISPATCHED'
-          ? React.createElement(Tooltip,{title:'撤回', placement:'top', arrow:false, mouseEnterDelay:0.12},
-              React.createElement('button',{
+          ? React.createElement('button',{
                   type:'button', className:'plan-ibtn', 'aria-label':`撤回排产 ${plan.schedNo}`,
                   onClick: e => { e.stopPropagation(); revokePlan(plan); },
-                },LIST_ICONS.undo))
+                },LIST_ICONS.undo,React.createElement('span',{className:'plan-ibtn-txt'},'撤回'))
           : React.createElement(React.Fragment,null,
               /* v104：「编辑」改为跳转新建排产第三步预览（用户第5条），不再打开排产编辑队列弹窗 */
-              React.createElement(Tooltip,{title:'编辑', placement:'top', arrow:false, mouseEnterDelay:0.12},
-                React.createElement('button',{
+              React.createElement('button',{
                     type:'button', className:'plan-ibtn', 'aria-label':`编辑排产 ${plan.schedNo}`,
                     onClick: e => { e.stopPropagation(); openWizardPrefill(plan); },
-                  },LIST_ICONS.pencil)),
+                  },LIST_ICONS.pencil,React.createElement('span',{className:'plan-ibtn-txt'},'编辑')),
               /* v105：二次确认收敛到 dispatchPlan 内部（原 v104 按钮层 dangerConfirm + v105 函数层
                  会叠两层确认）；确认后停留当前页不跳转（用户第4条） */
-              React.createElement(Tooltip,{title:'下发任务', placement:'top', arrow:false, mouseEnterDelay:0.12},
-                React.createElement('button',{
+              React.createElement('button',{
                     type:'button', className:'plan-ibtn is-primary', 'aria-label':`下发排产 ${plan.schedNo}`,
                     disabled: plan.status!=='READY',
                     onClick: e => { e.stopPropagation(); dispatchPlan(plan); },
-                  },LIST_ICONS.send)))
+                  },LIST_ICONS.send,React.createElement('span',{className:'plan-ibtn-txt'},'下发')))
       )
     );
   };
@@ -6479,76 +6800,93 @@ const SchedPlanListPage = ({onNavigate, onOpenDispatchConfirm}) => {
 
     React.createElement('div',{className:'plan-shell'},
 
-      /* ① 顶部工具栏（v54 按新稿 1552:413441 重排）：
-            计划列表 80 + 创建时间 sorter + 1px 竖线 + 日期 226 + 查询 90 / 重置 62 + 占位 + 新建 132。
-            v49 加的「生产日期」sorter 与「切割机 / 来源」两个 Select 是设计稿里没有的控件，整体摘除
-            （sortField / machineFilter / sourceFilter 的状态机保留，行为上相当于不做二次筛选）；
-            日期筛选的语义按设计稿 placeholder 对齐为「按创建时间查询」。
-            ⚠ 若后续要找回筛选入口，从 git/归档里恢复 5188 起的旧块即可。 */
+      /* ① 顶部工具栏：v122（用户图一）—— 两页统一恢复左连排「标题 → 新建 → 竖线 → 双时间查询 → 查询/重置」；
+            唯一保留的右侧改动：「工艺规划队列」margin-left:auto 推到卡片最右端 */
       React.createElement('div',{className:'plan-head'},
-        React.createElement('span',{className:'plan-head-title'},'计划列表'),
-        React.createElement('div',{
-            className:'plan-sorter' + (sortField==='createdAt' ? ' is-active' : ''),
-            onClick:()=>toggleSort('createdAt'),
-          },
-          React.createElement('span',null,'创建时间'),
-          React.createElement('span',{className:'plan-sorter-ico'},
-            caretIco('up', sortField==='createdAt' && sortAsc),
-            caretIco('down', sortField==='createdAt' && !sortAsc)
-          )
-        ),
+        React.createElement('span',{className:'plan-head-title'},'排产列表'),
+        React.createElement('div',{className:'plan-head-gap'}),
+        React.createElement(KButton,{type:'primary',style:{width:132},onClick:()=>{
+          /* 此入口必须切页；用直接调用而不是可选调用，避免回调遗漏时点击静默失效 */
+          onNavigate('new-sched-plan');
+        }},React.createElement('span',{style:{display:'inline-flex',alignItems:'center',gap:8}},
+          fileAddIcon, React.createElement('span',null,'新建预排产'))),
         React.createElement('span',{className:'plan-head-divider','aria-hidden':true}),
         React.createElement(DatePicker,{
-          value: prodDateInput ? dayjs(prodDateInput) : null, style:{width:226}, allowClear:false,
+          value: createdDateInput ? dayjs(createdDateInput) : null, style:{width:170}, allowClear:false,
           format:'YYYY-MM-DD', placeholder:'按创建时间查询',
+          onChange: d => setCreatedDateInput(d ? d.format('YYYY-MM-DD') : ''),
+        }),
+        React.createElement(DatePicker,{
+          value: prodDateInput ? dayjs(prodDateInput) : null, style:{width:170}, allowClear:false,
+          format:'YYYY-MM-DD', placeholder:'按生产时间查询',
           onChange: d => setProdDateInput(d ? d.format('YYYY-MM-DD') : ''),
         }),
-        React.createElement(Button,{style:{width:90},onClick:()=>{
-          if(!prodDateInput){ msg.warning('请先选择创建时间后再查询'); return; }
+        React.createElement(KButton,{size:'small',style:{width:90},onClick:()=>{
+          if(!createdDateInput && !prodDateInput){ msg.warning('请先选择查询时间后再查询'); return; }
+          setCreatedDateFilter(createdDateInput);
           setProdDateFilter(prodDateInput);
         }},
           React.createElement('span',{style:{display:'inline-flex',alignItems:'center',gap:8}},
             searchIcon, React.createElement('span',null,'查询'))),
-        React.createElement(Button,{
+        React.createElement(KButton,{size:'small',
           style:{width:62},
-          disabled: !prodDateFilter && !prodDateInput,
-          onClick:()=>{ setProdDateInput(''); setProdDateFilter(''); },
+          disabled: !createdDateFilter && !createdDateInput && !prodDateFilter && !prodDateInput,
+          onClick:()=>{ setCreatedDateInput(''); setCreatedDateFilter(''); setProdDateInput(''); setProdDateFilter(''); },
         },React.createElement('span',null,'重置')),
-        React.createElement('div',{className:'plan-head-gap'}),
-        /* v109（图四第2条）：「工艺规划队列」从右面板头部移入工具栏，放在「新建预排产」左侧 */
-        React.createElement(Button,{onClick:()=>setPlanningQueueOpen(true)},
+        React.createElement(KButton,{style:{marginLeft:'auto'},onClick:()=>setPlanningQueueOpen(true)},
           React.createElement('span',null,'工艺规划队列')),
-        React.createElement(Button,{type:'primary',style:{width:132},onClick:()=>{
-          /* 此入口必须切页；用直接调用而不是可选调用，避免回调遗漏时点击静默失效 */
-          onNavigate('new-sched-plan');
-        }},React.createElement('span',{style:{display:'inline-flex',alignItems:'center',gap:8}},
-          fileAddIcon, React.createElement('span',null,'新建预排产')))
       ),
 
       /* ② 双栏主体 */
       React.createElement('div',{className:'plan-body'},
 
         React.createElement('div',{className:'plan-col'},
-          /* 页签：与其他所有列表页同一套两段式（选中实色 #EE6402、未选白底 1px 灰边） */
+          /* 页签：与其他所有列表页同一套两段式（选中实色 #EE6402、未选白底 1px 灰边）
+             v120（V1.0.3 设计稿 1836:409748）：Tab 文案自带计数「预排产（N）/已下发（N）」 */
           React.createElement('div',{className:'plan-tabs'},
             React.createElement('div',{
                 className:'plan-tab' + (schedTab==='inbound' ? ' is-active' : ''),
                 onClick:()=>switchSchedTab('inbound'),
-              },'预排产'),
+              },`预排产（${readyCount}）`),
             React.createElement('div',{
                 className:'plan-tab' + (schedTab==='dispatched' ? ' is-active' : ''),
                 onClick:()=>switchSchedTab('dispatched'),
-              },'已下发')
+              },`已下发（${dispatchedCount}）`)
+          ),
+          /* v120（V1.0.3 设计稿 1836:410769）：左「共N条…」+ 右「创建时间排序」描边下拉，两端撑开 */
+          React.createElement('div',{className:'plan-list-tools'},
+            React.createElement('span',{className:'plan-count'},
+              `共${tabList.length}条${schedTab==='inbound' ? '预排产' : '已下发'}`),
+            React.createElement('div',{
+                className:'plan-sorter' + (sortField==='createdAt' ? ' is-active' : ''),
+                onClick:()=>toggleSort('createdAt'),
+              },
+              React.createElement('span',null,'创建时间排序'),
+              React.createElement('span',{className:'plan-sorter-ico'},
+                caretIco('up', sortField==='createdAt' && sortAsc),
+                caretIco('down', sortField==='createdAt' && !sortAsc)
+              )
+            ),
           ),
           React.createElement('div',{className:'plan-scroll' + (schedTab==='dispatched' ? ' is-hist' : '')},
             React.createElement('div',{className:'plan-cards'},
               visiblePlans.length
-                ? visiblePlans.map(planCardOf)
+                ? pagedPlans.map(planCardOf)
                 : /* v98：空态按规范改 antd Empty（对齐向导空态 SIMPLE 形态），替代裸文字 */
                   React.createElement('div',{className:'plan-card-empty'},
                     React.createElement(Empty,{image:Empty.PRESENTED_IMAGE_SIMPLE,
                       description:React.createElement('span',{style:{fontSize:13,color:'rgba(0,0,0,0.45)'}},
                         schedTab==='dispatched' ? '暂无已下发排产' : '暂无预排产')}))
+            )
+          ),
+          /* v120（V1.0.3 设计稿 1836:410914）：左栏底部分页行，#F5F5F5 灰底上居中 */
+          React.createElement('div',{className:'plan-col-pager'},
+            React.createElement('div',{className:'plan-pager'},
+              React.createElement(Pagination,{
+                current:cardPage, pageSize:cardSize, total:visiblePlans.length,
+                showSizeChanger:true, pageSizeOptions:[10,20,50], locale:{items_per_page:'/页'},
+                onChange:(p,s)=>{ const size=s||10; setCardPage(Math.min(p, Math.max(1, Math.ceil(visiblePlans.length/size)))); setCardSize(size); },
+              })
             )
           )
         ),
@@ -6565,6 +6903,7 @@ const SchedPlanListPage = ({onNavigate, onOpenDispatchConfirm}) => {
               React.createElement('span',{className:'plan-detail-folder'},folderIcon),
               React.createElement('span',{className:'plan-detail-title'},'排产编号'),
               React.createElement('span',{className:'plan-detail-no',title:activePlan?activePlan.schedNo:''},activePlan ? activePlan.schedNo : '-'),
+              /* v119（用户第2/3条）：恢复创建时间展示；入库状态字段移入下方工单表每行 */
               React.createElement('span',{className:'plan-detail-stamp'},activePlan ? (activePlan.createdAt || '') : '')
               /* v109（图四第2条）：右端「工艺规划队列」按钮已移到顶部工具栏（新建预排产左侧） */
             ),
@@ -6597,10 +6936,9 @@ const SchedPlanListPage = ({onNavigate, onOpenDispatchConfirm}) => {
                   current:detailPage,
                   pageSize:detailPageSize,
                   total:activeGroups.length,
-                  /* v51：去掉页容量选择器。设计稿分页只有「上一页 / 页码 / 下一页」；
-                     而且每页行数是按面板剩余高度算出来的（autoRowCount），让用户改反而会
-                     改出半行裁切 —— 少一个控件、少一处噪点。 */
-                  onChange:(p)=>{ setDetailPage(p); },
+                  /* v120（V1.0.3 设计稿 1836:410250）：恢复页容量选择器「10/页」，随设计稿补回 */
+                  showSizeChanger:true, pageSizeOptions:[10,20,50], locale:{items_per_page:'/页'},
+                  onChange:(p,s)=>{ setDetailPage(p); setPgSize(s||10); },
                 })
               )
             )
@@ -6611,7 +6949,10 @@ const SchedPlanListPage = ({onNavigate, onOpenDispatchConfirm}) => {
 
     React.createElement(Drawer,{
       /* 抽屉宽 1360：15 列（套料版图号 → 工艺规划状态）合计 1254，正好一屏放得下 */
-      title: detailRow ? `套料详情 · ${detailRow.schedNo} · ${detailData?.versionNo||''}` : '套料详情', width:800,
+      title: detailRow ? `套料详情 · ${detailRow.schedNo} · ${detailData?.versionNo||''}` : '套料详情',
+      /* v124（用户图四）：1080 仍出横向滚动条（15 列合计 1254 + 展开列 ≈1302 > 1080 可用宽）
+         —— 拉宽到 1380 档（小屏封顶 94vw），列合计 1302 一屏放下；scroll.x 删除消除横向滚动条 */
+      width:'min(1380px, 94vw)',
       open:!!detailRow, onClose:()=>{setDetailRow(null);setDetailVersionNo('');},
       /* v105：抽屉头右侧按钮组整组删除（用户图一红框）——原 v46 拆入的
          撤回下发 / 生产状态 / 下发至出库 / 编辑排产，下发与撤回已由卡片图标按钮承载 */
@@ -6627,7 +6968,8 @@ const SchedPlanListPage = ({onNavigate, onOpenDispatchConfirm}) => {
         /* v108（用户第10条）：去掉固定 y（原 calc(100vh-208px) 让表体恒占 750px，
            3 行数据也顶出抽屉 body 的竖向滚动条）—— 表体随内容自然伸高，
            内容未溢出无滚动条；数据多时由抽屉 body 滚动兜底（样式已全站统一） */
-        scroll:{x:1254},
+        /* v124：scroll.x 删除 —— 抽屉 1380 档下列合计一屏放下，不再出横向滚动条 */
+        scroll:{x:1302},
         locale:{emptyText:'该排产暂无套料明细'},
         /* v103：零件详情并入为套料行的子级（用户第3条）—— 点行首箭头展开该套料版图的
            零件宏事件表（partDetailRowsOf 九字段），不再单独开「零件详情」抽屉 */
@@ -6697,9 +7039,9 @@ const SchedPlanListPage = ({onNavigate, onOpenDispatchConfirm}) => {
 
     React.createElement(Modal,{title:'工艺规划队列',open:planningQueueOpen,width:1080,onCancel:()=>setPlanningQueueOpen(false),footer:null},
       React.createElement(Tabs,{activeKey:queueTab,onChange:k=>{setQueueTab(k);setQueueSelected([])},items:[{key:'active',label:'进行中'},{key:'completed',label:'已完成'}]}),
-      React.createElement(Space,{wrap:true,style:{marginBottom:12}},React.createElement(Select,{placeholder:'全部工单',value:queueOrder,onChange:setQueueOrder,style:{width:150},options:[{value:'',label:'全部'},...[...new Set(planningQueue.map(x=>x.sourceOrderNo))].map(x=>({value:x,label:x}))]}),React.createElement(Select,{placeholder:'全部切割机',value:queueMachine,onChange:setQueueMachine,style:{width:120},options:[{value:'',label:'全部'},...[...new Set(planningQueue.map(x=>x.machine))].map(x=>({value:x,label:x}))]}),React.createElement(Input,{placeholder:'搜索套料版图号',value:queueKeyword,onChange:e=>setQueueKeyword(e.target.value),style:{width:200}}),React.createElement(Button,{type:'primary',onClick:()=>setQueueSearch(queueKeyword)},'查询'),React.createElement(Button,{onClick:()=>{setQueueOrder();setQueueMachine();setQueueKeyword('');setQueueSearch('')}},'重置')),
-      queueTab==='active'&&queueSelected.length>0&&React.createElement(Alert,{type:'info',showIcon:true,style:{marginBottom:12},message:`已选 ${queueSelected.length} 项`,action:React.createElement(Button,{size:'small',type:'primary',onClick:()=>msg.success('已加入重新计算')},'批量加入重新计算')}),
-      React.createElement(Table,{size:'small',rowKey:'key',dataSource:queueRows,pagination:{hideOnSinglePage:true,pageSize:8},rowSelection:queueTab==='active'?{selectedRowKeys:queueSelected,onChange:setQueueSelected,getCheckboxProps:r=>({disabled:!queueEligible(r)})}:undefined,columns:[{title:'套料版图号',dataIndex:'nestingLayoutNo',width:180},{title:'来源切割包',dataIndex:'sourceOrderNo',width:150},{title:'切割机',dataIndex:'machine',width:90},{title:'工艺规划状态',dataIndex:'planningStatus',width:170,render:v=>renderDetailPlanningStatus(v)},{title:queueTab==='completed'?'完成时间':'进入队列时间',dataIndex:queueTab==='completed'?'completedTime':'queueTime',width:180},{title:'操作',render:(_,r)=>React.createElement(Space,null,React.createElement(Button,{size:'small',type:'link'},'查看详情'),queueTab==='active'&&React.createElement(Button,{size:'small',type:'link',onClick:()=>msg.success('已加入优先工艺规划队列')},'优先工艺规划'),React.createElement(Button,{size:'small',type:'link',onClick:()=>msg.success('已加入重新计算')},'重新计算'))}]})
+      React.createElement(Space,{wrap:true,style:{marginBottom:12}},React.createElement(Select,{placeholder:'全部工单',value:queueOrder,onChange:setQueueOrder,style:{width:150},options:[{value:'',label:'全部'},...[...new Set(planningQueue.map(x=>x.sourceOrderNo))].map(x=>({value:x,label:x}))]}),React.createElement(Select,{placeholder:'全部切割机',value:queueMachine,onChange:setQueueMachine,style:{width:120},options:[{value:'',label:'全部'},...[...new Set(planningQueue.map(x=>x.machine))].map(x=>({value:x,label:x}))]}),React.createElement(Input,{placeholder:'搜索套料版图号',value:queueKeyword,onChange:e=>setQueueKeyword(e.target.value),style:{width:200}}),React.createElement(KButton,{type:'primary',onClick:()=>setQueueSearch(queueKeyword)},'查询'),React.createElement(KButton,{onClick:()=>{setQueueOrder();setQueueMachine();setQueueKeyword('');setQueueSearch('')}},'重置')),
+      queueTab==='active'&&queueSelected.length>0&&React.createElement(Alert,{type:'info',showIcon:true,style:{marginBottom:12},message:`已选 ${queueSelected.length} 项`,action:React.createElement(KButton,{size:'small',type:'primary',onClick:()=>msg.success('已加入重新计算')},'批量加入重新计算')}),
+      React.createElement(Table,{size:'small',rowKey:'key',dataSource:queueRows,pagination:{hideOnSinglePage:true,pageSize:8},rowSelection:queueTab==='active'?{selectedRowKeys:queueSelected,onChange:setQueueSelected,getCheckboxProps:r=>({disabled:!queueEligible(r)})}:undefined,columns:[{title:'套料版图号',dataIndex:'nestingLayoutNo',width:180},{title:'来源切割包',dataIndex:'sourceOrderNo',width:150},{title:'切割机',dataIndex:'machine',width:90},{title:'工艺规划状态',dataIndex:'planningStatus',width:170,render:v=>renderDetailPlanningStatus(v)},{title:queueTab==='completed'?'完成时间':'进入队列时间',dataIndex:queueTab==='completed'?'completedTime':'queueTime',width:180},{title:'操作',render:(_,r)=>React.createElement(Space,null,React.createElement(KButton,{size:'small',type:'link'},'查看详情'),queueTab==='active'&&React.createElement(KButton,{size:'small',type:'link',onClick:()=>msg.success('已加入优先工艺规划队列')},'优先工艺规划'),React.createElement(KButton,{size:'small',type:'link',onClick:()=>msg.success('已加入重新计算')},'重新计算'))}]})
     ),
   );
 };
@@ -6902,6 +7244,9 @@ const PlanPage = ({data, onNavigate, onScheduleTargetDate}) => {
   });
   // 左侧分类页签（未完成计划 / 已完成计划）与当前查看的切割包
   const [planTab, setPlanTab] = useState('undone');
+  /* v120：卡片流分页（左栏底部分页行，与排产列表 V1.0.3 设计稿同款） */
+  const [cardPage, setCardPage] = useState(1);
+  const [cardSize, setCardSize] = useState(10);
   const [activePkgNo, setActivePkgNo] = useState('');
   const [sortField, setSortField] = useState(null);   // null | 'createdAt' | 'scheduleDate'
   const [sortAsc, setSortAsc] = useState(true);
@@ -7064,6 +7409,11 @@ const PlanPage = ({data, onNavigate, onScheduleTargetDate}) => {
     const sorted = [...tabPkgs].sort((a, b) => String(a[sortField] || '').localeCompare(String(b[sortField] || '')));
     return sortAsc ? sorted : sorted.reverse();
   }, [tabPkgs, sortField, sortAsc]);
+  /* v120：卡片流分页切片 + 换页签/筛选/排序后回第 1 页 */
+  const pagedPkgs = useMemo(() =>
+    visiblePkgs.slice((cardPage-1)*cardSize, cardPage*cardSize),
+    [visiblePkgs, cardPage, cardSize]);
+  useEffect(() => { setCardPage(1); }, [planTab, sortField, sortAsc, planDateFilter, shipFilter, blockFilter]);
   /* 当前查看的包：左卡片点谁，右边就显示谁的型材明细；切页签或筛选后自动落到首个 */
   const activePkg = visiblePkgs.find(p => p.packageNo === activePkgNo) || visiblePkgs[0] || null;
   const activeRows = useMemo(
@@ -7255,6 +7605,7 @@ const PlanPage = ({data, onNavigate, onScheduleTargetDate}) => {
   const resetNewPkg = () => {
     setNewPkgOpen(false); setUpFiles([]); newForm.resetFields();
     setPkgStep(1); setPkgParsing(false); setPkgAutoFilled(false);
+    msg.info('已放弃当前编辑内容');
   };
   /* ── 新建切割单 · ① 选择文件 ───────────────────────── */
   const addPkgFiles = (files) => {
@@ -7332,7 +7683,7 @@ const PlanPage = ({data, onNavigate, onScheduleTargetDate}) => {
       render:(_,r)=> (r.shipNo && r.shipNo !== '—') ? `${r.shipNo} / ${r.blockNo}` : '—' },
     { title:'失败原因', dataIndex:'reason', width:180, ellipsis:true, render:v => v || '—' },
     { title:'操作', key:'op', width:70,
-      render:(_,r)=>React.createElement(Button,{size:'small',type:'link',onClick:()=>removePkgFile(r.uid)},'移除') },
+      render:(_,r)=>React.createElement(KButton,{size:'small',type:'link',onClick:()=>removePkgFile(r.uid)},'移除') },
   ];
 
   // ── 表格列定义（包级别）──────────────────
@@ -7355,7 +7706,7 @@ const PlanPage = ({data, onNavigate, onScheduleTargetDate}) => {
       sorter:(a,b)=>(a.scheduleDate||'').localeCompare(b.scheduleDate||''), sortDirections:['ascend','descend'],
       render: v => v || '未排期' },
     { title:'操作', key:'op', width:80, fixed:'right',
-      render:(_,pkg)=>React.createElement(Button,{size:'small',type:'link',danger:true,onClick:()=>deletePackage(pkg)},'删除') },
+      render:(_,pkg)=>React.createElement(KButton,{size:'small',type:'link',danger:true,onClick:()=>deletePackage(pkg)},'删除') },
   ];
 
   // 字段顺序按需求固定：套料版图号 / 船号 / 分段号 / 程序号 / 型材规格 / 材质 / 长度（mm） / 零件数 / 预估切割时间(s)
@@ -7391,7 +7742,7 @@ const PlanPage = ({data, onNavigate, onScheduleTargetDate}) => {
       render:v=>v ?? '' },
     { title:'操作', key:'op', width:opColW, fixed:'right',
       /* v111（用户第6条）：入口与抽屉标题统一改为「详情」 */
-      render:(_,r)=>React.createElement(Button,{size:'small', type:'link',
+      render:(_,r)=>React.createElement(KButton,{size:'small', type:'link',
         onClick:()=>{
           const rows = partDetailRowsOf(r.nestingLayoutNo);
           if(!rows || !rows.length){ msg.warning('该型材暂无零件宏数据'); return; }
@@ -7449,8 +7800,8 @@ const PlanPage = ({data, onNavigate, onScheduleTargetDate}) => {
             React.createElement('span',{className:'plan-card-folder'},
               isActive ? folderIcon : folderClosedIcon),
             React.createElement('span',{className:'plan-card-k'},'切割包号'),
-            React.createElement('span',{className:'plan-card-no',title:pkg.packageNo},pkg.packageNo),
-            React.createElement('span',{className:'plan-card-stamp'},pkg.createdAt || '-')
+            React.createElement('span',{className:'plan-card-no',title:pkg.packageNo},pkg.packageNo)
+            /* v119（用户第2条）：卡片头创建时间删除 */
           ),
           /* 垃圾桶：默认由 CSS 置 opacity:0，只有 `.is-active` 的卡片才显示（v37 需求）；
              v40 加 hover 提示「删除」，样式取自设计稿 Web/tooltip/emulation（见 .plan-trash-tip） */
@@ -7507,35 +7858,12 @@ const PlanPage = ({data, onNavigate, onScheduleTargetDate}) => {
 
     React.createElement('div',{className:'plan-shell'},
 
-      // ① 标题 + 筛选 + 新建切割单（同一行 65 高，与设计稿一致）
+      // ① 标题 + 新建 + 竖划线 + 检索/查询（v119：排序控件下移列表内，检索/查询留工具栏）
       React.createElement('div',{className:'plan-head'},
         React.createElement('span',{className:'plan-head-title'},'计划列表'),
-        React.createElement('div',{
-            className:'plan-sorter' + (sortField==='createdAt' ? ' is-active' : ''),
-            onClick:()=>toggleSort('createdAt'),
-          },
-          React.createElement('span',null,'创建时间'),
-          React.createElement('span',{className:'plan-sorter-ico'},
-            caretIco('up', sortField==='createdAt' && sortAsc),
-            caretIco('down', sortField==='createdAt' && !sortAsc)
-          )
-        ),
-        React.createElement('div',{
-            className:'plan-sorter' + (sortField==='scheduleDate' ? ' is-active' : ''),
-            onClick:()=>toggleSort('scheduleDate'),
-          },
-          React.createElement('span',null,'计划时间'),
-          React.createElement('span',{className:'plan-sorter-ico'},
-            caretIco('up', sortField==='scheduleDate' && sortAsc),
-            caretIco('down', sortField==='scheduleDate' && !sortAsc)
-          )
-        ),
-        /* v42 分割式布局：计划时间之后插一条 1px 竖线，把工具栏分成「排序区 | 筛选区」两段
-           （设计稿 1552:413253 = padding 10 + 1px×28 的 #d9d9d9）。 */
+        React.createElement('div',{className:'plan-head-gap'}),
+        React.createElement(KButton,{type:'primary',style:{width:132},onClick:()=>setNewPkgOpen(true)},'+ 新建切割包'),
         React.createElement('span',{className:'plan-head-divider','aria-hidden':true}),
-        /* v57：恢复父子级筛选交互（此前 v37 拆成了两个独立下拉）。船号(父)→分段号(子)
-           用一个 Cascader：左列选父级、右列出该船的分段，输入框显示「船号 — 分段号」；
-           changeOnSelect 允许只选船号。数据直接用 shipBlockOptions（本就是父子结构）。 */
         React.createElement(Cascader,{
           className:'plan-head-cascader',
           options: shipBlockOptions,
@@ -7552,39 +7880,61 @@ const PlanPage = ({data, onNavigate, onScheduleTargetDate}) => {
           },
         }),
         React.createElement(DatePicker,{
-          value: planDateInput ? dayjs(planDateInput) : null, style:{width:226}, allowClear:false,
+          value: planDateInput ? dayjs(planDateInput) : null, style:{width:200}, allowClear:false,
           format:'YYYY-MM-DD', placeholder:'按计划日期查询',
           onChange: d => setPlanDateInput(d ? d.format('YYYY-MM-DD') : ''),
         }),
-        React.createElement(Button,{style:{width:90},onClick:()=>{
+        React.createElement(KButton,{size:'small',style:{width:90},onClick:()=>{
           if(!planDateInput){ msg.warning('请先选择计划日期后再查询'); return; }
           setPlanDateFilter(planDateInput); setSelectedPkgs([]);
         }},
           React.createElement('span',{style:{display:'inline-flex',alignItems:'center',gap:8}},
             searchIcon, React.createElement('span',null,'查询'))),
-        React.createElement(Button,{
+        React.createElement(KButton,{size:'small',
           style:{width:62},
           disabled: !planDateFilter && !planDateInput,
           onClick:()=>{ setPlanDateInput(''); setPlanDateFilter(''); setSelectedPkgs([]); },
         },React.createElement('span',null,'重置')),
-        React.createElement('div',{className:'plan-head-gap'}),
-        React.createElement(Button,{type:'primary',style:{width:132},onClick:()=>setNewPkgOpen(true)},'+ 新建切割包')
       ),
 
       // ② 双栏主体：左卡片列 / 右型材明细
       React.createElement('div',{className:'plan-body'},
 
         React.createElement('div',{className:'plan-col'},
-          // 分类页签
+          // 分类页签（v120：Tab 文案自带计数，与排产列表 V1.0.3 设计稿同款）
           React.createElement('div',{className:'plan-tabs'},
             React.createElement('div',{
                 className:'plan-tab' + (planTab==='undone' ? ' is-active' : ''),
                 onClick:()=>switchPlanTab('undone'),
-              },'未完成计划'),
+              },`未完成计划（${undonePkgs.length}）`),
             React.createElement('div',{
                 className:'plan-tab' + (planTab==='done' ? ' is-active' : ''),
                 onClick:()=>switchPlanTab('done'),
-              },'已完成计划')
+              },`已完成计划（${donePkgs.length}）`)
+          ),
+          /* v120：左「共N条计划」+ 右两个时间排序描边下拉，两端撑开 */
+          React.createElement('div',{className:'plan-list-tools'},
+            React.createElement('span',{className:'plan-count'},`共${tabPkgs.length}条计划`),
+            React.createElement('div',{
+                className:'plan-sorter' + (sortField==='createdAt' ? ' is-active' : ''),
+                onClick:()=>toggleSort('createdAt'),
+              },
+              React.createElement('span',null,'创建时间排序'),
+              React.createElement('span',{className:'plan-sorter-ico'},
+                caretIco('up', sortField==='createdAt' && sortAsc),
+                caretIco('down', sortField==='createdAt' && !sortAsc)
+              )
+            ),
+            React.createElement('div',{
+                className:'plan-sorter' + (sortField==='scheduleDate' ? ' is-active' : ''),
+                onClick:()=>toggleSort('scheduleDate'),
+              },
+              React.createElement('span',null,'计划时间排序'),
+              React.createElement('span',{className:'plan-sorter-ico'},
+                caretIco('up', sortField==='scheduleDate' && sortAsc),
+                caretIco('down', sortField==='scheduleDate' && !sortAsc)
+              )
+            ),
           ),
           /* 卡片流（已完成页签的 tab 本身比未完成稿高 2px，用 is-hist 补齐，卡片仍落在设计稿 y=260）
              v43：外层 .plan-scroll 只留着做布局壳（承接上下外边距 + 让卡片保持 421 宽），
@@ -7592,9 +7942,19 @@ const PlanPage = ({data, onNavigate, onScheduleTargetDate}) => {
           React.createElement('div',{className:'plan-scroll' + (planTab==='done' ? ' is-hist' : '')},
             React.createElement('div',{className:'plan-cards'},
               visiblePkgs.length
-                ? visiblePkgs.map(planCardOf)
+                ? pagedPkgs.map(planCardOf)
                 : React.createElement('div',{className:'plan-card-empty'},
                     planTab==='done' ? '暂无已完成计划' : '暂无未完成计划')
+            )
+          ),
+          /* v120：左栏底部分页行（V1.0.3 设计稿左分页落 #F5F5F5 灰底、居中） */
+          React.createElement('div',{className:'plan-col-pager'},
+            React.createElement('div',{className:'plan-pager'},
+              React.createElement(Pagination,{
+                current:cardPage, pageSize:cardSize, total:visiblePkgs.length,
+                showSizeChanger:true, pageSizeOptions:[10,20,50], locale:{items_per_page:'/页'},
+                onChange:(p,s)=>{ const size=s||10; setCardPage(Math.min(p, Math.max(1, Math.ceil(visiblePkgs.length/size)))); setCardSize(size); },
+              })
             )
           )
         ),
@@ -7607,6 +7967,7 @@ const PlanPage = ({data, onNavigate, onScheduleTargetDate}) => {
               React.createElement('span',{className:'plan-detail-folder'},folderIcon),
               React.createElement('span',{className:'plan-detail-title'},'切割包号'),
               React.createElement('span',{className:'plan-detail-no'},activePkg ? activePkg.packageNo : '-'),
+              /* v119（用户第2条）：恢复创建时间展示 */
               React.createElement('span',{className:'plan-detail-stamp'},activePkg ? (activePkg.createdAt || '') : '')
             ),
             React.createElement('div',{className:'plan-detail-body', ref:detailBodyRef},
@@ -7629,6 +7990,7 @@ const PlanPage = ({data, onNavigate, onScheduleTargetDate}) => {
                 total: activeRows.length,
                 showSizeChanger: true,
                 pageSizeOptions: [10,20,50],
+                locale:{items_per_page:'/页'},
                 onChange:(p, size) => { setDetailPage(p); setPgSize(size); },
               })
             )
@@ -7704,7 +8066,7 @@ const PlanPage = ({data, onNavigate, onScheduleTargetDate}) => {
           React.createElement('span',{className:'pkg-step-dot'},'2'),
           React.createElement('span',{className:'pkg-step-text'},'确认解析结果与信息')
         ),
-        pkgStep===2 && React.createElement(Button,{className:'pkg-step-back',onClick:()=>setPkgStep(1)},
+        pkgStep===2 && React.createElement(KButton,{className:'pkg-step-back',onClick:()=>setPkgStep(1)},
           React.createElement('svg',{viewBox:'0 0 12 12',width:12,height:12,fill:'none'},
             React.createElement('path',{d:'M7.5 2.5L4 6l3.5 3.5',stroke:'currentColor',strokeWidth:1.2,strokeLinecap:'round',strokeLinejoin:'round'})),
           '返回上一级')
@@ -7837,8 +8199,8 @@ const ReportPage = ({kind='production',data=[]}) => {
   const rows = data.slice(0,8).map((r,i)=>({key:i+1,name:r.profileId||r.oid||`记录-${String(i+1).padStart(3,'0')}`,phase:r.phaseNo||'切割',status:r.opStatus||'FINISH',time:r.opTime||'2026-06-17 14:32:15'}));
   const tableCols=[{title:'业务编码',dataIndex:'name',width:220,render:v=>React.createElement('span',{style:{fontFamily:'SFMono-Regular,Menlo,monospace',fontSize:12}},v)},{title:'工序',dataIndex:'phase'},{title:'状态',dataIndex:'status',render:v=>React.createElement(Tag,{color:v==='FINISH'?'success':'processing'},v==='FINISH'?'已完成':'进行中')},{title:'更新时间',dataIndex:'time',width:170}];
   return React.createElement('div',{className:'page-content'},React.createElement('div',{className:'report-page'},
-    React.createElement('div',{className:'report-head'},React.createElement('div',null,React.createElement('h1',{className:'report-title'},cfg.title),React.createElement('div',{className:'report-subtitle'},cfg.subtitle)),React.createElement('div',{className:'report-actions'},React.createElement(Button,{icon:React.createElement(ReportIcon,{name:'report'}),onClick:()=>window.print()},'导出报表'))),
-    React.createElement('div',{className:'report-filter'},React.createElement('span',{className:'report-filter-label'},'统计周期'),React.createElement(Radio.Group,{value:range,onChange:e=>setRange(e.target.value),optionType:'button',buttonStyle:'solid',size:'small'},['近7天','近30天','近12个月'].map(x=>React.createElement(Radio.Button,{key:x,value:x},x))),React.createElement('div',{style:{flex:1}}),React.createElement('span',{className:'report-filter-label'},`数据更新时间：2026-06-17 14:32`),React.createElement(Button,{size:'small',icon:React.createElement(ReportIcon,{name:'dashboard'}),onClick:()=>message.success('数据已刷新')},'刷新')),
+    React.createElement('div',{className:'report-head'},React.createElement('div',null,React.createElement('h1',{className:'report-title'},cfg.title),React.createElement('div',{className:'report-subtitle'},cfg.subtitle)),React.createElement('div',{className:'report-actions'},React.createElement(KButton,{icon:React.createElement(ReportIcon,{name:'report'}),onClick:()=>window.print()},'导出报表'))),
+    React.createElement('div',{className:'report-filter'},React.createElement('span',{className:'report-filter-label'},'统计周期'),React.createElement(Radio.Group,{value:range,onChange:e=>setRange(e.target.value),optionType:'button',buttonStyle:'solid',size:'small'},['近7天','近30天','近12个月'].map(x=>React.createElement(Radio.Button,{key:x,value:x},x))),React.createElement('div',{style:{flex:1}}),React.createElement('span',{className:'report-filter-label'},`数据更新时间：2026-06-17 14:32`),React.createElement(KButton,{size:'small',icon:React.createElement(ReportIcon,{name:'dashboard'}),onClick:()=>message.success('数据已刷新')},'刷新')),
     React.createElement('div',{className:'report-kpis'},cfg.kpis.map(x=>reportKpi(...x))),
     React.createElement('div',{className:'report-grid'},React.createElement('div',{className:'report-panel'},React.createElement('div',{className:'report-panel-title'},cfg.chartTitle,React.createElement('span',{className:'report-panel-note'},range)),reportLineSvg(REPORT_SERIES,kind==='quality'?'#2e9b65':kind==='device'?'#4b7bec':'#ee6402'),React.createElement('div',{className:'report-legend'},React.createElement('span',null,React.createElement('i',{style:{background:kind==='quality'?'#2e9b65':kind==='device'?'#4b7bec':'#ee6402'}}),'完成量'),React.createElement('span',null,React.createElement('i',{style:{background:'#dbe1e7'}}),'目标值'))),React.createElement('div',{className:'report-panel'},React.createElement('div',{className:'report-panel-title'},cfg.rankTitle,React.createElement('span',{className:'report-panel-note'},'本期')),cfg.rank.map((x,i)=>React.createElement('div',{className:'report-rank',key:x[0]},React.createElement('span',{className:'report-rank-num'},String(i+1).padStart(2,'0')),React.createElement('span',{className:'report-rank-name'},x[0]),React.createElement('span',{className:'report-rank-bar'},React.createElement('i',{style:{width:`${Math.max(10,x[1])}%`}})),React.createElement('span',{className:'report-rank-value'},x[1]))))),
     React.createElement('div',{className:'report-panel'},React.createElement('div',{className:'report-panel-title'},'明细记录',React.createElement('span',{className:'report-panel-note'},`共 ${rows.length||0} 条`)),React.createElement(Table,{className:'report-table',columns:tableCols,dataSource:rows,rowKey:'key',size:'small',pagination:{hideOnSinglePage:true,pageSize:5}}))
@@ -7867,7 +8229,7 @@ const BinMaintenancePage = ({data}) => {
     {title:'操作人', dataIndex:'operator', width:100},
     {title:'修改时间', dataIndex:'updateTime', width:155, ellipsis:true},
     {title:'操作', key:'op', width:88, fixed:'right',
-      render:(_,r)=>React.createElement(Button,{size:'small',type:'link',onClick:()=>openEdit(r)},'修改')
+      render:(_,r)=>React.createElement(KButton,{size:'small',type:'link',onClick:()=>openEdit(r)},'修改')
     },
   ];
 
@@ -7886,7 +8248,7 @@ const BinMaintenancePage = ({data}) => {
 
     React.createElement(Card,{
       size:'small', title:'库位信息维护记录',
-      extra:React.createElement(Button,{type:'primary',onClick:()=>openEdit(null)},'+ 新建维护记录'),
+      extra:React.createElement(KButton,{type:'primary',onClick:()=>openEdit(null)},'+ 新建维护记录'),
     },
       React.createElement(Table,{
         columns:cols, dataSource:data, rowKey:'key', size:'small',
@@ -7993,8 +8355,8 @@ const UserPage = () => {
     { title:'创建时间', dataIndex:'create_time', width:160, ellipsis:true },
     { title:'创建人', dataIndex:'create_by', width:100 },
     { title:'操作', key:'op', width:110, fixed:'right', render:(_,r)=>React.createElement(Space,{size:2},
-        React.createElement(Button,{size:'small',type:'link',onClick:()=>openEdit(r)},'编辑'),
-        React.createElement(Button,{size:'small',type:'link',onClick:()=>del(r)},'删除')
+        React.createElement(KButton,{size:'small',type:'link',onClick:()=>openEdit(r)},'编辑'),
+        React.createElement(KButton,{size:'small',type:'link',onClick:()=>del(r)},'删除')
       ) },
   ];
 
@@ -8004,10 +8366,10 @@ const UserPage = () => {
         React.createElement('span',{className:'log-filter-title'},'用户管理'),
         React.createElement(Input,{placeholder:'用户名/姓名/手机号',style:{width:200},
           value:kwInput,onChange:e=>setKwInput(e.target.value),onPressEnter:()=>setKw(kwInput)}),
-        React.createElement(Button,{onClick:()=>setKw(kwInput)},'查询'),
-        React.createElement(Button,{onClick:()=>{setKwInput('');setKw('');}},'重置')),
+        React.createElement(KButton,{onClick:()=>setKw(kwInput)},'查询'),
+        React.createElement(KButton,{onClick:()=>{setKwInput('');setKw('');}},'重置')),
       extra:React.createElement(Space,null,
-        React.createElement(Button,{type:'primary',onClick:openAdd},'+ 新增用户'))
+        React.createElement(KButton,{type:'primary',onClick:openAdd},'+ 新增用户'))
     },
       React.createElement(Table,{columns:cols,dataSource:filtered,rowKey:'key',size:'small',scroll:{x:1150},
         pagination:{hideOnSinglePage:true,pageSize:8}})
@@ -8092,9 +8454,9 @@ const RolePage = () => {
     { title:'备注', dataIndex:'remark', ellipsis:true },
     { title:'状态', dataIndex:'status', width:90, render:(v,r)=>React.createElement(Switch,{checked:!!v,checkedChildren:'启用',unCheckedChildren:'禁用',onChange:()=>toggle(r)}) },
     { title:'操作', key:'op', width:170, fixed:'right', render:(_,r)=>React.createElement(Space,{size:2},
-        React.createElement(Button,{size:'small',type:'link',onClick:()=>openEdit(r)},'编辑'),
-        React.createElement(Button,{size:'small',type:'link',onClick:()=>openPerm(r)},'权限配置'),
-        React.createElement(Button,{size:'small',type:'link',onClick:()=>del(r)},'删除')
+        React.createElement(KButton,{size:'small',type:'link',onClick:()=>openEdit(r)},'编辑'),
+        React.createElement(KButton,{size:'small',type:'link',onClick:()=>openPerm(r)},'权限配置'),
+        React.createElement(KButton,{size:'small',type:'link',onClick:()=>del(r)},'删除')
       ) },
   ];
 
@@ -8104,10 +8466,10 @@ const RolePage = () => {
         React.createElement('span',{className:'log-filter-title'},'角色管理'),
         React.createElement(Input,{placeholder:'角色名称/编码',style:{width:180},
           value:kwInput,onChange:e=>setKwInput(e.target.value),onPressEnter:()=>setKw(kwInput)}),
-        React.createElement(Button,{onClick:()=>setKw(kwInput)},'查询'),
-        React.createElement(Button,{onClick:()=>{setKwInput('');setKw('');}},'重置')),
+        React.createElement(KButton,{onClick:()=>setKw(kwInput)},'查询'),
+        React.createElement(KButton,{onClick:()=>{setKwInput('');setKw('');}},'重置')),
       extra:React.createElement(Space,null,
-        React.createElement(Button,{type:'primary',onClick:openAdd},'+ 新增角色'))
+        React.createElement(KButton,{type:'primary',onClick:openAdd},'+ 新增角色'))
     },
       React.createElement(Table,{columns:cols,dataSource:filtered,rowKey:'key',size:'small',scroll:{x:900},
         pagination:{hideOnSinglePage:true,pageSize:8}})
@@ -8187,8 +8549,8 @@ const ShiftPage = () => {
     { title:'状态', dataIndex:'status', width:90, render:(v,r)=>React.createElement(Switch,{checked:!!v,checkedChildren:'启用',unCheckedChildren:'禁用',onChange:checked=>checked?enable(r):disable(r)}) },
     { title:'备注', dataIndex:'remark', width:140, ellipsis:true },
     { title:'操作', key:'op', width:110, fixed:'right', render:(_,r)=>React.createElement(Space,{size:2},
-        React.createElement(Button,{size:'small',type:'link',onClick:()=>openEdit(r)},'编辑'),
-        React.createElement(Button,{size:'small',type:'link',onClick:()=>del(r)},'删除')
+        React.createElement(KButton,{size:'small',type:'link',onClick:()=>openEdit(r)},'编辑'),
+        React.createElement(KButton,{size:'small',type:'link',onClick:()=>del(r)},'删除')
       ) },
   ];
   const timeRow = (n) => React.createElement(Row,{gutter:14,key:n},
@@ -8202,10 +8564,10 @@ const ShiftPage = () => {
         React.createElement('span',{className:'log-filter-title'},'生产班次管理'),
         React.createElement(Input,{placeholder:'班次名称',style:{width:160},
           value:kwInput,onChange:e=>setKwInput(e.target.value),onPressEnter:()=>setKw(kwInput)}),
-        React.createElement(Button,{onClick:()=>setKw(kwInput)},'查询'),
-        React.createElement(Button,{onClick:()=>{setKwInput('');setKw('');}},'重置')),
+        React.createElement(KButton,{onClick:()=>setKw(kwInput)},'查询'),
+        React.createElement(KButton,{onClick:()=>{setKwInput('');setKw('');}},'重置')),
       extra:React.createElement(Space,null,
-        React.createElement(Button,{type:'primary',onClick:openAdd},'+ 新增班次'))
+        React.createElement(KButton,{type:'primary',onClick:openAdd},'+ 新增班次'))
     },
       React.createElement(Alert,{type:'info',showIcon:true,style:{marginBottom:12},
         message:'启用班次唯一：启用某班次后，其余班次将自动禁用，仅启用班次参与生产排班与统计。'}),
@@ -8298,15 +8660,15 @@ const LogPage = () => {
           options:[{value:'',label:'全部'}, ...Object.keys(LOG_LEVELS).map(l=>({value:l,label:l}))]}),
         React.createElement(Input,{placeholder:'内容/来源关键字',style:{width:200},value:kwInput,
           onChange:e=>setKwInput(e.target.value),onPressEnter:()=>setKw(kwInput)}),
-        React.createElement(Button,{onClick:()=>setKw(kwInput)},'查询'),
-        React.createElement(Button,{onClick:()=>{setKwInput('');setKw('');setType('');setLevel('');}},'重置')),
+        React.createElement(KButton,{onClick:()=>setKw(kwInput)},'查询'),
+        React.createElement(KButton,{onClick:()=>{setKwInput('');setKw('');setType('');setLevel('');}},'重置')),
       extra: React.createElement(Space,null,
-        sel.length>0 && React.createElement(Button,{danger:true,size:'small',onClick:()=>delSel()},`手动删除(${sel.length})`),
-        logExportMode && React.createElement(Button,{size:'small',type:'primary',onClick:()=>exportFile('txt')},'导出 TXT'),
-        logExportMode && React.createElement(Button,{size:'small',type:'primary',onClick:()=>exportFile('excel')},'导出 EXCEL'),
-        logExportMode && React.createElement(Button,{size:'small',onClick:()=>{setLogExportMode(false);setSel([]);}},'取消'),
-        !logExportMode && React.createElement(Button,{size:'small',type:'primary',onClick:()=>setLogExportMode(true)},'导出'),
-        React.createElement(Button,{size:'small',onClick:()=>setCleanOpen(true)},'自动清理设置')),
+        sel.length>0 && React.createElement(KButton,{danger:true,size:'small',onClick:()=>delSel()},`手动删除(${sel.length})`),
+        logExportMode && React.createElement(KButton,{size:'small',type:'primary',onClick:()=>exportFile('txt')},'导出 TXT'),
+        logExportMode && React.createElement(KButton,{size:'small',type:'primary',onClick:()=>exportFile('excel')},'导出 EXCEL'),
+        logExportMode && React.createElement(KButton,{size:'small',onClick:()=>{setLogExportMode(false);setSel([]);}},'取消'),
+        !logExportMode && React.createElement(KButton,{size:'small',type:'primary',onClick:()=>setLogExportMode(true)},'导出'),
+        React.createElement(KButton,{size:'small',onClick:()=>setCleanOpen(true)},'自动清理设置')),
     },
       React.createElement(Table,{columns:cols,dataSource:filtered,rowKey:'key',size:'small',scroll:{x:760},
         rowSelection: logExportMode ? {selectedRowKeys:sel,onChange:setSel} : undefined,
@@ -8955,8 +9317,8 @@ const RptFilterBar = ({state, setState, deviceOpts, onExportData, onExportReport
     React.createElement(Select,{value:state.shift,style:{width:130},onChange:v=>set('shift',v),
       options:['全部班次','班次1','班次2'].map(s=>({value:s,label:s}))}),
     React.createElement('div',{style:{flex:1}}),
-    React.createElement(Button,{onClick:onExportData},'导出数据'),
-    React.createElement(Button,{onClick:onExportReport},'导出报告'));
+    React.createElement(KButton,{onClick:onExportData},'导出数据'),
+    React.createElement(KButton,{onClick:onExportReport},'导出报告'));
 };
 
 /* —— 设备统计卡片 —— */
@@ -9155,29 +9517,29 @@ React.createElement('div',{className:'header-bar'},
         React.createElement(Space,{split:React.createElement(Divider,{type:'vertical'})},
           React.createElement('span',null,
             React.createElement('span',{className:'conn-dot conn-ok'}),
-            React.createElement(Text,{style:{fontSize:12}},'WMS 在线')
+            React.createElement(Text,{style:{fontSize:14}},'WMS 在线')
           ),
           React.createElement('span',null,
             React.createElement('span',{className:'conn-dot conn-ok'}),
-            React.createElement(Text,{style:{fontSize:12}},'MES 在线')
+            React.createElement(Text,{style:{fontSize:14}},'MES 在线')
           ),
           React.createElement('span',null,
             React.createElement('span',{className:'conn-dot conn-ok'}),
-            React.createElement(Text,{style:{fontSize:12}},'喷码 在线')
+            React.createElement(Text,{style:{fontSize:14}},'喷码 在线')
           ),
           React.createElement('span',null,
             React.createElement('span',{className:'conn-dot conn-ok'}),
-            React.createElement(Text,{style:{fontSize:12}},'切割1 在线')
+            React.createElement(Text,{style:{fontSize:14}},'切割1 在线')
           ),
           React.createElement('span',null,
             React.createElement('span',{className:'conn-dot conn-ok'}),
-            React.createElement(Text,{style:{fontSize:12}},'切割2 在线')
+            React.createElement(Text,{style:{fontSize:14}},'切割2 在线')
           ),
           React.createElement('span',null,
             React.createElement('span',{className:'conn-dot conn-ok'}),
-            React.createElement(Text,{style:{fontSize:12}},'切割3 在线')
+            React.createElement(Text,{style:{fontSize:14}},'切割3 在线')
           ),
-          React.createElement(Text,{type:'secondary',style:{fontSize:12}},
+          React.createElement(Text,{type:'secondary',style:{fontSize:14}},
             '仓管管理员 ｜ 2026-05-17'
           ),
         )
@@ -9275,13 +9637,29 @@ React.createElement('div',{className:'header-bar'},
 
       // Content(面包屑放进内容容器内,融入页面背景)
       React.createElement(Content,{style:{overflow:'auto',background:'#F8F9FA',scrollbarGutter:'stable'}},
-        React.createElement('div',{className:'crumb-bar'},
+        /* v118（用户第5条）：模块释义与面包屑**同一行**——面包屑居左、释义贴右上角；
+           释义保留「模块名：」映射标题（用户要求给出映射标题），12px 辅助灰 */
+        /* v123（向导第2条）：新建排产页不渲染面包屑，原位置放「取消新建排产」橙实底按钮（向左线性 < 图标）；
+           其他页面面包屑保持不变 */
+        page==='new-sched-plan'
+          ? React.createElement('div',{className:'crumb-bar crumb-bar-with-intro',style:{marginBottom:8}},
+              /* v124（用户图二）：橙描边 + 橙文字 + 白底（原橙实底作废）；容器底部 8px 间距 */
+              React.createElement(KButton,{className:'kb-cancel-wizard',onClick:()=>navigate('sched-plan-list')},
+                React.createElement('span',{style:{display:'inline-flex',alignItems:'center',gap:8}},
+                  React.createElement('svg',{width:14,height:14,viewBox:'0 0 16 16',fill:'none','aria-hidden':true},
+                    React.createElement('path',{d:'M10 3L5 8L10 13',stroke:'currentColor',strokeWidth:1.5,strokeLinecap:'round',strokeLinejoin:'round'})),
+                  React.createElement('span',null,'取消新建排产')))
+            )
+          : React.createElement('div',{className:'crumb-bar crumb-bar-with-intro'},
           React.createElement(Breadcrumb,{
             items:crumbItems,
             /* Figma icon/expand 18×18 作分隔符 */
             separator:React.createElement('svg',{viewBox:'0 0 18 18',width:18,height:18,fill:'none'},
               React.createElement('path',{d:'M7 4.75L11.2426 8.99264L7 13.2353',stroke:'currentColor',strokeLinecap:'round',strokeLinejoin:'round'}))
-          })
+          }),
+          KB_PAGE_INTROS[page]
+            ? React.createElement('span',{className:'crumb-intro'},KB_PAGE_INTROS[page])
+            : null
         ),
         /* v76：包装层追加 page-<key> 类 —— 供 CSS 按页面精确限定作用域
            （如卡片大标题投影只加库存管理/系统管理/数据报表，库位维护与入库任务共用
@@ -9310,7 +9688,9 @@ const RootApp = () =>
   },
     /* 提示策略:全局最多同时 2 条,新提示顶替旧提示,不再纵向堆一列(见 useMsg 策略层) */
     React.createElement(App,{message:{maxCount:2,duration:1.6}},
-      React.createElement(AppInner,null)
+      React.createElement(AppInner,null),
+      /* v121：统一确认/提示弹框宿主（App 树内 ⇒ 主题 token 正确、标题必渲染） */
+      React.createElement(KBConfirmHost,null)
     )
   );
 
