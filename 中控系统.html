@@ -6,7 +6,7 @@
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <title>型材立库中控系统 · v10.12-127</title>
+  <title>型材立库中控系统 · v10.12-128</title>
   <link rel="stylesheet" href="antd.min.css">
   <style>
     * { box-sizing: border-box; }
@@ -1626,17 +1626,15 @@
     .ant-modal.ant-modal-confirm .ant-modal-confirm-body > .anticon { color:#EE6402 !important; }
     .ant-modal.ant-modal-confirm .ant-modal-confirm-btns .ant-btn + .ant-btn { margin-left:12px; }
     .ant-btn-default, .ant-btn-dashed, .ant-btn-text, .ant-btn-color-default { color:rgba(0,0,0,0.85) !important; }
-    /* v125（用户图一）：「取消新建排产」icon+文字主色橙 —— 上行 .ant-btn-default color !important
-       会压过 JSX 内联色（实测文字/图标黑），须同类级 !important 反压；
-       v127（用户第1条）：默认白底 + 橙描边 + 橙字橙icon，并补三态过渡（与全站 .15s/.2s 过渡口径一致） */
-    .ant-btn.kb-cancel-wizard {
+    /* v128（用户反馈橙块无字）：改用 id 选择器（特异度 1,0,0）——类级规则在个别浏览器环境
+       存在被运行时样式压制的可能，id+!important 双保险；v127 同口径保留三态与过渡 */
+    #kbCancelWizard {
       color:#EE6402 !important; border-color:#EE6402 !important; background:#fff !important;
       transition:background-color .2s ease, border-color .2s ease, color .2s ease; }
-    /* v126/v127（用户图三/第4·5条）：hover 与点击(active) = 实色橙填充 + 白字白icon（原 #FF7A45 红橙描边 hover 移除） */
-    .ant-btn.kb-cancel-wizard:not(:disabled):hover,
-    .ant-btn.kb-cancel-wizard:not(:disabled):focus-visible,
-    .ant-btn.kb-cancel-wizard:not(:disabled):active {
-      background:#EE6402 !important; border-color:#EE6402 !important; color:#fff !important; box-shadow:none !important; outline:none !important; }
+    /* hover 与点击(active)/键盘聚焦 = 实色橙填充 + 白字白icon */
+    #kbCancelWizard:hover, #kbCancelWizard:focus-visible, #kbCancelWizard:active {
+      background:#EE6402 !important; border-color:#EE6402 !important; color:#fff !important;
+      box-shadow:none !important; outline:none !important; }
     .ant-btn-primary, .ant-btn-color-primary { color:#fff !important; }
     .ant-btn-link, .ant-btn-color-link { color:#EE6402 !important; }
     /* 文字链接按钮 hover:浅橙 #FF7A45(禁用态除外,禁用保持置灰无 hover) */
@@ -9648,7 +9646,7 @@ React.createElement('div',{className:'header-bar'},
         page==='new-sched-plan'
           ? React.createElement('div',{className:'crumb-bar crumb-bar-with-intro',style:{marginBottom:8}},
               /* v124（用户图二）：橙描边 + 橙文字 + 白底（原橙实底作废）；容器底部 8px 间距 */
-              React.createElement(KButton,{className:'kb-cancel-wizard',onClick:()=>navigate('sched-plan-list')},
+              React.createElement(KButton,{id:'kbCancelWizard',className:'kb-cancel-wizard',onClick:()=>navigate('sched-plan-list')},
                 React.createElement('span',{style:{display:'inline-flex',alignItems:'center',gap:8}},
                   React.createElement('svg',{width:14,height:14,viewBox:'0 0 16 16',fill:'none','aria-hidden':true},
                     React.createElement('path',{d:'M10 3L5 8L10 13',stroke:'currentColor',strokeWidth:1.5,strokeLinecap:'round',strokeLinejoin:'round'})),
