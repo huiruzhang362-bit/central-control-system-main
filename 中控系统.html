@@ -6,7 +6,7 @@
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <title>型材立库中控系统 · v10.12-145</title>
+  <title>型材立库中控系统 · v10.12-146</title>
   <link rel="stylesheet" href="antd.min.css">
   <style>
     * { box-sizing: border-box; }
@@ -1667,6 +1667,13 @@
        间距 8px：flex gap 8 + 清零 antd 内建按钮 margin，避免叠加成 20px */
     .ant-modal .ant-modal-footer .ant-btn svg { display:none !important; }
     .ant-modal .ant-modal-footer .ant-btn + .ant-btn { margin-inline-start:0 !important; margin-left:0 !important; }
+    /* v146（用户：弹框按钮间距丢失排查）：v141 清零内建 margin 后只给「新建切割包」自定义 footer
+       配了 gap —— 所有 antd 默认 footer 的弹窗（KBConfirmHost 全部确认框 / 接收计划 / 新建工单等）
+       间距归零（v141 前实际呈现的 12px 由 L2026 margin-left:12px 提供，也被上面的 !important 压死）。
+       统一改为 footer flex + gap:12（与抽屉 footer 规范一致）；按钮 margin 一并清零防叠加。
+       自定义 footer 的弹窗不受影响（新建切割包内联 gap:8、创建工单 wz-import-modal gap:10 各自覆盖） */
+    .ant-modal .ant-modal-footer { display:flex; justify-content:flex-end; align-items:center; gap:12px; }
+    .ant-modal .ant-modal-footer .ant-btn { margin:0 !important; }
 
     /* ── v117：输入框 / 检索框 / 按钮 文字统一 16px（用户蓝框标准）──
        .page-form * 等旧规则是 0,1,0 同权 !important，这里全部用双类/两层选择器反压 */
@@ -2022,8 +2029,8 @@
        对齐规范 —— 弃用 modal.confirm，改为 App 树内受控 Modal（KBConfirmHost）承载：
        头部 = 标题 16px Medium 85% 黑 + 下接 1px #F0F0F0 分隔线（两端不留白）+ 右上 24×24 关闭；
        内容 = 橙警示图标 16px + 85% 黑说明（距头部 20px）；footer = 取消（描边）左 + 主操作（橙实底）右，
-       间距 12px、距内容 24px；宽度固定 420 档（--modal-w-sm），提示类 footer 只留「知道了」。 */
-    .ant-modal .ant-modal-footer .ant-btn + .ant-btn { margin-left:12px; }
+       间距 12px、距内容 24px；宽度固定 420 档（--modal-w-sm），提示类 footer 只留「知道了」。
+       （v146：间距 12px 的实现由 L1669 区的全局 footer flex gap:12 承载，此处旧 margin-left 规则删除） */
     /* v124（用户图五）：弹窗结构规范全站统一 —— 原 .kb-confirm 作用域规则提升为 .ant-modal 全局，
        22 处 Modal 全部对齐撤回/删除弹框规范：头部标题 16 Medium + 出血分隔线 + body 顶距 20 + footer 间距 24。
        （v103 撤销的是「flex 列 + max-height + close 重定位」那组旧全局块，本组仅 padding/分隔线/字号，无冲突） */
@@ -7854,12 +7861,13 @@ const PlanPage = ({data, onNavigate, onScheduleTargetDate}) => {
     { key:'reason', title:'失败原因', dataIndex:'reason', width:180, ellipsis:true, render:v => v || '—' },
     /* v140（用户第4条）：解析失败行「移除」→「重新导入」（重新解析该文件并回填） */
     /* v143（用户）：解析失败行 = 重新导入（弹系统文件选择框替换重解析）+ 删除；成功行保留移除 */
+    /* v146（用户红框）：待解析/成功行「移除」文案统一改「删除」（样式仍为普通链接色） */
     { key:'op', title:'操作', width:150,
       render:(_,r)=> r.state==='fail'
         ? React.createElement('span',{style:{display:'inline-flex',gap:8}},
             React.createElement(KButton,{size:'small',type:'link',onClick:()=>reimportPkgFile(r.uid)},'重新导入'),
             React.createElement(KButton,{size:'small',type:'link',danger:true,onClick:()=>removePkgFile(r.uid)},'删除'))
-        : React.createElement(KButton,{size:'small',type:'link',onClick:()=>removePkgFile(r.uid)},'移除') },
+        : React.createElement(KButton,{size:'small',type:'link',onClick:()=>removePkgFile(r.uid)},'删除') },
   ];
   const pkgFileCols = pkgFileColsAll;
   /* v140（用户第3条）：导入列表固定高 6 行（约 234px），超出显示垂直滚动条 */
