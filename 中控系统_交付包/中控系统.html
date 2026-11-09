@@ -6,7 +6,7 @@
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <title>型材立库中控系统 · v10.12-128</title>
+  <title>型材立库中控系统 · v10.12-145</title>
   <link rel="stylesheet" href="antd.min.css">
   <style>
     * { box-sizing: border-box; }
@@ -100,7 +100,7 @@
     .section-gap { margin-bottom: 14px; }
 
     /* ── 加工任务 实时看板 ── */
-    .kb-mat-id { font-family: 'SFMono-Regular', Menlo, Consolas, monospace; font-weight: 700; font-size: 12px; color: rgba(0,0,0,0.85); }
+    .kb-mat-id { font-family: 'SFMono-Regular', Menlo, Consolas, monospace; font-weight: 700; font-size: 14px; color: rgba(0,0,0,0.85); } /* v139（用户图一红框）：12→14px */
     .kb-badge {
       display: inline-flex; align-items: center; border-radius: 2px;
       padding: 1px 9px; font-size: 12px; font-weight: 600;
@@ -108,7 +108,8 @@
     }
     .kb-table .kb-row-pushfail > td { background: #fff1f0 !important; }
     .kb-drag-handle { cursor: grab; color:#bfbfbf; font-size:16px; line-height:1; user-select:none; display:inline-block; padding:0 2px; }
-    .kb-drag-handle:hover { color:#fa8c16; }
+    /* v129（用户第2条）：拖拽控件 hover 统一主橙高亮（对齐全站可交互元素 hover 口径） */
+    .kb-drag-handle:hover { color:#EE6402; }
     .kb-drag-handle:active { cursor: grabbing; }
     .kb-table .kb-row-dragover > td { border-top: 2px solid #fa8c16 !important; background:#fff7e6; }
     /* 加工任务列表固定高度：任务较少时也保持一致的可视区域 */
@@ -193,13 +194,23 @@
     .ns-chip.on { color:#fff!important; background:#3CB44B!important; border-color:#3CB44B!important; font-weight:600!important; box-shadow:0 2px 6px rgba(60,180,75,.28); }
     .ns-chip.on:hover { background:#2E9E3D!important; border-color:#2E9E3D!important; }
     .ns-chip.off { color:#A6AEBA!important; background:#ECEEF1!important; border-color:#ECEEF1!important; font-weight:500!important; }
-    .ns-chip.off:hover { background:#E2E5E9!important; color:#8C96A2!important; }
+    /* v140（用户图一红框）：hover 红色描边取消 —— off 态只改了底/字色，antd 主橙 hover
+       border-color 仍穿透成红边；补 border-color 同色即可整体消除 */
+    .ns-chip.off:hover { background:#E2E5E9!important; color:#8C96A2!important; border-color:#E2E5E9!important; }
     .ns-chip.em.off { color:#E0565E!important; }
     /* v126（用户图四红框/第4·5条）：移除应急芯片红色 hover（对齐普通 off 态灰色 hover）；
        focus/键盘聚焦不再出现主橙描边环（C1 上的橙圈）；选中态任何时刻文字强制白色 */
-    .ns-chip.em.off:hover { background:#E2E5E9!important; color:#8C96A2!important; }
+    .ns-chip.em.off:hover { background:#E2E5E9!important; color:#8C96A2!important; border-color:#E2E5E9!important; }
+    .ns-chip.ant-btn-default:hover:not(.on):not(.off) { border-color:#d9d9d9 !important; }
     .ns-chip:focus, .ns-chip:focus-visible { outline:none !important; box-shadow:none !important; }
     .ns-chip.on, .ns-chip.on:hover, .ns-chip.on:focus, .ns-chip.on:focus-visible { color:#fff !important; }
+    /* v145（用户第3条）：红色/主色 hover 残留彻底根治 —— 全局 .ant-btn-default:hover{color:#EE6402!important}
+       特异度 (0,4,0) 会把 on/off chip hover 时的文字与描边压成主色橙（旧规则只有 (0,3,0) 压不过），
+       这里用「双层类 + 状态类」提到 (0,5,0) 反压回规范色：on=白字绿底、off=灰字浅灰底，与默认态一致 */
+    .ns-chip.ant-btn.ant-btn-default.on:hover,
+    .ns-chip.ant-btn.ant-btn-default.on:focus-visible { color:#fff !important; background:#2E9E3D !important; border-color:#2E9E3D !important; }
+    .ns-chip.ant-btn.ant-btn-default.off:hover,
+    .ns-chip.ant-btn.ant-btn-default.off:focus-visible { color:#8C96A2 !important; background:#E2E5E9 !important; border-color:#E2E5E9 !important; }
     .ns-config-controls { display:flex; align-items:center; gap:16px; flex-wrap:wrap; padding:10px 12px; margin-bottom:12px; border:1px solid #f0f0f0; border-radius:6px; background:#fafafa; }
     .ns-device-row { display:flex; gap:28px; flex-wrap:wrap; margin-bottom:10px; }
     /* v99：自动配置左右并排（用户图二红框）—— 左列=运行模式+开关，右列=设备启停+工艺通路+连线图 */
@@ -461,6 +472,9 @@
     .wz-queue { display:flex; flex-direction:column; gap:6px; max-height:264px; overflow:auto; }
     .page-form .wz-queue-item { display:flex; align-items:center; gap:10px; padding:8px 12px; border:1px solid #f0f0f0; border-radius:6px; background:#fff; cursor:grab; font-size:13px !important; color:rgba(0,0,0,.85) !important; }
     .page-form .wz-queue-item:active { cursor:grabbing; }
+    /* v129（用户第2条）：可拖拽行 hover 浅橙高亮（is-dragging/is-dropover 优先级更高，不受影响） */
+    .page-form .wz-queue-item:hover { border-color:rgba(238,100,2,.45); background:#FFF7E6; }
+    .wz-adjust-item:hover { background:#FFF7E6; }
     .wz-queue-item .wz-queue-route { margin-left:auto; color:#8c8c8c; font-size:12px; white-space:nowrap; }
     /* v123（向导第4/6条）：拖拽中 = 规范浅橙 #FFF7E6 且整个拖拽过程保持（不再半透明执行蓝）；
        悬停落点 = 浅灰 #F5F5F5（原低透明执行蓝按用户要求改浅灰），描边同步转灰 */
@@ -472,11 +486,14 @@
     /* v123（向导第3条）：生产日期行上下内边距 12→16px，且不再被 last-of-type flex:1 拉高 —— 背景高度收紧为内容高 */
     .wz-confirm-head { display:flex; align-items:center; gap:10px; padding:16px 20px; }
     .wz-confirm-card { display:flex; flex-direction:column; }
-    /* v125（用户图一）：卡片区恢复 flex:1 填满页脚上方留白 —— 生产日期行仍由 head flex:0 0 auto 保持紧凑，
-       富余高度给 wz-split（左右卡随行高拉伸） */
-    .wz-page > section.wz-card.wz-confirm-card { flex:1 1 auto; }
+    /* v145（用户第6条）：生产日期行与下方卡片之间留白收敛 —— v125 的 confirm-card flex:1
+       实际拉高的是「只含日期行」的空卡（wz-split 与 confirm-card 平级，不在其内部），
+       富余高度全部变成日期卡内部空白（实测 82px）。改为：confirm-card 高度收紧为内容高，
+       富余高度转给 wz-split（左右卡随行高拉伸），日期行与卡片间距 = wz-page gap 12 + margin 4 = 16，
+       与上方 padding（16px）一致 */
+    .wz-page > section.wz-card.wz-confirm-card { flex:0 0 auto; }
     .wz-confirm-card > .wz-confirm-head { flex:0 0 auto; }
-    .wz-confirm-card > .wz-split { flex:1 1 auto; min-height:0; }
+    .wz-page > .wz-split { flex:1 1 auto; min-height:0; margin-top:4px; }
     /* v109（图三第2/3条）：生产日期必填星号；排产编号置灰只读 */
     .wz-fl-req::before { content:'*'; display:inline-block; margin-right:4px; color:#ff4d4f; font-family:SimSun,sans-serif; line-height:1; }
     .page-form .wz-confirm-head input.wz-ro-input { background:#f5f5f5 !important; color:#8c8c8c !important; cursor:not-allowed; }
@@ -592,6 +609,7 @@
     /* 选中态(通用卡片，含出库立库)：橙色描边 #ee6402 + 浅橙底 + 橙色外发光 */
     .kbq-cut-item.is-selected { border-color:#ee6402; background:#fff7e6; box-shadow:0 0 0 2px rgba(238,100,2,.12); }
     .kbq-drag-dots { display:inline-block; width:8px; height:14px; flex:none; cursor:grab; background:radial-gradient(circle,#8d9bab 1.35px,transparent 1.6px) 0 0/5px 5px; }
+    .kbq-drag-dots:hover { background:radial-gradient(circle,#EE6402 1.35px,transparent 1.6px) 0 0/5px 5px; }
     /* 拖动把手：作为复选框前的普通 flex 项排列（原绝对定位在卡片 padding 收紧后会与复选框重叠） */
     .kbq-group-drag { flex:none; }
     /* ── 切割工单卡片（v59 按 Figma 1509:34797 一比一重刻）──
@@ -682,7 +700,7 @@
        用户红框的错乱）。24px ⇒ 可视高 822、maxScroll=376：第 4 组 shift 恰为 24 完全落位，
        li 底缘 524 与生产监控标题顶 528 之间净隙 4px；「切割」底部 882 距菜单底 886 仅 4px，
        多余留白消除。trigger(910..958) 仍在菜单下方，不遮挡任何条目 */
-    .app-sider .ant-layout-sider-children { padding-bottom:24px; box-sizing:border-box; }
+    .app-sider .ant-layout-sider-children { padding-bottom:0; box-sizing:border-box; } /* v134（用户红框）：底部留白 24→0 */
     .app-sider .ant-layout-sider-trigger {
       height:48px; line-height:48px; bottom:0;
       background:#fff; color:#595959;
@@ -703,6 +721,13 @@
     /* v82：底色 #FAFAFA→#F8F9FA（用户嫌深，取规范页面底色 token，更浅一档） */
     .app-sider:not(.ant-layout-sider-collapsed) .ant-menu { background:#F8F9FA; }
     .app-sider .ant-menu-sub.ant-menu-sub { background:#F8F9FA !important; } /* 双层类+!important 压过 antd css-var 规则 */
+    /* v134（用户：抖动修复①）：分组开合瞬时化 —— 0.2s 高度动画的中间态叠加滚动/吸顶重排
+       是抖动温床（自动收起时 scrollHeight 渐变 + scrollTop 钳制反复），duration 0 后几何一帧到位 */
+    .app-sider .ant-menu-sub { transition-duration:0s !important; }
+    .app-sider .ant-motion-collapse-appear-active,
+    .app-sider .ant-motion-collapse-enter-active,
+    .app-sider .ant-motion-collapse-leave-active,
+    .app-sider .ant-motion-collapse { transition:none !important; }
     .app-sider .ant-menu { flex:1; font-family:'Source Han Sans CN','Source Han Sans SC','Noto Sans CJK SC','PingFang SC','Microsoft YaHei',sans-serif; }
     /* ===== 左侧导航滚动容器:滑块绝对定位于容器最右侧,不占布局,导航按钮宽度不受滑块影响 ===== */
     .app-sider .ant-menu { overflow-y:auto !important; overflow-x:hidden; scrollbar-width:none; -ms-overflow-style:none; }
@@ -734,13 +759,26 @@
       color:rgba(0,0,0,0.68) !important; font-size:16px !important; font-weight:500;
       padding:0 16px !important;
     }
-    /* 二级菜单:Figma list_secondary 固定高 48 / 左缩进 48 / 间隙 2px */
-    .app-sider .ant-menu-sub .ant-menu-item {
+    /* 二级菜单:Figma list_secondary 固定高 48 / 左缩进 48 / 间隙 2px
+       v136（用户：导航缝隙/错乱）：上面一级 56 规则的选择器 `.ant-menu-inline > .ant-menu-item`
+       同样命中子项（antd inline 模式下子级 ul 也带 .ant-menu-inline），两者同特异度 (0,3,0)
+       —— 实测 computed height=56，子项全部长成标题高度、层级差消失、整栏被拉高（缝隙观感）。
+       提高特异度强制 48 落地 */
+    /* v142（结构还原）：删除 v136 误加的第二分支 .ant-menu-inline > .ant-menu-item.ant-menu-item-only-child
+       —— 实测该类被 antd 打在全部 14 个子项上（与第一分支重复），且语义上是「顶层唯一子项」，
+       一旦出现真正的顶层 item 会被错误压成 48 高 + 48 缩进 */
+    .app-sider .ant-menu .ant-menu-sub .ant-menu-item {
+      /* v136：min-height:56px 也命中子项 —— height 输了会被它钳回 56，必须一并覆盖 */
+      min-height:48px !important;
       margin-block:2px !important; margin-inline:0 !important; width:100% !important;
       height:48px !important; padding:0 16px 0 48px !important;
       border-radius:4px !important; line-height:22px !important;
       color:rgba(0,0,0,0.68) !important; font-size:16px !important; font-weight:500;
     }
+    /* v142（用户：选中子级文字高亮恢复）：v136 的 48px 规则 (0,4,0) color !important 压过了
+       (0,3,0) 的选中规则 —— 选中子项文字被误改回深灰（背景橙还在、字不橙）。
+       以 (0,5,0) 例外规则恢复橙色高亮（含 hover 态） */
+    .app-sider .ant-menu .ant-menu-sub .ant-menu-item.ant-menu-item-selected { color:#EE6402 !important; }
     /* 父级标题:图标与文字间距按 Figma 8px(覆盖 antd 默认 10px 间隔) */
     .app-sider .ant-menu-inline .ant-menu-submenu-title .ant-menu-title-content { margin-inline-start:0; }
     /* 选中态(鼠标点击):底色 #FDF4E7、文字/图标 #EE6402(Figma 界面框架规范) */
@@ -751,8 +789,14 @@
        鼠标划过时那条线会闪掉 */
     .app-sider .ant-menu-inline > .ant-menu-item:not(.ant-menu-item-selected):hover,
     .app-sider .ant-menu-sub .ant-menu-item:not(.ant-menu-item-selected):hover,
-    .app-sider .ant-menu-inline .ant-menu-submenu-title:hover { background-color:#ECEDED !important; }
-    .app-sider .ant-menu-item-selected:hover { background-color:#FDF4E7 !important; }
+    .app-sider .ant-menu-inline .ant-menu-submenu-title:hover {
+      background-color:#ECEDED !important;
+      color:rgba(0,0,0,0.85) !important; }   /* v133：antd 默认 hover 会把文字染主橙 —— 显式压回 85% 黑 */
+    /* v133：hover 时箭头同步压回灰（antd 默认箭头随文字变主橙） */
+    .app-sider .ant-menu-inline .ant-menu-submenu-title:hover .ant-menu-submenu-arrow { color:rgba(0,0,0,0.45); }
+    /* v133 三态定版：默认白底黑字 / hover 灰底黑字 / 选中橙底橙字（含当前页父级标题 hover 保持橙字） */
+    .app-sider .ant-menu-item-selected:hover { background-color:#FDF4E7 !important; color:#EE6402 !important; }
+    .app-sider .ant-menu-inline > .ant-menu-submenu-selected > .ant-menu-submenu-title:hover { color:#EE6402 !important; }
     /* 父级高亮:唯一判定条件 = 这一组下面有「当前页」子项(antd 命中 selectedKeys 后自动给父级加
        .ant-menu-submenu-selected)。点父级标题只切换展开,展开 ≠ 选中 ⇒ 不再产生任何高亮。
        以前这里还有一条 .nav-parent-selected(点过就上色),正是"只点父级也高亮"的误触发源头,已移除。
@@ -767,7 +811,7 @@
        ⚠ 仍然不用 position:sticky —— 外层 .nav-scroll-wrap 是 overflow:clip，
        Safari/部分 WebView 会把它当 sticky 的滚动容器，导致 sticky "算了但没生效"。 */
     .app-sider .ant-menu-inline > .ant-menu-submenu > .ant-menu-submenu-title {
-      z-index:3; background-color:#fff;
+      z-index:3; background-color:#F8F9FA;   /* v142：#fff→#F8F9FA —— v80 菜单改灰后遗留白底让标题条与子项割裂 */
     }
     /* 吸顶态(JS 打 data 标记)。分隔线必须画在「盒子内部」—— 用 box-shadow 向外画会被紧贴在下面的
        那个堆叠标题的白底盖住(同 z-index、DOM 在后 ⇒ 后者在上),肉眼看就是没有线,所以改用
@@ -831,8 +875,16 @@
        所以原先那套「被吸顶条扣住时先滚出来再开合」的 revealStuckGroup 已整套删除。
        ⚠️ 下面这条 position:relative **不能删** —— 吸顶标题的 z-index:3 必须有定位上下文才生效，
        删掉之后被 translateY 钉住的标题会被下面滚上来的子项盖住。 */
-    .app-sider .ant-menu-submenu-arrow { display:none !important; }
-    .app-sider .ant-menu-inline .ant-menu-submenu-title { position:relative; }
+    /* v131（用户）：展开/收缩箭头恢复（v47 曾整体删除）—— 直接启用 antd 原生箭头
+       （收拢朝右 / 展开朝下，随开合自动旋转），不再走自绘 ::after 遮罩那套；
+       下面这条 position:relative **不能删** —— 吸顶标题的 z-index:3 必须有定位上下文才生效。 */
+    .app-sider .ant-menu-submenu-arrow { color:rgba(0,0,0,0.45); }
+    /* v134（用户）：箭头橙色仅当父级被选中（当前页在其子级，antd submenu-selected 派生）；
+       仅展开（open）/悬停等其他状态一律灰 —— 原 .ant-menu-submenu-open 橙色规则作废 */
+    .app-sider .ant-menu-inline > .ant-menu-submenu-selected > .ant-menu-submenu-title .ant-menu-submenu-arrow { color:#EE6402; }
+    /* v137：sticky 标题必须不透明且高于子项层级 —— 子项从其下方滚过时被白底遮挡；
+       z-index:3（原 transform 吸顶时代就依赖这个层级） */
+    .app-sider .ant-menu-inline .ant-menu-submenu-title { position:relative; background:#F8F9FA; z-index:3; }
     /* Figma 导航图标:24×24(currentColor 填充),库存图标 20×16 */
     .nav-figma-icon { display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; margin-right:8px; flex:none; }
     .nav-figma-icon svg { display:block; }
@@ -1213,6 +1265,8 @@
     /* v77：内阴影删除（用户：投影过深显得脏乱）—— 面板顶部与排产列表一致保持干净，
        1px #F0F0F0 描边保留（v69 规范） */
     .plan-page:not(.sched-page) .plan-detail { border-radius:0; border-color:#f0f0f0; }
+    /* v132（用户图一）：撤销 v131 的右面板整体圆角（恢复 v69 直角口径）；唯一保留 = 页码分页卡右下角圆角 */
+    .plan-page:not(.sched-page) .plan-pager-card { border-bottom-right-radius:8px; }
     /* v48：排产列表把「甘特图」与「排产编号表单」拆成上下两张独立卡片，间距 12。
        ⚠ gap 只写在 .sched-page 作用域内 —— .plan-detail-wrap 是计划列表与排产列表共用的，
        改基类会让计划列表的面板凭空矮 12px（v38 好不容易把那段间距折进 .plan-pager 的 71 里）。 */
@@ -1319,6 +1373,10 @@
     .plan-col-pager .plan-pager { flex:0 0 auto; height:100%; border-top:0; }
     /* v124（用户图一）：入库任务表分页 —— 对齐列表页页码规范（右对齐 + 上分隔线 + 向上投影 + 10/页） */
     .inb-tables .ant-table-pagination.ant-pagination { margin:0 !important; min-height:54px; padding:0 8px; display:flex; align-items:center; justify-content:flex-end; border-top:1px solid #f0f0f0; box-shadow:0 -2px 4px rgba(0,0,0,.04); position:relative; z-index:1; }
+    /* v145（用户第1条）：历史队列标准分页行 —— 复用同一规范（右对齐 + 上分隔线 + 向上投影），
+       卡片网格与分页行之间 6px（与卡片间距一致） */
+    .kbq-hist-pager { margin-top:6px; min-height:54px; padding:0 8px; display:flex; align-items:center; justify-content:flex-end; border-top:1px solid #f0f0f0; box-shadow:0 -2px 4px rgba(0,0,0,.04); background:#fff; position:relative; z-index:1; }
+    .kbq-hist-pager .ant-pagination { margin:0 !important; }
     /* 页容量选择器（10/页）与页码同高同圆角 */
     .plan-pager .ant-pagination-options .ant-select-selector { border-radius:2px !important; }
     .plan-pager .ant-pagination { margin:0; }
@@ -1530,7 +1588,7 @@
     /* v89：全站按钮文字字重 400→350（用户第1条） */
     /* v118（用户第4条）：按钮文字 16px —— 原先这里 14px 会命中按钮内层 span（含文字的），
        压掉外层 16px 规则；表单/输入框样式与按钮样式各自独立选择器，不复用 */
-    .ant-btn, .ant-btn * { font-size:16px !important; font-weight:350 !important; font-family:'Source Han Sans CN','Source Han Sans SC','Noto Sans CJK SC',sans-serif !important; }
+    .ant-btn, .ant-btn * { font-size:16px !important; font-weight:400 !important; font-family:'Source Han Sans CN','Source Han Sans SC','Noto Sans CJK SC',sans-serif !important; }
     /* v99：全站标签（Tag）统一删除描边（用户图五红框，要求全站覆盖）——
        双层类 + !important 压过 antd 5.29 的 css-var border 规则；底色/文字色不变 */
     /* v105：全站标签统一 14px + 固定宽 64px 水平居中（用户第7条）——不随文字多少收缩扩展；
@@ -1605,6 +1663,10 @@
        footer 背景**透明**（透出抽屉 90% 白底，不单独铺白） */
     .ant-drawer .ant-drawer-footer { background:transparent; border-top:1px solid #F0F0F0; padding:12px 24px 16px; text-align:right; }
     .ant-drawer .ant-drawer-footer .ant-btn + .ant-btn { margin-left:12px; }
+    /* v141（用户第2条）：弹窗底部按钮不带图标 —— KButton 按文案注入的 svg 在 footer 内一律隐藏；
+       间距 8px：flex gap 8 + 清零 antd 内建按钮 margin，避免叠加成 20px */
+    .ant-modal .ant-modal-footer .ant-btn svg { display:none !important; }
+    .ant-modal .ant-modal-footer .ant-btn + .ant-btn { margin-inline-start:0 !important; margin-left:0 !important; }
 
     /* ── v117：输入框 / 检索框 / 按钮 文字统一 16px（用户蓝框标准）──
        .page-form * 等旧规则是 0,1,0 同权 !important，这里全部用双类/两层选择器反压 */
@@ -1778,7 +1840,7 @@
     .ant-modal-confirm .ant-modal-confirm-body > .anticon { margin-top:4px; }
     /* 确认弹框带页头时(可关闭弹框),正文内不再重复显示标题——标题已在页头展示一次 */
     .ant-modal-content:has(> .ant-modal-header) .ant-modal-confirm-title { display:none; }
-    /* ===== 新建切割单 · 两步流程（① 选择文件 → ② 确认解析结果与信息）=====
+    /* ===== 新建切割包 · 两步流程（① 选择文件 → ② 确认解析结果与信息）=====
        流程骨架与布局参照 MES 参考图,配色/字号/圆角一律走规范值(主色 #EE6402,禁止残留蓝色) */
     .pkg-steps { display:flex; align-items:center; gap:12px; margin:0 0 16px; }
     .pkg-step { display:flex; align-items:center; gap:8px; flex:none; }
@@ -1794,9 +1856,6 @@
     .pkg-step-line { flex:1; height:1px; background:#E3E3E3; }
     /* 「返回上一级」是次操作:小号描边按钮,放在步骤行右侧。
        规范限定弹窗 footer 只放「取消 + 主操作」两个按钮,所以它不进 footer */
-    .pkg-step-back.ant-btn { height:24px; padding:0 10px; margin-left:8px; font-size:12px; border-radius:4px;
-                             display:inline-flex; align-items:center; gap:4px; }
-    .pkg-step-back.ant-btn:not(:disabled):hover { border-color:#EE6402 !important; color:#EE6402 !important; }
     /* ② 确认解析结果与信息:拖拽区收起(与参考图一致),只保留文件表 + 表单 */
     .pkg-drop.is-hidden { display:none !important; }
     /* 拖拽上传区:虚线描边(#FFC999),主文案主橙、副文案 45% 黑 */
@@ -1808,6 +1867,9 @@
     /* 文件解析表:与全站表格同规格(表头 14/500 浅灰底,单元格 14/Regular/85% 黑) */
     .pkg-file-table .ant-table-thead > tr > th { background:#FAFAFA; font-size:14px; font-weight:500; color:rgba(0,0,0,0.85); }
     .pkg-file-table .ant-table-tbody > tr > td { font-size:14px; color:rgba(0,0,0,0.85); }
+    /* v141（用户图一红框）：文件名列长文本溢出压到「解析状态」列 —— 本表局部恢复省略号
+       （全站禁省略号口径不变，仅此弹窗表格内例外），配合弹窗加宽彻底消除重叠 */
+    .pkg-file-table .ant-table-cell-ellipsis { overflow:hidden !important; text-overflow:ellipsis !important; }
     .pkg-file-table .ant-table-tbody > tr > td .ant-btn-link { color:#EE6402; }
     .pkg-file-table .ant-btn-link:not(:disabled):hover { color:#FF7A45 !important; text-decoration:underline; }
     /* 空态:文字居中 + 45% 黑(表格单元格默认左对齐,这里用高优先级压回来) */
@@ -1815,6 +1877,12 @@
     .pkg-file-table .ant-empty-description { color:rgba(0,0,0,0.45); font-size:14px; }
     /* 解析结论/回填提示:12px、45% 黑,与上方表格留 8px */
     .pkg-parse-summary, .pkg-parse-hint { margin:8px 0 0; font-size:12px; color:rgba(0,0,0,0.45); line-height:18px; }
+    /* v145（用户第5条）：解析失败置灰拦截提示（主橙小字，随 pkg-parse-hint 同版式） */
+    .ant-modal .pkg-block-hint { color:#EE6402 !important; font-weight:400 !important; }
+    /* v145（用户第7条）：创建工单弹窗 footer 两按钮间隙 10px —— flex+gap 统一排版，
+       清零 antd 内建按钮 margin 防叠加（v141 曾用同法把间距定在 8px，本轮上调） */
+    .wz-import-modal .ant-modal-footer { display:flex; justify-content:flex-end; align-items:center; gap:10px; }
+    .wz-import-modal .ant-modal-footer button { margin:0 !important; }
     /* 库存看板-库存明细表字体规范:Source Han Sans CN / 14px / Regular / 85%黑 */
     .inv-page .ant-table { font-family:'Source Han Sans CN','Source Han Sans SC','Noto Sans CJK SC',sans-serif; font-size:14px !important; }
     .inv-page .ant-table .ant-table-tbody > tr > td { color:rgba(0,0,0,0.85) !important; font-weight:400 !important; font-size:14px !important; }
@@ -1861,7 +1929,12 @@
     .page-form, .page-form * { font-weight:400 !important; }
     /* v89：page-form 内按钮 350 —— 上面 (0,1,0) 的 400 会压掉 L1359 同特异度的 .ant-btn 350，
        必须在其后用更高特异度 (.page-form .ant-btn, 0,2,0) 重申 */
-    .page-form .ant-btn, .page-form .ant-btn * { font-weight:350 !important; }
+     .page-form .ant-btn, .page-form .ant-btn * { font-weight:400 !important; }
+     /* v129（用户第4条）：带下划线的文字按钮（type link）例外 —— 保持原字重 350 不变（双保险特异度压过上面两条） */
+     .ant-btn.ant-btn-link, .ant-btn.ant-btn-link *,
+     .page-form .ant-btn.ant-btn-link, .page-form .ant-btn.ant-btn-link * { font-weight:350 !important; }
+     /* v129（用户图三红框）：「立即刷新」随看板红框口径 14px（同特异度后置覆盖全局按钮 16px） */
+     .kb-refresh-link, .kb-refresh-link * { font-size:14px !important; }
     .ant-modal, .ant-modal * { font-weight:400 !important; }
     /* 数据报表内容字重 Regular(与表单页统一);卡片标题/KPI 数值/详情标题保持 500 */
     .rpt-page, .rpt-page * { font-weight:400 !important; }
@@ -2187,7 +2260,7 @@ const KB_ICON_RULES = [
   [/^全选/,         KB_LINE_ICON('M2.5 8.5l3.5 3.5 7.5-8')],
   [/^清空/,         KB_LINE_ICON('M4 4l8 8M12 4l-8 8')],
   [/(配置|设置)/,   KB_LINE_ICON('M2.5 4.5h6m3 0h2m-11 7h2m3 0h7M8.5 4.5a1.5 1.5 0 1 0 3 0 1.5 1.5 0 0 0-3 0Zm-4 7a1.5 1.5 0 1 0 3 0 1.5 1.5 0 0 0-3 0Z')],
-  [/(计算|排产)/,   KB_LINE_ICON('M9 1.5 4 9h4l-1 5.5L12 7H8l1-5.5Z')],
+  [/^计算排产$/,   KB_LINE_ICON('M9 1.5 4 9h4l-1 5.5L12 7H8l1-5.5Z')], /* v134：全串锚定 —— 原宽松正则会命中「新建预排产」误注入闪电图标 */
   [/^库存同步/,     KB_LINE_ICON('M13.5 8a5.5 5.5 0 1 1-1.6-3.9M13.5 1.5v3h-3')],
   [/(规划|队列)/,   KB_LINE_ICON('M2.5 4h11M2.5 8h11M2.5 12h7')],
   [/^取消$/,        KB_LINE_ICON('M8 14.5A6.5 6.5 0 1 0 8 1.5a6.5 6.5 0 0 0 0 13ZM5.5 5.5l5 5m0-5-5 5')],
@@ -2218,8 +2291,8 @@ const KButton = (props) => {
    v118：键名修正 —— 排产列表=sched-plan-list、加工任务=outbound（与菜单路由一致，走查补全）═══ */
 const KB_PAGE_INTROS = {
   /* v125（用户图四）：删除「xxx：」提示前缀（模块名在面包屑已可见），只留说明文案 */
-  'plan':        '汇总全部生产计划及其排产状态，可从这里发起新建预排产，排产结果在「排产列表」中管理。',
-  'sched-plan-list':'查看预排产与已下发的排产，可编辑、下发（生成出库任务）或撤回；下发后任务进入「加工任务」执行。',
+  'plan':        '汇总全部生产计划及其排产状态，可从这里发起新建切割包，切割包的排产结果在「排产列表」中管理。',
+  'sched-plan-list':'查看预排产与已下发的排产，可新建预排产、编辑、下发（生成出库任务）或撤回；下发后任务进入「加工任务」执行。',
   'new-sched-plan':'三步完成一次排产 —— 选工单、配置加工通路、核对计算结果；保存后排产进入「排产列表」待下发。',
   'inbound':     '跟踪每根型材从叫料到入库的校验与推送，异常任务在此人工核对后恢复产线。',
   'outbound':    '查看排产下发后的实时执行队列与已完成历史，可在队列中调整切割顺序或撤回任务。',
@@ -2316,7 +2389,7 @@ function partDetailRowsOf(layoutNos){
 }
 const PART_DETAIL_COLS = [
   { title:'零件编号', dataIndex:'partNo', width:130, fixed:'left', ellipsis:{showTitle:false},
-    render:v=>React.createElement(Tooltip,{title:v},v) },
+    render:v=>React.createElement(Tooltip,{title:v,placement:'top',arrow:false,mouseEnterDelay:0.12},v) },
   { title:'分段号', dataIndex:'blockNo', width:84 },
   { title:'流向', dataIndex:'flow', width:76 },
   { title:'长度(mm)', dataIndex:'len', width:100, render:v=>v!=null?Math.round(v):'-' },
@@ -2325,13 +2398,14 @@ const PART_DETAIL_COLS = [
   { title:'宏距离(mm)', dataIndex:'macroDist', width:104, render:v=>v!=null?Math.round(v):'-' },
   { title:'加工顺序', dataIndex:'seq', width:84 },
   { title:'宏参数', dataIndex:'macroParam', ellipsis:{showTitle:false},
-    render:v=>v&&v!=='-'?React.createElement(Tooltip,{title:v,placement:'topLeft'},v):'-' },
+    render:v=>v&&v!=='-'?React.createElement(Tooltip,{title:v,placement:'topLeft',arrow:false,mouseEnterDelay:0.12},v):'-' },
 ];
 /* 零件详情抽屉（排产列表/计划列表两处入口共用同一结构） */
-function partDetailDrawer(rows, onClose){
+function partDetailDrawer(rows, onClose, title){
   return React.createElement(Drawer,{
-    title: '详情',
-    width:960, open:!!rows, onClose, destroyOnClose:true,
+    /* v138（用户第2/4条）：宽度对齐排产详情抽屉（1380 档）；标题改「套料版图号 详情」 */
+    title: title || '详情',
+    width:'min(1380px, 94vw)', open:!!rows, onClose, destroyOnClose:true,
   },
     rows && React.createElement(Table,{
       size:'small', rowKey:(r,i)=>i, dataSource:rows, columns:PART_DETAIL_COLS,
@@ -2394,12 +2468,13 @@ function useMsg(){
       error:   (c,d)=>emit(raw.error,  'e', c, d ?? 3.2),
       warning: (c,d)=>emit(raw.warning,'w', c, d ?? 2.2),
       info:    (c,d)=>emit(raw.info,   'i', c, d ?? 1.6),
-      /* L3:默认静默;纯结果可见的操作不再打扰 */
+      /* v136（用户：点击保存没有 toast 反馈）：旧「L3 结果可见即静默」策略作废 —— 它把全站
+         保存/更新/删除类 success 全部吞掉（代码有调用、策略层不弹出，走查时只看调用点发现不了）。
+         新口径：所有操作结果一律弹出（同文案 2.5s 去重保留）；导出/推送/跳转等白名单类 2.4s，普通结果 2s */
       success: (c,opts)=>{
         const text = typeof c==='string' ? c : '';
-        const keep = opts===true || (opts&&opts.keep===true) || KEEP_SUCCESS_RE.some(re=>re.test(text));
-        if(!keep) return;
-        return emit(raw.success, 's', c, (opts&&opts.duration)||1.6);
+        const dur = (opts&&opts.duration) || (KEEP_SUCCESS_RE.some(re=>re.test(text)) ? 2.4 : 2);
+        return emit(raw.success, 's', c, dur);
       },
       loading: raw.loading, open: raw.open, destroy: raw.destroy,
     };
@@ -2805,8 +2880,8 @@ const InventoryDashboard = ({gridData, inventoryData}) => {
         ),
         React.createElement(Form.Item,{style:{marginBottom:0, marginLeft:'auto'}},
           React.createElement(Space,{size:10},
-            React.createElement(Text,{type:'secondary',style:{fontSize:12}},'数据更新于 2026-05-17 14:32:15'),
-            React.createElement(KButton,{size:'small',type:'link',style:{padding:0,color:'#EE6402',textDecoration:'underline'},onClick:()=>msg.success('库存数据已刷新',{keep:true})},'立即刷新'),
+            React.createElement(Text,{type:'secondary',style:{fontSize:14}},'数据更新于 2026-05-17 14:32:15'),
+            React.createElement(KButton,{size:'small',type:'link',className:'kb-refresh-link',style:{padding:0,color:'#EE6402',textDecoration:'underline'},onClick:()=>msg.success('库存数据已刷新',{keep:true})},'立即刷新'),
           )
         ),
       )
@@ -2821,7 +2896,7 @@ const InventoryDashboard = ({gridData, inventoryData}) => {
         selected && React.createElement(Tag,{color:'blue',closable:true,onClose:()=>{setSelected(null);setTableData(filteredData);}},
           `已选中: ${selected.binNo}`
         ),
-        React.createElement(Text,{type:'secondary',style:{fontSize:12}},
+        React.createElement(Text,{type:'secondary',style:{fontSize:14}},
           '1号分区 95 库位 / 2号分区 136 库位 / 3号分区 136 库位'
         ),
       ),
@@ -3143,7 +3218,8 @@ const InboundPage = ({data, planData, onNavigate}) => {
     }),
     // 操作按钮放入卡片头 extra(全站统一卡片头机制:48px 行内垂直居中),页签在卡片体内;卡片头无下划线(参考立库「加工详情」布局)
     React.createElement(Card,{ size:'small', className:'card-no-head-border inb-tables', title:'入库任务',
-      /* v113（图一）：「新建入库任务」按钮删除；「卡片字段配置」改名「参数字段配置」并移到其原位置 */
+      /* v113（图一）：「新建入库任务」按钮删除；「卡片字段配置」改名「参数字段配置」并移到其原位置
+         v145（用户第2条）：与全站口径统一，改名「字段显示配置」（与加工任务弹窗同名） */
       extra: React.createElement(Space,{size:10},
         React.createElement(KButton,{onClick:()=>msg.info('库存同步请求已发送')},'库存同步'),
         React.createElement(Popover,{
@@ -3160,7 +3236,7 @@ const InboundPage = ({data, planData, onNavigate}) => {
                   /* v110：锁定字段 checkbox 置灰不可取消 */
                   disabled:INB_LOCKED_COLS.includes(f.key)}))}))
           },
-          React.createElement(KButton,{size:'small'},React.createElement('span',null,'参数字段配置'))),
+          React.createElement(KButton,{size:'small'},React.createElement('span',null,'字段显示配置'))),
       ),
     },
       React.createElement(Tabs,{
@@ -3716,6 +3792,9 @@ const ProcessingQueueGantt = ({ tasks, histTasks=[], queueTab='queue', onQueueTa
   const [selectedGroupIds, setSelectedGroupIds] = useState([]);
   const [selectedProfileKeys, setSelectedProfileKeys] = useState([]);
   const [dragOverId, setDragOverId] = useState(null);
+  /* v145（用户第1条）：历史队列标准分页 —— 全部组跨切割机汇总、按完成时间倒序，每页 N 组再按机分列 */
+  const [histPage, setHistPage] = useState(1);
+  const [histPageSize, setHistPageSize] = useState(10);
   const cutGroupDragId = useRef(null);
   const profileDragId = useRef(null);
   // tasks 是父组件每次渲染新建的数组，若直接作为 effect 依赖会导致每次渲染都重置手动排序；
@@ -3841,13 +3920,16 @@ const ProcessingQueueGantt = ({ tasks, histTasks=[], queueTab='queue', onQueueTa
           },
             React.createElement('div',{className:'kbq-gc-head'},
               React.createElement('div',{className:'kbq-gc-head-l'},
-                waiting&&React.createElement('span',{className:'kbq-drag-dots kbq-group-drag',draggable:true,title:'拖动调整切割工单顺序',
-                  onClick:e=>e.stopPropagation(),onDragStart:e=>{e.stopPropagation();cutGroupDragId.current=group.id;e.dataTransfer.effectAllowed='move';}}),
+                /* v129：原生 title 改标准 Tooltip（对齐删除图标提示规范） */
+                waiting&&React.createElement(Tooltip,{title:'拖动调整切割工单顺序',placement:'top',arrow:false,mouseEnterDelay:0.12},
+                  React.createElement('span',{className:'kbq-drag-dots kbq-group-drag',draggable:true,
+                  onClick:e=>e.stopPropagation(),onDragStart:e=>{e.stopPropagation();cutGroupDragId.current=group.id;e.dataTransfer.effectAllowed='move';}})),
                 React.createElement(Checkbox,{checked:selectedGroupIds.includes(group.id),disabled:running,
                   onClick:e=>e.stopPropagation(),onChange:e=>setSelectedGroupIds(prev=>e.target.checked?[...prev,group.id]:prev.filter(id=>id!==group.id))}),
                 /* v81：执行中卡片名称左侧圆点图标删除（用户要求），CSS 规则一并清理 */
                 React.createElement('span',{className:'kbq-gc-lb'},'切割工单'),
-                React.createElement('span',{className:'kbq-gc-lb kbq-gc-no',title:group.groupNo},group.groupNo),
+                React.createElement(Tooltip,{title:group.groupNo,placement:'top',arrow:false,mouseEnterDelay:0.12},
+                  React.createElement('span',{className:'kbq-gc-lb kbq-gc-no'},group.groupNo)),
                 running&&React.createElement('span',{className:'kbq-gc-status'},'执行中')
               ),
               React.createElement(KButton,{size:'small',className:'kbq-recall-btn',
@@ -3929,8 +4011,9 @@ const ProcessingQueueGantt = ({ tasks, histTasks=[], queueTab='queue', onQueueTa
         onDrop:e=>{e.preventDefault();if(draggable)reorderGroupProfile(cutGroupDetail,profileDragId.current,currentKey);profileDragId.current=null;},
         style:{padding:'10px 2px',borderBottom:'1px solid #f0f0f0',display:'flex',alignItems:'center',justifyContent:'space-between',gap:8,cursor:draggable?'grab':'default',background:selectedProfileKeys.includes(currentKey)?'#FFF7E6':'transparent'}},
         React.createElement('div',{style:{minWidth:0,display:'flex',alignItems:'center',gap:7}},
-          draggable&&React.createElement('span',{className:'kbq-drag-dots',draggable:true,title:'拖动调整组内顺序',
-            onDragStart:e=>{e.stopPropagation();profileDragId.current=currentKey;e.dataTransfer.effectAllowed='move';}}),
+          draggable&&React.createElement(Tooltip,{title:'拖动调整组内顺序',placement:'top',arrow:false,mouseEnterDelay:0.12},
+            React.createElement('span',{className:'kbq-drag-dots',draggable:true,
+            onDragStart:e=>{e.stopPropagation();profileDragId.current=currentKey;e.dataTransfer.effectAllowed='move';}})),
           React.createElement(Checkbox,{checked:selectedProfileKeys.includes(currentKey),disabled:!draggable,
             onChange:e=>setSelectedProfileKeys(prev=>e.target.checked?[...prev,currentKey]:prev.filter(key=>key!==currentKey))}),
           React.createElement('div',{style:{minWidth:0}},
@@ -3959,25 +4042,46 @@ const ProcessingQueueGantt = ({ tasks, histTasks=[], queueTab='queue', onQueueTa
   const histPair=(lb,vl)=>React.createElement('div',{className:'kbq-gc-pair'},
     React.createElement('span',{className:'kbq-gc-lb2'},lb),
     React.createElement('span',{className:'kbq-gc-vl',title:String(vl??'')},vl??'-'));
-  const histContent=React.createElement('div',{className:'kbq-cut-grid'},cuts.map(cut=>{
+  /* v145（用户第1条）：历史队列底部加标准分页 —— 全部组跨切割机汇总、按完成时间倒序，
+     每页 N 组切片后再按切割机分列展示（该页内某机无组则显示「暂无历史任务」）；
+     分页行样式对齐列表页/入库任务规范（右对齐 + 上分隔线 + 向上投影），单页自动隐藏 */
+  const allHistGroups = cuts.flatMap(cut=>{
     const list=histTasks.filter(t=>t.cutStation===cut);
     const groups=Object.values(list.reduce((acc,task)=>{
       const id=task.profileGroupId||task.profileGroupNo||task.id;
-      if(!acc[id]) acc[id]={id, groupNo:task.profileGroupNo||task.nestingLayoutNo||id, packageNo:task.packageNo, profileCount:0, minutes:0, finishTime:''};
+      if(!acc[id]) acc[id]={id, groupNo:task.profileGroupNo||task.nestingLayoutNo||id, packageNo:task.packageNo, profileCount:0, minutes:0, finishTime:'', cut};
       acc[id].profileCount += Number(task.profileCount)||1;
       acc[id].minutes += cutMinutes(task);
       if(task.finishTime && (!acc[id].finishTime || String(task.finishTime)>String(acc[id].finishTime))) acc[id].finishTime=task.finishTime;
       return acc;
     },{}));
+    return groups;
+  }).sort((a,b)=>String(b.finishTime||'').localeCompare(String(a.finishTime||'')));
+  const histTotal=allHistGroups.length;
+  const histPaged=allHistGroups.slice((histPage-1)*histPageSize, histPage*histPageSize);
+  const histPager = histTotal > histPageSize
+    ? React.createElement('div',{className:'kbq-hist-pager'},
+        React.createElement(Pagination,{
+          current:histPage, pageSize:histPageSize, total:histTotal,
+          showSizeChanger:true, pageSizeOptions:['10','20','50'], hideOnSinglePage:true,
+          onChange:(p,s)=>{ if(s!==histPageSize){ setHistPageSize(s); setHistPage(1); } else setHistPage(p); },
+        }))
+    : null;
+  const histContent=React.createElement(React.Fragment,null,
+    React.createElement('div',{className:'kbq-cut-grid'},cuts.map(cut=>{
+    const list=histTasks.filter(t=>t.cutStation===cut);
+    const cutAllGroups=allHistGroups.filter(g=>g.cut===cut).length;
+    const groups=histPaged.filter(g=>g.cut===cut);
     return React.createElement(Card,{key:cut,size:'small',className:'kbq-panel',
       title:`${cut} 切割机任务`,
-      extra:React.createElement('span',{style:{fontSize:12,color:'rgba(0,0,0,0.65)'}},`${groups.length} 组 / ${list.length} 项`)},
+      extra:React.createElement('span',{style:{fontSize:12,color:'rgba(0,0,0,0.65)'}},`${cutAllGroups} 组 / ${list.length} 项`)},
       React.createElement('div',{className:'kbq-cut-list'},groups.length?groups.map(group=>React.createElement('div',
           {key:group.id,className:'kbq-cut-item kbq-group-card is-pending'},
           React.createElement('div',{className:'kbq-gc-head'},
             React.createElement('div',{className:'kbq-gc-head-l'},
               React.createElement('span',{className:'kbq-gc-lb'},'切割工单'),
-              React.createElement('span',{className:'kbq-gc-lb kbq-gc-no',title:group.groupNo},group.groupNo),
+              React.createElement(Tooltip,{title:group.groupNo,placement:'top',arrow:false,mouseEnterDelay:0.12},
+                React.createElement('span',{className:'kbq-gc-lb kbq-gc-no'},group.groupNo)),
               React.createElement('span',{className:'kbq-gc-status is-done'},'已完成'))),
           React.createElement('div',{className:'kbq-gc-row'},
             histPair('来源切割包',group.packageNo||'-'),
@@ -3990,14 +4094,15 @@ const ProcessingQueueGantt = ({ tasks, histTasks=[], queueTab='queue', onQueueTa
           React.createElement('div',{className:'kbq-gc-row',style:{marginBottom:24}},
             histPair('完成时间',group.finishTime||'-'))))
         : React.createElement('div',{style:{padding:'24px',textAlign:'center',color:'rgba(0,0,0,0.45)'}},'暂无历史任务')))
-  }));
+  })),
+    histPager);
   return React.createElement(React.Fragment,null,
     React.createElement(Card,{className:'kbq-wrap kb-mode-card',size:'small'},
       React.createElement('div',{className:'kb-head-row'},
         /* v111（用户第1条）：原页面标题「切割队列」删除，原位放 Tabs；
            v112（用户第6条）：选项为「任务队列 / 历史队列」，顶部橙色大切换按钮已恢复到悬浮条 */
         React.createElement('div',{className:'kb-head-left'},
-          React.createElement(Tabs,{className:'kb-head-tabs',activeKey:queueTab,onChange:k=>onQueueTab?.(k),
+          React.createElement(Tabs,{className:'kb-head-tabs',activeKey:queueTab,onChange:k=>{ setHistPage(1); onQueueTab?.(k); },
             items:[
               {key:'queue',label:'任务队列'},
               {key:'hist',label:'历史队列'},
@@ -4413,10 +4518,10 @@ const OutboundPage = ({onRecallToSchedule}) => {
     const meta = KB_STATION_FIELDS[field];
     const di = KB_STATION_MAP[field].di;
     const cur = item[di];
-    return React.createElement('span', {
-      style:{ color:'rgba(0,0,0,0.85)', cursor:'default' },
-      title:`${meta.label}由排产指定，不可修改`,
-    }, cur);
+    /* v129：原生 title 改标准 Tooltip */
+    return React.createElement(Tooltip, {
+      title:`${meta.label}由排产指定，不可修改`, placement:'top', arrow:false, mouseEnterDelay:0.12,
+    }, React.createElement('span', { style:{ color:'rgba(0,0,0,0.85)', cursor:'default' } }, cur));
   };
 
   // ── 操作列 ──
@@ -4642,7 +4747,13 @@ const OutboundPage = ({onRecallToSchedule}) => {
             className:'kb-colfg-grid', value:visibleCols,
             onChange: applyCols,
             options: OUT_COL_META.map(m => ({ label:m.title, value:m.key })),
-          })),
+          }),
+          /* v133（用户）：恢复「套料版图号 / 完成时间」固定项展示（v126 改 Popover 时遗漏）——
+             灰色禁用勾选，与表格实际列对齐：15 可勾选 + 2 固定 + 操作列 */
+          React.createElement('div', { className:'kb-colfg-fixed' },
+            React.createElement('span', { className:'kb-colfg-hint' },'固定显示'),
+            OUT_COL_FIXED.map(m =>
+              React.createElement(Checkbox, { key:m.key, checked:true, disabled:true }, m.label)))),
       },
       React.createElement(KButton, { size:'small' }, React.createElement('span', null, '字段显示配置')))
     : null;
@@ -5562,7 +5673,7 @@ const SchedulePage = ({targetDate,dispatchConfirm,onConfirmDispatch,onCancelDisp
                 /* v107：已配置通路的型材复选框置灰禁点，悬停提示「已配置」（用户第3条）；行点击勾选仍可用。
                    disabled input 不派发鼠标事件，Tooltip 内必须垫一层 span 承接 hover */
                 r.route
-                  ? React.createElement(Tooltip,{title:'已配置'},
+                  ? React.createElement(Tooltip,{title:'已配置',placement:'top',arrow:false,mouseEnterDelay:0.12},
                       React.createElement('span',{style:{display:'inline-flex',cursor:'not-allowed'}},
                         React.createElement(Checkbox,{checked:true,disabled:true,
                           onClick:e=>e.stopPropagation(),onChange:()=>{}})))
@@ -5674,15 +5785,17 @@ const SchedulePage = ({targetDate,dispatchConfirm,onConfirmDispatch,onCancelDisp
       React.createElement('span',null,machine),
       React.createElement('span',{className:'wz-muted'},`${machineGroups[machine].length} 单 · ${nsFmtTime(machineGroups[machine].reduce((n,t)=>n+(Number(t.cutTime)||0),0))}`)
     ),
-    ...machineGroups[machine].map(task=>React.createElement('div',{
-        key:task.key, className:'wz-adjust-item'+(adjDragKey===task.key?' is-dragging':''), draggable:true,
-        title:'拖到其他切割机即可调整',
+    /* v129：原生 title 改标准 Tooltip（key 随外层迁移） */
+    ...machineGroups[machine].map(task=>React.createElement(Tooltip,
+      {key:task.key, title:'拖到其他切割机即可调整', placement:'top', arrow:false, mouseEnterDelay:0.12},
+      React.createElement('div',{
+        className:'wz-adjust-item'+(adjDragKey===task.key?' is-dragging':''), draggable:true,
         onDragStart:e=>{e.dataTransfer.setData('text/plain',task.key);e.dataTransfer.effectAllowed='move';setAdjDragKey(task.key);},
         onDragEnd:()=>{setAdjDragKey(null);setAdjOver(null);},
       },
       React.createElement('span',{className:'wz-adjust-no'},task.taskNo),
       React.createElement('span',{className:'wz-muted'},`${task.materialCount} 根`)
-    )),
+    ))),
     machineGroups[machine].length ? null : React.createElement('div',{className:'wz-col-empty'},'暂无工单')
   ));
   const step2=React.createElement(React.Fragment,null,
@@ -5697,7 +5810,8 @@ const SchedulePage = ({targetDate,dispatchConfirm,onConfirmDispatch,onCancelDisp
           allowClear:false, format:'YYYY年M月D日', placeholder:'请选择生产日期', style:{width:180},
         }),
         React.createElement('span',{className:'wz-fl'},'排产编号'),
-        React.createElement(Input,{value:scheduleNo, readOnly:true, className:'wz-ro-input', style:{width:200}, title:'排产编号由系统生成，不可修改'}),
+        React.createElement(Tooltip,{title:'排产编号由系统生成，不可修改',placement:'top',arrow:false,mouseEnterDelay:0.12},
+          React.createElement(Input,{value:scheduleNo, readOnly:true, className:'wz-ro-input', style:{width:200}})),
         React.createElement('div',{style:{flex:'1 1 auto'}}),
         React.createElement('span',{className:'wz-draft'},'当前为草稿，尚未保存')
       )
@@ -5775,8 +5889,9 @@ const SchedulePage = ({targetDate,dispatchConfirm,onConfirmDispatch,onCancelDisp
     React.createElement('span',{className:'wz-step-hint'},`第 ${step+1} 步，共 3 步`),
     step>0 && React.createElement(KButton,{onClick:()=>setStep(step-1)},React.createElement('span',null,'上一步')),
     step<2
-      ? React.createElement(KButton,{type:'primary',disabled:step===0&&!scopeKeys.length,onClick:()=>{
-          if(step===0&&!scopeKeys.length){ msg.warning('请至少选择一个切割工单'); return; }
+      /* v129（用户第3条）：下一步默认可点（disabled 移除）——未创建工单时点击给出引导提示，不再置灰 */
+      ? React.createElement(KButton,{type:'primary',onClick:()=>{
+          if(step===0&&!scopeKeys.length){ msg.warning('尚未创建切割工单，请先点击右上角「创建工单」选择切割包 / 套料版图'); return; }
           /* v111（用户第4条）：第二步配置未完成时禁止进入第三步，并给出明确提示 */
           if(step===1&&planMode==='manual'&&mProfiles.length&&mAssignedCount<mProfiles.length){
             msg.warning(`还有 ${mProfiles.length-mAssignedCount} 根型材未完成通路配置，请先完成配置`);
@@ -5797,6 +5912,8 @@ const SchedulePage = ({targetDate,dispatchConfirm,onConfirmDispatch,onCancelDisp
   const importModal=React.createElement(Modal,{
       /* v110（图四）：弹窗标题与第一步入口按钮统一改为「创建工单」（用户要求一并修改） */
       title: importOpen==='scope' ? '创建工单' : '导入工单（切割包 / 套料版图）',
+      /* v145（用户第7条）：footer 两按钮间隙 10px（见 .wz-import-modal CSS） */
+      className:'wz-import-modal',
       open:!!importOpen, width:760, okText:'导入', cancelText:'取消',
       onCancel:()=>{setImportOpen(null);setImportChecked([]);},
       onOk:importSubmit, okButtonProps:{disabled:!nestLeaves.length}, destroyOnClose:true,
@@ -6081,14 +6198,6 @@ const SchedPlanListPage = ({onNavigate, onOpenDispatchConfirm}) => {
   const trashIcon        = LIST_ICONS.trash;
   const searchIcon       = LIST_ICONS.search;
   const caretIco         = LIST_ICONS.caret;
-  /* v54：新建预排产按钮的 FileAddOutlined（设计稿 1552:413466 的 Icon-Wrapper 20×20），
-     路径取 antd FileAddOutlined 形，与查询按钮的 searchIcon 同为 currentColor 描边风格 */
-  const fileAddIcon = React.createElement('svg',{
-      width:20, height:20, viewBox:'0 0 1024 1024', fill:'currentColor',
-      'aria-hidden':'true', focusable:'false',
-    },
-    React.createElement('path',{d:'M480 580H376c-4.4 0-8 3.6-8 8v48c0 4.4 3.6 8 8 8h104v104c0 4.4 3.6 8 8 8h48c4.4 0 8-3.6 8-8V644h104c4.4 0 8-3.6 8-8v-48c0-4.4-3.6-8-8-8H544V376c0-4.4-3.6-8-8-8h-48c-4.4 0-8 3.6-8 8v204z'}),
-    React.createElement('path',{d:'M880 298.4L725.6 144H192c-17.7 0-32 14.3-32 32v704c0 17.7 14.3 32 32 32h640c17.7 0 32-14.3 32-32V298.4c0-8.5-3.4-16.6-9.4-22.6zM736 900H240c-8.8 0-16-7.2-16-16V236c0-8.8 7.2-16 16-16h451.2L832 360.8V884c0 8.8-7.2 16-16 16z'}));
   const msg = useMsg();
   const { modal } = App.useApp();
   const [list, setList] = useState(()=>{
@@ -6441,6 +6550,8 @@ const SchedPlanListPage = ({onNavigate, onOpenDispatchConfirm}) => {
       productionDate:planProdDate(plan)||String(plan.createdAt||'').slice(0,10)||'2026-09-01',
       tasks,
     };
+    /* v130（用户）：编辑入口标志 —— crumb-bar 左上角按钮文案按入口区分（编辑=「取消排产编辑」） */
+    window.__WIZARD_EDIT=true;
     onNavigate?.('new-sched-plan');
   };
   /* v49：列宽取自设计稿 1561:415952 的实测（233 / 127 / 153 / 190 / 146 / 112 / 118 / 118，
@@ -6591,7 +6702,8 @@ const SchedPlanListPage = ({onNavigate, onOpenDispatchConfirm}) => {
           React.createElement('div',{className:'plan-card-info'},
             React.createElement('span',{className:'plan-card-folder'}, isActive ? folderIcon : folderClosedIcon),
             React.createElement('span',{className:'plan-card-k'},'排产编号'),
-            React.createElement('span',{className:'plan-card-no',title:plan.schedNo},plan.schedNo)
+            React.createElement(Tooltip,{title:plan.schedNo,placement:'top',arrow:false,mouseEnterDelay:0.12},
+              React.createElement('span',{className:'plan-card-no'},plan.schedNo))
             /* v119（用户第2条）：卡片头创建时间删除（恢复右面板头时间展示） */
           ),
           React.createElement('span',{className:'plan-card-acts'},
@@ -6809,9 +6921,9 @@ const SchedPlanListPage = ({onNavigate, onOpenDispatchConfirm}) => {
         React.createElement('div',{className:'plan-head-gap'}),
         React.createElement(KButton,{type:'primary',style:{width:132},onClick:()=>{
           /* 此入口必须切页；用直接调用而不是可选调用，避免回调遗漏时点击静默失效 */
+          window.__WIZARD_EDIT=false;
           onNavigate('new-sched-plan');
-        }},React.createElement('span',{style:{display:'inline-flex',alignItems:'center',gap:8}},
-          fileAddIcon, React.createElement('span',null,'新建预排产'))),
+        }},React.createElement('span',null,'+ 新建预排产')),
         React.createElement('span',{className:'plan-head-divider','aria-hidden':true}),
         React.createElement(DatePicker,{
           value: createdDateInput ? dayjs(createdDateInput) : null, style:{width:170}, allowClear:false,
@@ -6951,7 +7063,8 @@ const SchedPlanListPage = ({onNavigate, onOpenDispatchConfirm}) => {
 
     React.createElement(Drawer,{
       /* 抽屉宽 1360：15 列（套料版图号 → 工艺规划状态）合计 1254，正好一屏放得下 */
-      title: detailRow ? `套料详情 · ${detailRow.schedNo} · ${detailData?.versionNo||''}` : '套料详情',
+      /* v138（用户第1/3条）：标题删「套料」前缀，改「切割工单编号 · 版本 详情」 */
+      title: detailRow ? `${detailRow.schedNo} · ${detailData?.versionNo||''} 详情` : '详情',
       /* v124（用户图四）：1080 仍出横向滚动条（15 列合计 1254 + 展开列 ≈1302 > 1080 可用宽）
          —— 拉宽到 1380 档（小屏封顶 94vw），列合计 1302 一屏放下；scroll.x 删除消除横向滚动条 */
       width:'min(1380px, 94vw)',
@@ -6991,7 +7104,9 @@ const SchedPlanListPage = ({onNavigate, onOpenDispatchConfirm}) => {
           rowExpandable: row => !!row.nestingLayoutNo,
         },
         columns:[
-          { title:'套料版图号', dataIndex:'nestingLayoutNo', width:112, ellipsis:true,
+          /* v139：套料版图号 112→146（kb-mat-id 升 14px 等宽后 14 字符需 ~118px，112 会截断）；
+             列合计 1302→1336 ≤ 抽屉 1338 可用宽，横向滚动条不会回归 */
+          { title:'套料版图号', dataIndex:'nestingLayoutNo', width:146, ellipsis:true,
             render:v=>React.createElement('span',{className:'kb-mat-id'},v) },
           /* 船号 / 分段号 在型材行里常常为空，逐层兜底到所属工单，避免整列是「-」 */
           { title:'船号', dataIndex:'shipNo', width:78,
@@ -7194,7 +7309,7 @@ const buildPlanProdDateMap = (items) => {
 const renderDetailPlanningStatus = (status) => {
   const cfg = getProfilePlanStatus(status);
   const steps = ['工艺','规划','迁移'];
-  return React.createElement(Tooltip,{title:cfg.label},
+  return React.createElement(Tooltip,{title:cfg.label,placement:'top',arrow:false,mouseEnterDelay:0.12},
     React.createElement('div',{className:'kb-prog plan-prog'},
       React.createElement('div',{className:'kb-prog-bar'},
         steps.map((step,index)=>React.createElement('span',{
@@ -7266,18 +7381,22 @@ const PlanPage = ({data, onNavigate, onScheduleTargetDate}) => {
   // batch date assign
   const [assignDate, setAssignDate] = useState('');
   const [newPkgOpen, setNewPkgOpen] = useState(false);
-  /* 新建切割单的待解析文件列表:每项 = { uid, name, size, shipNo, blockNo, state:'pending'|'ok'|'fail', reason }
+  /* 新建切割包的待解析文件列表:每项 = { uid, name, size, shipNo, blockNo, state:'pending'|'ok'|'fail', reason }
      自己维护而不用 Upload 的 fileList —— 表格要展示解析结果(船号/分段号/失败原因),antd 的列表结构放不下 */
   const [upFiles, setUpFiles] = useState([]);
   /* 两步流程:1=选择文件 / 2=确认解析结果与信息;pkgParsing 表示正在解析,pkgAutoFilled 控制"已自动回填"提示 */
   const [pkgStep, setPkgStep] = useState(1);
   const [pkgParsing, setPkgParsing] = useState(false);
   const [pkgAutoFilled, setPkgAutoFilled] = useState(false);
+  /* v145（用户第5条）：解析失败置灰时点「确认新建」的拦截标记 —— 置灰态不触发表单校验（无输入不弹红字），
+     改为表单下方小字提示「需要解析成功才能创建」；重新导入成功 / 关弹窗时清除 */
+  const [pkgBlockHint, setPkgBlockHint] = useState(false);
   const [newForm] = Form.useForm();
   const [selectedPkgs, setSelectedPkgs] = useState([]);
   const [detailProfile, setDetailProfile] = useState(null);
-  /* v84：零件详情抽屉（本型材的宏事件行） */
+  /* v84：零件详情抽屉（本型材的宏事件行）；v138：抽屉标题 = 套料版图号 + 详情 */
   const [partRows, setPartRows] = useState(null);
+  const [partTitle, setPartTitle] = useState('');
   /* 右侧明细分页独立于 Table（设计稿 1513:34860：分页在面板之外、贴白底板底部） */
   const [detailPage, setDetailPage] = useState(1);
   const [pgSize, setPgSize] = useState(0);
@@ -7606,10 +7725,10 @@ const PlanPage = ({data, onNavigate, onScheduleTargetDate}) => {
 
   const resetNewPkg = () => {
     setNewPkgOpen(false); setUpFiles([]); newForm.resetFields();
-    setPkgStep(1); setPkgParsing(false); setPkgAutoFilled(false);
+    setPkgStep(1); setPkgParsing(false); setPkgAutoFilled(false); setPkgBlockHint(false);
     msg.info('已放弃当前编辑内容');
   };
-  /* ── 新建切割单 · ① 选择文件 ───────────────────────── */
+  /* ── 新建切割包 · ① 选择文件 ───────────────────────── */
   const addPkgFiles = (files) => {
     setUpFiles(prev => {
       const seen = new Set(prev.map(f => f.name));
@@ -7622,7 +7741,46 @@ const PlanPage = ({data, onNavigate, onScheduleTargetDate}) => {
     });
   };
   const removePkgFile = (uid) => setUpFiles(prev => prev.filter(f => f.uid !== uid));
-  /* ── 新建切割单 · ② 解析并确认 ───────────────────────
+  /* v143（用户）：「重新导入」= 弹出**系统文件选择框**挑选替换文件，选中后替换该行并重新解析；
+     成功则回填空表单项。隐藏 input 常驻弹窗内，uid 记在 ref 供 onChange 对位 */
+  const pkgReimportInputRef = useRef(null);
+  const pkgReimportUidRef = useRef('');
+  const reimportPkgFile = (uid) => {
+    if(pkgParsing) return;
+    if(!upFiles.some(x=>x.uid===uid)) return;
+    pkgReimportUidRef.current = uid;
+    const inp = pkgReimportInputRef.current;
+    if(!inp) return;
+    inp.value='';   /* 允许重复选择同一个文件 */
+    inp.click();
+  };
+  const handlePkgReimportFile = (e) => {
+    const file = e.target.files && e.target.files[0];
+    const uid = pkgReimportUidRef.current;
+    e.target.value='';
+    if(!file || !uid || pkgParsing) return;
+    setPkgParsing(true);
+    setUpFiles(prev => prev.map(x => x.uid===uid ? {...x, name:file.name, size:file.size||0, state:'pending', reason:''} : x));
+    setTimeout(() => {
+      const base = String(file.name).replace(/\.[^.]+$/, '');
+      const m = base.match(/^([A-Za-z]{2,})[-_ ]?([0-9]{2,}[A-Za-z]?)/);
+      const res = m ? {shipNo:m[1].toUpperCase(), blockNo:m[2].toUpperCase(), state:'ok', reason:'—'}
+                    : {shipNo:'—', blockNo:'—', state:'fail', reason:'文件名不含船号/分段号'};
+      setUpFiles(prev => prev.map(x => x.uid===uid ? {...x, ...res} : x));
+      if(res.state==='ok'){
+        const cur = newForm.getFieldsValue();
+        const patch = {};
+        if(!cur.shipNo && res.shipNo!=='—') patch.shipNo = res.shipNo;
+        if(!cur.blockNo && res.blockNo!=='—') patch.blockNo = res.blockNo;
+        if(Object.keys(patch).length){ newForm.setFieldsValue(patch); setPkgAutoFilled(true); }
+        msg.success(`${file.name} 重新解析成功`);
+      }else{
+        msg.warning(`${file.name} 解析失败：${res.reason}`);
+      }
+      setPkgParsing(false);
+    }, 700);
+  };
+  /* ── 新建切割包 · ② 解析并确认 ───────────────────────
      解析规则(演示环境):按文件名推导船号/分段号,如 CU-603P-1.net ⇒ 船号 CU、分段号 603P;
      推导不出来就标「解析失败」并写明原因。解析成功后把首个有效结果回填到还空着的表单项,
      与参考图「船号、分段号一致,已自动回填」一致 */
@@ -7653,6 +7811,15 @@ const PlanPage = ({data, onNavigate, onScheduleTargetDate}) => {
   };
   const handleCreatePkg = () => {
     // 上传套料文件创建
+    /* v145（用户第5条）：解析失败置灰状态下不触发表单校验（无输入不弹字段红字），
+       清掉历史校验状态并改为表单下方小字提示「需要解析成功才能创建」 */
+    if (upFiles.some(f => f.state === 'fail')) {
+      newForm.setFields([
+        { name:'packageNo', errors:[] }, { name:'shipNo', errors:[] }, { name:'blockNo', errors:[] },
+      ]);
+      setPkgBlockHint(true);
+      return;
+    }
     newForm.validateFields().then(v => {
       if (plans.some(p => p.packageNo === v.packageNo)) { msg.error('任务工单号已存在'); return; }
       const cnt = upFiles.length ? Math.max(3, upFiles.length*4) : (rnd(4)+4);
@@ -7670,23 +7837,33 @@ const PlanPage = ({data, onNavigate, onScheduleTargetDate}) => {
     });
   };
 
-  /* ── 新建切割单 · 文件解析表列定义 ─────────────
+  /* ── 新建切割包 · 文件解析表列定义 ─────────────
      列与参考图一致：文件名 / 解析状态 / 船号·分段号 / 失败原因 / 操作 */
-  const pkgFileCols = [
-    { title:'文件名', dataIndex:'name', ellipsis:true },
-    { title:'解析状态', dataIndex:'state', width:100,
+  /* v143（用户：图三「字段显示配置」删掉）：恢复固定全列展示 */
+  const pkgFileColsAll = [
+    { key:'name', title:'文件名', dataIndex:'name', ellipsis:true },
+    { key:'state', title:'解析状态', dataIndex:'state', width:100,
       render:(v)=>{
         if (pkgParsing && v === 'pending') return React.createElement(Tag,{color:'processing'},'解析中');
         if (v === 'ok')   return React.createElement(Tag,{color:'success'},'解析成功');
         if (v === 'fail') return React.createElement(Tag,{color:'error'},'解析失败');
         return React.createElement(Tag,null,'待解析');
       } },
-    { title:'船号 / 分段号', key:'shipBlock', width:140,
+    { key:'shipBlock', title:'船号 / 分段号', width:140,
       render:(_,r)=> (r.shipNo && r.shipNo !== '—') ? `${r.shipNo} / ${r.blockNo}` : '—' },
-    { title:'失败原因', dataIndex:'reason', width:180, ellipsis:true, render:v => v || '—' },
-    { title:'操作', key:'op', width:70,
-      render:(_,r)=>React.createElement(KButton,{size:'small',type:'link',onClick:()=>removePkgFile(r.uid)},'移除') },
+    { key:'reason', title:'失败原因', dataIndex:'reason', width:180, ellipsis:true, render:v => v || '—' },
+    /* v140（用户第4条）：解析失败行「移除」→「重新导入」（重新解析该文件并回填） */
+    /* v143（用户）：解析失败行 = 重新导入（弹系统文件选择框替换重解析）+ 删除；成功行保留移除 */
+    { key:'op', title:'操作', width:150,
+      render:(_,r)=> r.state==='fail'
+        ? React.createElement('span',{style:{display:'inline-flex',gap:8}},
+            React.createElement(KButton,{size:'small',type:'link',onClick:()=>reimportPkgFile(r.uid)},'重新导入'),
+            React.createElement(KButton,{size:'small',type:'link',danger:true,onClick:()=>removePkgFile(r.uid)},'删除'))
+        : React.createElement(KButton,{size:'small',type:'link',onClick:()=>removePkgFile(r.uid)},'移除') },
   ];
+  const pkgFileCols = pkgFileColsAll;
+  /* v140（用户第3条）：导入列表固定高 6 行（约 234px），超出显示垂直滚动条 */
+  const PKG_FILE_TABLE_H = 234;
 
   // ── 表格列定义（包级别）──────────────────
   // 字段顺序按需求固定：切割包号 / 船号 / 分段号 / 来源 / 工艺规划状态 / 创建时间 / 计划日期
@@ -7749,6 +7926,7 @@ const PlanPage = ({data, onNavigate, onScheduleTargetDate}) => {
           const rows = partDetailRowsOf(r.nestingLayoutNo);
           if(!rows || !rows.length){ msg.warning('该型材暂无零件宏数据'); return; }
           setPartRows(rows);
+          setPartTitle(`${r.nestingLayoutNo} 详情`);
         }},'详情') },
   ];
 
@@ -7802,7 +7980,8 @@ const PlanPage = ({data, onNavigate, onScheduleTargetDate}) => {
             React.createElement('span',{className:'plan-card-folder'},
               isActive ? folderIcon : folderClosedIcon),
             React.createElement('span',{className:'plan-card-k'},'切割包号'),
-            React.createElement('span',{className:'plan-card-no',title:pkg.packageNo},pkg.packageNo)
+            React.createElement(Tooltip,{title:pkg.packageNo,placement:'top',arrow:false,mouseEnterDelay:0.12},
+              React.createElement('span',{className:'plan-card-no'},pkg.packageNo))
             /* v119（用户第2条）：卡片头创建时间删除 */
           ),
           /* 垃圾桶：默认由 CSS 置 opacity:0，只有 `.is-active` 的卡片才显示（v37 需求）；
@@ -8041,18 +8220,23 @@ const PlanPage = ({data, onNavigate, onScheduleTargetDate}) => {
     ),
 
     /* v84：零件详情抽屉（九字段宏事件表） */
-    partDetailDrawer(partRows, ()=>setPartRows(null)),
+    partDetailDrawer(partRows, ()=>{setPartRows(null);setPartTitle('');}, partTitle),
 
-    // 新建切割单 Modal：两步流程（① 选择文件 → ② 确认解析结果与信息）
+    // 新建切割包 Modal：两步流程（① 选择文件 → ② 确认解析结果与信息）
     React.createElement(Modal,{
-      title:'新建切割单', open:newPkgOpen, width:640, destroyOnClose:true, maskClosable:false,
-      cancelText:'取消',
+      title:'新建切割包', open:newPkgOpen, width:720, destroyOnClose:true, maskClosable:false, /* v141：640→720 字段不重叠 */
+      /* v140（用户第4条）：footer 自定义 —— 参照参考实现：取消（左）｜返回上一级（创建左侧）｜创建（主橙）；
+         第一步仍为 取消 + 确认并解析 */
+      footer: React.createElement('div',{style:{display:'flex',justifyContent:'flex-end',gap:8}},
+        React.createElement(KButton,{onClick:resetNewPkg},'取消'),
+        pkgStep===2 && React.createElement(KButton,{onClick:()=>setPkgStep(1)},'返回上一级'),
+        pkgStep===1
+          ? React.createElement(KButton,{type:'primary',disabled:!upFiles.length||pkgParsing,loading:pkgParsing,onClick:parsePkgFiles},'确认并解析')
+          : React.createElement(KButton,{type:'primary',onClick:handleCreatePkg},'确认新建') /* v145（用户第5条）：文案「创建」→「确认新建」 */
+      ),
       /* 内容较高时(第二步入场、或低分辨率),正文区限高滚动,不撑破视口 */
       styles:{body:{maxHeight:'calc(100vh - 220px)', overflowY:'auto', overflowX:'hidden'}},
-      okText: pkgStep===1 ? '确认并解析' : '创建',
-      onOk: pkgStep===1 ? parsePkgFiles : handleCreatePkg,
       onCancel: resetNewPkg,
-      okButtonProps:{ disabled: pkgStep===1 && (!upFiles.length || pkgParsing), loading: pkgStep===1 && pkgParsing },
     },
       /* 步骤条：① 完成显示对勾、② 未到显示灰点；
          「返回上一级」属于次操作，放在步骤行右侧 —— 规范限定弹窗 footer 只放「取消 + 主操作」两个按钮 */
@@ -8068,11 +8252,10 @@ const PlanPage = ({data, onNavigate, onScheduleTargetDate}) => {
           React.createElement('span',{className:'pkg-step-dot'},'2'),
           React.createElement('span',{className:'pkg-step-text'},'确认解析结果与信息')
         ),
-        pkgStep===2 && React.createElement(KButton,{className:'pkg-step-back',onClick:()=>setPkgStep(1)},
-          React.createElement('svg',{viewBox:'0 0 12 12',width:12,height:12,fill:'none'},
-            React.createElement('path',{d:'M7.5 2.5L4 6l3.5 3.5',stroke:'currentColor',strokeWidth:1.2,strokeLinecap:'round',strokeLinejoin:'round'})),
-          '返回上一级')
       ),
+      /* v143（用户）：「字段显示配置」删除；「重新导入」用隐藏文件框弹系统选择器 */
+      React.createElement('input',{type:'file', accept:'.gen,.nest', style:{display:'none'},
+        ref:pkgReimportInputRef, onChange:handlePkgReimportFile}),
       /* ① 选择文件：拖拽区文案沿用原定义，不做改写 */
       React.createElement(Upload.Dragger,{
         className:'pkg-drop'+(pkgStep===2?' is-hidden':''), accept:'.gen,.nest', multiple:true, showUploadList:false, fileList:[],
@@ -8084,6 +8267,8 @@ const PlanPage = ({data, onNavigate, onScheduleTargetDate}) => {
       /* 文件表：① 显示待解析，② 显示解析结果 */
       React.createElement(Table,{
         className:'pkg-file-table', size:'small', pagination:false, style:{marginTop:12},
+        /* v140（用户第3条）：固定高最多显示 6 行（234px），超出显示垂直滚动条 */
+        scroll:{y:PKG_FILE_TABLE_H},
         rowKey:'uid', columns:pkgFileCols, dataSource:upFiles,
         locale:{emptyText:React.createElement('div',{style:{width:'100%',textAlign:'center',color:'rgba(0,0,0,0.45)',fontSize:14,padding:'10px 0'}},'暂无数据')},
       }),
@@ -8093,7 +8278,8 @@ const PlanPage = ({data, onNavigate, onScheduleTargetDate}) => {
       /* ② 确认表单：字段与顺序沿用列表口径（切割包号 / 船号 / 分段号 / 计划日期）
          名称必须与列表表头逐字一致，否则同一个 packageNo 在两处叫两个名字
          用 display 隐藏而不是条件卸载 —— 保证 form 实例始终连着组件，解析回填 setFieldsValue 不会丢 */
-      React.createElement(Form,{form:newForm,layout:'vertical',style:{marginTop:16,display: pkgStep===2?'block':'none'}},
+      /* v140（用户第4条）：存在解析失败文件时，下方四个控件整体置灰不可操作（改完/重新导入成功后恢复） */
+      React.createElement(Form,{form:newForm,layout:'vertical',disabled:upFiles.some(f=>f.state==='fail'),style:{marginTop:16,display: pkgStep===2?'block':'none'}},
             React.createElement(Row,{gutter:14},
               React.createElement(Col,{span:12},React.createElement(Form.Item,{name:'packageNo',label:'切割包号',rules:[{required:true,message:'请输入切割包号'}]},React.createElement(Input,{placeholder:'如 PKG-100'}))),
               React.createElement(Col,{span:12},React.createElement(Form.Item,{name:'shipNo',label:'船号',rules:[{required:true,message:'请输入船号'}]},React.createElement(Input,{placeholder:'如 H1234'}))),
@@ -8101,6 +8287,10 @@ const PlanPage = ({data, onNavigate, onScheduleTargetDate}) => {
               React.createElement(Col,{span:12},React.createElement(Form.Item,{name:'scheduleDate',label:'计划日期'},React.createElement(DatePicker,{style:{width:'100%'},placeholder:'请选择日期',format:'YYYY年M月D日'}))),
             )
           ),
+      /* v145（用户第5条）：解析失败置灰时点「确认新建」的拦截提示（小字、主橙）；
+         显示条件带「仍有 fail 文件」——重新导入全部成功后自动消失 */
+      React.createElement('p',{className:'pkg-parse-hint pkg-block-hint',style:{display:(pkgStep===2&&pkgBlockHint&&upFiles.some(f=>f.state==='fail'))?'block':'none'}},
+        '需要解析成功才能创建'),
       React.createElement('p',{className:'pkg-parse-hint',style:{display:(pkgStep===2&&pkgAutoFilled)?'block':'none'}},
         '船号、分段号一致，已自动回填。')
     ),
@@ -8751,6 +8941,8 @@ const AppInner = () => {
   const embeddedPage = new URLSearchParams(window.location.search).get('embed');
   const [page, setPage] = useState(embeddedPage || 'plan');
   const navigate = useCallback((nextPage) => setPage(nextPage), []);
+  /* v145（用户第4条）：取消新建/编辑排产确认后弹 toast（与保存等确认操作一致的提示行为） */
+  const msg = useMsg();
   /* v48：导航折叠**恢复**（v45 误删）。侧栏底部那条「点击整栏左右收放」的把手回来了：
      210px 展开 ↔ 58px 收拢（设计稿折叠态宽度），状态只驱动 Sider 的 collapsed，
      Menu 通过 antd 的 SiderContext 自动拿到 siderCollapsed ⇒ 自动切到图标态，
@@ -8767,6 +8959,64 @@ const AppInner = () => {
   const navWrapRef = useRef(null);
   const navThumbRef = useRef(null);
   const getNavMenu = useCallback(()=>navWrapRef.current ? navWrapRef.current.querySelector('.ant-menu') : null,[]);
+  /* v131（用户）：滚动方向驱动的自动展开/收起（与吸顶共存）——
+     openKeysRef 镜像供事件回调读当前值；navAutoCollapsedRef 记录「因下滑自动收起」的组，
+     上滑时只恢复这批（用户手动点收起的不受上滑强制展开）；冷却期 450ms 盖住 0.2s 开合动画，
+     防止收起→scrollTop 钳制→反向事件→再展开的振荡。 */
+  const openKeysRef = useRef(openKeys);
+  useEffect(()=>{ openKeysRef.current=openKeys; },[openKeys]);
+  const navAutoCollapsedRef = useRef(new Set());
+  const navAutoCdRef = useRef(0);
+  const navWheelDebounceRef = useRef(0);
+  /* v134（抖动修复②）：自动收起时记录「被收起子项总高」，布局落位后同步回补 scrollTop ——
+     否则 scrollHeight 骤减、浏览器钳制 scrollTop，可见内容整体跳一下 */
+  const navCollapseDeltaRef = useRef(0);
+  /* v135（用户第1条）：滚动方向实时检测 —— 上滑立即恢复自动收起的组。此前上滑展开也走
+     wheel debounce（滚动持续期间 timer 不断重置），展开滞后到滚动停止后 ~1s，
+     期间吸顶槽位停留在收起态几何上 → 导航与内容间隙偏大后突然缩回。 */
+  const navLastScrollRef = useRef(null);
+  const navAutoByDir = useCallback((dir)=>{
+    if(collapsed) return;
+    const now=Date.now();
+    /* v135：冷却期只约束「收起」方向 —— 收起会缩内容触发钳制，振荡风险在这里；
+       展开方向幂等（autoCollapsed 空即 return）且只增内容，实时触发无副作用 */
+    if(dir>0){
+      if(now<navAutoCdRef.current) return;
+      /* 下滑：收起所有「已吸顶且仍展开」的父级（标题保持钉住） */
+      if(!openKeysRef.current.length) return;
+      const el=getNavMenu(); if(!el) return;
+      const lis=navGroupLis(el);
+      const stuckKeys=NAV_ITEMS.filter((g,i)=>{
+        const t=lis[i]&&lis[i].firstElementChild;
+        return t&&t.getAttribute('data-nav-stuck')==='1';
+      }).map(g=>g.key).filter(k=>openKeysRef.current.includes(k));
+      if(!stuckKeys.length) return;
+      /* v137（卡死修复）：收起前先算回补量，若收起后导航几乎无可滚余量（<60px）则跳过本次
+         —— 全收起会让 scrollHeight 掉到容器高度以下，用户再怎么滚都没有响应（「完全卡住」） */
+      const preDelta=lis.reduce((n,li,i)=>{
+        const t=li.firstElementChild;
+        if(!t||!stuckKeys.includes(NAV_ITEMS[i]?NAV_ITEMS[i].key:'')) return n;
+        return n+Math.max(0, li.offsetHeight-(t.offsetHeight||NAV_TITLE_H));
+      },0);
+      if(el.scrollHeight-preDelta-el.clientHeight<60) return;
+      stuckKeys.forEach(k=>navAutoCollapsedRef.current.add(k));
+      /* v144（用户：吸顶失效主根因修复）：自动收起**不做 scrollTop 回补** —— v138 为「点击收起」
+         加的回补会把滚动位拉回顶部，滚轮下滑时导航不断回到顶部 ⇒ 吸顶永远不可见。
+         自动收起按 v131 规格执行「收缩并吸顶」：标题靠位移重算保持钉住，不回补。
+         （点击收起的回补仍保留 —— 那里滚动位是用户手放的，保持内容稳定是对的） */
+      setOpenKeys(openKeysRef.current.filter(k=>!navAutoCollapsedRef.current.has(k)));
+      navAutoCdRef.current=now+450;
+    }else{
+      /* 上滑：恢复此前因下滑自动收起的组（openKeys 变更 → 既有 effect force 重测几何 + 320ms 补算，
+         吸顶槽位随新几何自适应，二者不冲突）
+         v135：展开方向无钳制振荡风险，不受冷却期限制 —— scroll 实时方向（含 wheel 兜底）都能立即触发 */
+      if(!navAutoCollapsedRef.current.size) return;
+      const restore=[...navAutoCollapsedRef.current];
+      navAutoCollapsedRef.current.clear();
+      setOpenKeys([...new Set([...openKeysRef.current,...restore])]);
+      navAutoCdRef.current=now+450;
+    }
+  },[collapsed,getNavMenu]);
   /* v49：收拢态（58px）hover 分组图标时弹出的悬浮菜单。
      不再用 rc-menu 的 .ant-menu-submenu-popup（那东西在 inline-collapsed + 全量 openKeys 下会
      把 6 个分组面板全部常驻渲染，压住整块内容区，就是用户看到的"错乱浮动菜单栏"），
@@ -8862,6 +9112,10 @@ const AppInner = () => {
         滚动中 naturalTop = base − scrollTop 纯算术；滚动回调进 rAF 合并为每帧一次，
         并删掉 onScrollCapture（见下方 JSX）。
      视觉与交互（累积堆叠、整层挤出、贴顶分隔线、点击拉出）完全保持原样。 */
+  /* ── 吸顶几何缓存 + 滚动抖动治理（v44）──────────────────────────────
+     抖动根因有两个，都出在滚动回调里：
+     ① 位移取整 ⇒ 保留两位小数，标题像素级静止；
+     ② 逐帧重读几何 ⇒ base 缓存、滚动中纯算术。 */
   const navGeomRef = useRef(null);
   const navRafRef = useRef(0);
   const measureNavGeom = useCallback(()=>{
@@ -8874,17 +9128,10 @@ const AppInner = () => {
       const title=li.firstElementChild;
       if(!title||!title.classList.contains('ant-menu-submenu-title')) return;
       const cur=title.style.transform?(parseFloat(title.dataset.navShift||'0')||0):0;
-      /* v53：位移有可能挂在 **li** 上（见 updateNavSticky 的「末组整组锁定」），
-         这时标题 rect 里已经含了 li 的位移，必须一并扣掉才是真正的自然位置。 */
       const liCur=li.style.transform?(parseFloat(li.dataset.navShift||'0')||0):0;
-      /* base = 该标题在「scrollTop=0 时」的**视口坐标 top**（扣掉已施加的位移，再把滚过的量加回来）。
-         ⚠ 不能减 elTop：吸顶目标是 topY（视口坐标），两者必须在同一坐标系。
-         liBase / liH 是**自己这一组**（title + 子项）的容器几何。
-         li 自身的 rect 会带上它自己的 transform，所以同样要扣 liCur。 */
       const lr=li.getBoundingClientRect();
       items.push({
-        li,
-        title,
+        li, title,
         h:title.offsetHeight||56,
         base:title.getBoundingClientRect().top-cur-liCur+st,
         liBase:lr.top-liCur+st,
@@ -8907,29 +9154,14 @@ const AppInner = () => {
       if(t.hasAttribute('data-nav-last')) t.removeAttribute('data-nav-last');
     });
   },[getNavMenu]);
-  /* ── 滚动终点校准 ─────────────────────────────────────────────────────────
-     v53 试过「把最后一条 li 的 margin 收缩 delta，让 maxScroll 正好停在『第 4 个父级落位』」，
-     实测**行不通**：浏览器算 scrollHeight 时不计末尾元素的 margin（inline 写 -24px、
-     computed 也确实变 -24px，scrollHeight 只从 1198 掉到 1196——掉的那 2px 是原本的 +2px
-     被抹平，不是 24px 生效）。要真降可滚总量只能裁内容，得不偿失。
-     所以回到「不校准」：滚到底时第 4 组由堆叠位移钉住，位移量 ≈ 22px，其下沿会与
-     「生产监控」标题的顶部内边距重叠一段 —— 实测文字不重叠（见注释里的量测数据）。 */
-  const navEndPadLi = useRef(null);
-  const syncNavEndPad = useCallback(()=>{
-    const el=getNavMenu(); if(!el) return;
-    if(navEndPadLi.current){
-      navEndPadLi.current.removeAttribute('data-nav-shrink');
-      navEndPadLi.current.style.removeProperty('--nav-shrink-end');
-      navEndPadLi.current=null;
-    }
-  },[getNavMenu]);
-  /* ── 父级吸顶：多标题累积堆叠，上限 4 个（v53 恢复 v51 的算法）─────────────
-     ① 已滚过导航顶部的标题按 DOM 顺序占槽位 0 / h₁ / h₁+h₂ …，**不移除、不顶走**，
-        所以滚到底时 4 个父级标题同时钉在顶部；
-     ② 第 5 组起不再吸顶（`NAV_PIN_MAX`）—— 不封顶时 6 组全变标题墙，内容全被盖住；
-     ③ 位移保留两位小数（`scrollTop` 是小数，取整会 ±0.5px 抖）；
-     ④ 只有真正钉住的标题才打 `data-nav-stuck`，最后一个打 `data-nav-last` 挂投影。
-     配合上面的 syncNavEndPad：滚到底时第 4 组位移恰好为 0，子项自然停在吸顶区下方。 */
+  /* ── 父级吸顶：多标题累积堆叠，上限 4 个（v53 算法 + v137 整组位移）─────────
+     v137（用户：缝隙/卡住）两处定版：
+     ① **全部钉住组整组位移**（标题+子项一起移）——v53 的「前 3 组只移标题」会在标题与
+        自己子项之间拉出 shift 大小的空洞（最大 ~150px，就是用户红框的缝隙）；整组移后
+        子项紧跟标题、洞消失。代价 = 最后一个钉住组与首个未钉组之间 ≤22px 的重叠，
+        由后续组的白底标题盖住（仅滚动中途出现，滚到底时第 4 组位移归零无重叠）。
+     ② 滚动回调只用缓存几何（纯算术），无读写交替 —— 配合开合瞬时化，连续快速滚动
+        不再触发逐帧回流（卡住根因）。 */
   const updateNavSticky = useCallback((force)=>{
     const el=getNavMenu(); if(!el) return;
     if(collapsed){ clearNavShifts(); return; }
@@ -8941,7 +9173,6 @@ const AppInner = () => {
     if(!geom.items.length){ clearNavShifts(); return; }
     const topY=geom.elTop;
     const scrolled=el.scrollTop;
-    /* 第一遍：只算「该不该钉、要移多少」，不碰 DOM */
     const plans=[];
     let slot=0, closed=false, pinnedCount=0;
     geom.items.forEach(it=>{
@@ -8950,9 +9181,9 @@ const AppInner = () => {
         const naturalTop=it.base-scrolled;
         const want=topY+slot;
         if(naturalTop>want+0.5){
-          closed=true;                       /* 还没到槽位 ⇒ 本组及后面都不吸顶 */
+          closed=true;
         }else if(pinnedCount>=NAV_PIN_MAX){
-          closed=true;                       /* 槽位已满 ⇒ 从这里起不再吸顶 */
+          closed=true;
         }else{
           shift=want-naturalTop;
           if(shift>0.5){ slot+=it.h; pinned=true; pinnedCount++; }
@@ -8960,24 +9191,15 @@ const AppInner = () => {
       }
       plans.push({it, shift, pinned});
     });
-    /* 第二遍：决定位移挂在哪一层
-       ── 前 3 组只把**标题**钉住：它们的子项早已滚到吸顶区里、被连续的白底标题盖住，
-          跟着移反而会从下方露出来。
-       ── 第 4 组（堆叠满 4 个时的最后一个）**整组一起移**：它要是也只移标题，标题下沿
-          （+24px 后到 288）就会压住自己第一个子项「用户管理」的顶部 20px —— 实测文字都被
-          切掉 3px，这正是用户三次反馈的「导航缺了一块」。整组移 ⇒ 标题 232..288、
-          用户管理 292 起，接得干干净净。 */
-    const pinnedPlans=plans.filter(p=>p.pinned);
-    const tailPinned=pinnedPlans[pinnedPlans.length-1];
-    const lockWholeGroup=(pinnedPlans.length===NAV_PIN_MAX) ? tailPinned : null;
-    /* ── v53b 试过、**已回退**：4 组钉满后给第 5、6 组做「补位位移」，把组间距还原成 4px，
-       消掉「日志管理 / 生产监控」挤在一起的 18px。视觉上确实更好看，但**不能上**：
-       li 上的 translateY 是向下位移，会让内容越过菜单底边 ⇒ 浏览器把它算进 scrollHeight
-       ⇒ maxScroll 变大 ⇒ 滚得更远 ⇒ 位移更大 —— 正反馈，永远不收敛。
-       实测滚一次 400 → 422 → 444，班次管理/日志管理整体被推飞 78px，越滚越乱。
-       结论：在「用 transform 模拟吸顶」这个前提下，任何下移都无法追加到第 5 组之后的元素上。
-       现在的取舍是：滚到底时第 5、6 组仍会自然滑入，与第 4 组尾部靠得较近（间距 38 而非 58），
-       但**文字不重叠、不遮挡**，属于「内容还没滚完」的正常表现。 */
+    /* v140（用户：吸顶丢失回归修复）：v139 的「驻留预算释放」在 maxScroll 仅 ~250px 的
+       实际环境里把吸顶压掉大半 —— 整体撤销，恢复 v138 原吸顶布局（多父级堆叠吸顶正常生效）；
+       点击吸顶父级展开的「原位落座」交互保留（不影响吸顶本身）。 */
+    /* v144（用户：吸顶失效根修）：删除「到底释放」类逻辑（v141 无条件 40px / v143 遮罩检测版）——
+       它们在 maxScroll 偏小的环境里压制吸顶，是「父级无法吸顶」的直接原因。
+       子级不被遮挡改由「末位钉住组整组停靠」保证：最后一个钉住的组标题+子项一起停靠在
+       槽位上（而非只移标题），子项永远排在标题正下方 —— 任何滚动位置（含最底部）都不被遮挡。
+       代价 = 停靠块与下一组的自然位置最多重叠 shift px，由下一组标题的不透明底 + z-index 盖住
+       （用户环境 shift ≤16px，仅 2px 实际交叠）。 */
     const applyShift=(node, val, isLi)=>{
       if(!node) return;
       const q=Math.round(val*100)/100;
@@ -8991,6 +9213,19 @@ const AppInner = () => {
         else if(node.hasAttribute('data-nav-group-shift')) node.removeAttribute('data-nav-group-shift');
       }
     };
+    /* 第二遍：决定位移挂哪一层（v53 定版 + v137 实测复核）
+       ── 前面各组**只移标题**：其子项留在自然位置继续随滚动上移、从钉住标题的白底背后
+          滚过（z-index 遮挡）——视觉上「标题与子项之间没有洞」（子项本来就在那个位置，
+          后续钉住标题的连续堆叠恰好盖住过渡区）；
+       ── 若整组一起移，钉住组会整体上移 shift，与尚未吸顶的后续组产生最高 ~230px 的
+          重叠错位（实测：系统管理/班次管理被裁切、日志管理消失）—— v137 已实测否决。
+       ── 堆叠满 4 个时的**最后一个钉住组整组移**：它若只移标题，标题下沿会压住自己
+          第一个子项的顶部（用户三次反馈的「导航缺了一块」），整组移则接得干净；
+          滚到底时它的位移恰好归零，与下一组无重叠。 */
+    const pinnedPlans=plans.filter(p=>p.pinned);
+    const tailPinned=pinnedPlans[pinnedPlans.length-1];
+    /* v144：末位钉住组一律整组停靠（不再要求钉满 4 组才启用） */
+    const lockWholeGroup=tailPinned||null;
     plans.forEach(p=>{
       const whole=(lockWholeGroup && p===lockWholeGroup);
       applyShift(p.it.title, whole ? 0 : p.shift, false);
@@ -8999,29 +9234,61 @@ const AppInner = () => {
       if(p.pinned){ if(t.getAttribute('data-nav-stuck')!=='1') t.setAttribute('data-nav-stuck','1'); }
       else if(t.hasAttribute('data-nav-stuck')) t.removeAttribute('data-nav-stuck');
     });
-    /* 投影只给堆叠的最下面那一个：它下方才是真正的内容区，投影不会被别的标题白底盖掉 */
+    /* 投影只给堆叠的最下面那一个（tailPinned 复用上方钉住计划的最后一个） */
     geom.items.forEach(it=>{
       const t=it.title;
-      if(t===tailPinned?.it.title){ if(t.getAttribute('data-nav-last')!=='1') t.setAttribute('data-nav-last','1'); }
+      if(tailPinned && t===tailPinned.it.title){ if(t.getAttribute('data-nav-last')!=='1') t.setAttribute('data-nav-last','1'); }
       else if(t.hasAttribute('data-nav-last')) t.removeAttribute('data-nav-last');
     });
   },[getNavMenu, measureNavGeom, collapsed, clearNavShifts]);
   /* v50：点父级不需要「先滚出来再开合」那套逻辑 —— 堆叠吸顶下手风琴的开合结果
      与标题位置无关（位移每帧重算，展开后几何失效会走 force 重测）。
      原 revealStuckGroup（按槽位算滚动位置把被扣住的分组拉出来）整套删除。 */
+  /* v137：瞬时开合（duration 0s）下无动画中间态 —— openKeys 变化后布局同帧落位，无需跟随重测 */
+  /* 页面切换 / 布局变化 ⇒ 重挂 sticky 槽位 + 刷新标记 */
   useEffect(()=>{
-    /* 布局变了 ⇒ 必须重测几何缓存（force=true） */
-    syncNavEndPad(); updateNavThumb(); updateNavSticky(true);
-    /* antd 子菜单展开/收起是 0.2s 的高度动画:动画过程中量到的几何是中间态,会算出错误槽位。
-       所以动画结束后再补算一次(320ms ≈ 200ms 动画 + 余量),保证折叠/展开后位置仍然正确 */
-    const t=setTimeout(()=>{ syncNavEndPad(); updateNavThumb(); updateNavSticky(true); },320);
-    return ()=>clearTimeout(t);
-  },[openKeys, page, syncNavEndPad, updateNavThumb, updateNavSticky]);
+    updateNavThumb(); updateNavSticky(true);
+  },[page, updateNavThumb, updateNavSticky]);
+  /* openKeys 变化 ⇒ 落位后回补 scrollTop（同帧完成无跳变），并刷新 stuck 标记 */
+  useEffect(()=>{
+    if(navCollapseDeltaRef.current>0){
+      const el=getNavMenu();
+      if(el){
+        const nt=Math.max(0, el.scrollTop-navCollapseDeltaRef.current);
+        el.scrollTop=nt;
+        /* 回补本身会派发 scroll 事件 —— 同步更新方向基准，防被误判为「上滑」而立即重新展开 */
+        navLastScrollRef.current=nt;
+      }
+      navCollapseDeltaRef.current=0;
+    }
+    /* v141（用户：展开/收缩抖动）：点击开合的抖动来自「两次测量」——立即 force 测到的是
+       rc-motion 中间态 DOM（错位一帧），320ms 兜底再测才正确（又跳一帧）。改为 rAF 轮询：
+       几何（scrollHeight + 各节点高度指纹）连续 2 帧稳定即一次性重测，最迟 450ms 兜底 ——
+       中间态不再产生任何一次吸顶计算，抖动消除 */
+    let lastSig=''; let stable=0; const t0=Date.now(); let alive=true;
+    const tick=()=>{
+      if(!alive) return;
+      const el2=getNavMenu();
+      const sig=el2 ? el2.scrollHeight+'|'+[...el2.querySelectorAll('.ant-menu-submenu-title, .ant-menu-item')].map(x=>x.offsetHeight).join(',') : 'x';
+      if(sig===lastSig) stable++; else { stable=0; lastSig=sig; }
+      if(stable>=2 || Date.now()-t0>450){
+        updateNavThumb(); updateNavSticky(true);
+        return;
+      }
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+    return ()=>{ alive=false; };
+  },[openKeys, getNavMenu, updateNavSticky]);
   /* v48：折叠把手恢复后，这里也恢复「从收拢态展开时把所有父级重新展开」。
      收拢态下 antd 会把 inline 菜单切成图标栏、分组标题不可见；展开回来时如果还保留着
      上次的 openKeys，用户会看到一片只剩标题的空导航，得逐个点开 —— 恢复成全展开更符合直觉。 */
   useEffect(()=>{
-    if(!collapsed) setOpenKeys(NAV_ITEMS.map(g=>g.key));
+    /* v134（抖动修复③）：从收拢态展开时仅在确实非全开时才恢复全量（避免每次把手切换都触发
+       无谓的 setState → 菜单动画/重测链路，消除收缩抖动）；收拢本身无需任何处理 */
+    if(!collapsed && openKeysRef.current.length!==NAV_ITEMS.length){
+      setOpenKeys(NAV_ITEMS.map(g=>g.key));
+    }
   },[collapsed]);
   useEffect(()=>{
     const el=getNavMenu();
@@ -9032,20 +9299,46 @@ const AppInner = () => {
       if(navRafRef.current) return;
       navRafRef.current=requestAnimationFrame(()=>{
         navRafRef.current=0;
-        updateNavThumb(); updateNavSticky();
+        updateNavThumb();
+        /* v135（用户第1条）：上滑实时展开 —— scrollTop 方向即时判定，无 debounce 延迟；
+           展开只增内容不会触发钳制跳变，可安全即时执行（下滑收起仍走 wheel debounce） */
+        if(el){
+          const st=el.scrollTop;
+          if(navLastScrollRef.current!=null && st<navLastScrollRef.current-0.5){
+            navAutoByDir(-1);
+          }
+          navLastScrollRef.current=st;
+        }
+        updateNavSticky();
       });
     };
-    /* 窗口尺寸变化会改变可滚动总量 ⇒ 收尾留白与几何缓存都要重算 */
-    const onResize=()=>{ syncNavEndPad(); updateNavThumb(); updateNavSticky(true); };
+    /* 窗口尺寸变化 ⇒ 刷新滑块与吸顶几何 */
+    const onResize=()=>{ updateNavThumb(); updateNavSticky(true); };
     if(el) el.addEventListener('scroll', scheduleNav, {passive:true});
+    /* v131：滚轮方向 → 自动展开/收起（wheel 信号不受 scrollTop 钳制影响，
+       在导航滚到顶/底时依然能触发展开/收起；passive 不阻塞滚动） */
+    /* v132（卡顿修复②）：自动收展延后到滚动停止 180ms 后执行 —— 此前在滚动进行中直接
+       抽走/塞入内容，与原生滚动抢帧产生卡顿感；debounce 后动作落在滚动间隙，视觉更顺 */
+    const onNavWheel=(e)=>{
+      const dir=e.deltaY>0?1:-1;
+      /* v137（卡死修复）：上滑展开**立即执行**（不 debounce）——全收起后导航无滚动空间、
+         scroll 事件不再发生，此前上滑展开依赖 debounce，连续滚动时 timer 不断重置 →
+         展开永不执行 → 导航「完全停止响应」。展开幂等且只增内容，即时安全 */
+      if(dir<0){ navAutoByDir(-1); return; }
+      clearTimeout(navWheelDebounceRef.current);
+      navWheelDebounceRef.current=setTimeout(()=>navAutoByDir(dir),180);
+    };
+    if(el) el.addEventListener('wheel', onNavWheel, {passive:true});
     window.addEventListener('resize', onResize);
     updateNavThumb(); updateNavSticky(true);
     return ()=>{
       if(el) el.removeEventListener('scroll', scheduleNav);
+      if(el) el.removeEventListener('wheel', onNavWheel);
+      clearTimeout(navWheelDebounceRef.current);
       window.removeEventListener('resize', onResize);
       if(navRafRef.current){ cancelAnimationFrame(navRafRef.current); navRafRef.current=0; }
     };
-  },[getNavMenu, syncNavEndPad, updateNavThumb, updateNavSticky]);
+  },[getNavMenu, updateNavThumb, updateNavSticky, navAutoByDir]);
   /* v49：收拢态（58px）下 hover 分组图标 → 自绘悬浮菜单；移出 → 延时关闭。
      为什么不用 rc-menu 的 hover 弹层：见 CSS 里 .ant-menu-submenu-popup 那段说明。
      这里是「事件委托」而不是给每个 li 挂 props —— 菜单是数据驱动渲染的，改 DOM 属性会被 antd 覆盖。 */
@@ -9579,11 +9872,56 @@ React.createElement('div',{className:'header-bar'},
           openKeys: collapsed ? [] : openKeys,
           items: NAV_ITEMS,
           onOpenChange:(keys)=>{
-            /* v80：父级点击收缩折叠**整体删除**（用户要求：分组常开，点父级无动作）。
-               openKeys 是受控 state 且初始/展开态恒为全量 —— 不接收任何变更即永远展开，
-               手风琴开合动画与几何重算路径自然失效。收拢态本来就不接收（hover 走自绘浮层）。
-               ⚠ 不能在这里 setOpenKeys([]) 之类的清空 —— 会程序化洗掉全开状态（v49 教训） */
-            return;
+            /* v131（用户）：父级点击开合**恢复**（v80 曾按「分组常开」整体删除；现随箭头一并回归）——
+               openKeys 回归真实受控；收拢态仍不接收（hover 走自绘浮层，v49 口径不变）。
+               手动展开的组同时从「下滑自动收起」集合移除，避免紧接的上滑又被强制展开。
+               ⚠ 仍然不能 setOpenKeys([]) 全清 —— 会程序化洗空状态（v49 教训） */
+            if(collapsed) return;
+            const all=NAV_ITEMS.map(g=>g.key);
+            const nextKeys=all.filter(k=>keys.includes(k));
+            all.filter(k=>keys.includes(k)).forEach(k=>navAutoCollapsedRef.current.delete(k));
+            /* v138（用户：点击吸顶错乱根因）：点击**收起**吸顶组时与自动收起同样要做 scrollTop 回补 ——
+               子项从布局中移除后 scrollHeight 骤减、st 被浏览器钳制，而 force 重测与 clamp 竞争
+               会量到错误 base → 后续组序颠倒错乱。回补后（openKeys effect 内）再重测即自洽 */
+            const elM=getNavMenu();
+            /* v139（用户第2条）：点击吸顶父级**展开**时 —— 该组标题钉在槽位上、子项还在
+               上方滚动流里（被后续钉住标题盖住），直接展开会出现「子级折叠/部分隐藏」。
+               处理：把导航滚动到该组自然位置恰好落在其当前吸顶视觉位置 —— 标题原位落座、
+               子项在标题下方完整展开（后续组自然下移，无需等待重测）。 */
+            if(elM && nextKeys.length>openKeysRef.current.length){
+              const geomN=navGeomRef.current;
+              if(geomN && geomN.el===elM){
+                const gk=NAV_ITEMS.map(g=>g.key).find(k=>keys.includes(k)&&!openKeysRef.current.includes(k));
+                const gi=NAV_ITEMS.findIndex(g=>g.key===gk);
+                const itN=geomN.items[gi];
+                if(itN){
+                  const tTop=itN.title.getBoundingClientRect().top;
+                  const shifted=Math.abs(parseFloat(itN.title.dataset.navShift||'0')||0)>0.5
+                    || itN.title.getAttribute('data-nav-stuck')==='1';
+                  if(shifted){
+                    /* 目标：组自然位置恰好落在标题当前吸顶视觉位置（naturalPageTop = liBase - scrollTop = tTop）
+                       ⇒ scrollTop' = liBase - tTop。落位后 shift=0、不再钉住，标题原位、子项在下方完整展开
+                       （若用 liBase-(tTop-elTop) 会落低 elTop 偏移 → 标题又被重新钉起盖住子级，实测抓回） */
+                    const target=Math.max(0, Math.round(itN.liBase-tTop));
+                    if(Math.abs(target-elM.scrollTop)>1){
+                      elM.scrollTop=target;
+                      navLastScrollRef.current=target;   /* 同步方向基准，防被误判为上滑 */
+                    }
+                  }
+                }
+              }
+            }
+            if(elM && nextKeys.length<openKeysRef.current.length){
+              const lis=navGroupLis(elM);
+              const removed=openKeysRef.current.filter(k=>!nextKeys.includes(k));
+              navCollapseDeltaRef.current=lis.reduce((n,li,i)=>{
+                const t=li.firstElementChild;
+                if(!t||!removed.includes(NAV_ITEMS[i]?NAV_ITEMS[i].key:'')) return n;
+                return n+Math.max(0, li.offsetHeight-(t.offsetHeight||NAV_TITLE_H));
+              },0);
+            }
+            navAutoCdRef.current=Date.now()+450;   /* v132：手动开合同样进入冷却，动画期内不受 wheel 自动收展干扰 */
+            setOpenKeys(nextKeys);
             /* —— 原「点父级只开合当前手风琴」逻辑（v80 起停用，留档）——
             if(collapsed) return;
             const all=NAV_ITEMS.map(g=>g.key);
@@ -9593,6 +9931,20 @@ React.createElement('div',{className:'header-bar'},
             */
           },
           onClick:({key})=>{
+            /* v135（用户第3条）：编辑/新建预排产离开拦截 —— 点左侧导航其他选项先弹规范确认框
+               （KBConfirmHost：标题+橙警示图标+取消/放弃并离开），确认放弃后才切页；
+               其他页面不受影响 */
+            if(page==='new-sched-plan'){
+              window.__kbConfirm({
+                title:'离开确认',
+                content: window.__WIZARD_EDIT
+                  ? '当前处于排产编辑状态，离开将放弃未保存的修改。'
+                  : '当前正在新建预排产，离开将放弃未保存的内容。',
+                okText:'放弃并离开',
+                onOk:()=>{ window.__WIZARD_EDIT=false; setPage(key); },
+              });
+              return;
+            }
             /* 只有点中子级菜单项才改变当前页 —— 父级高亮随 page 派生,不在这里写任何高亮状态 */
             setPage(key);
           },
@@ -9646,11 +9998,28 @@ React.createElement('div',{className:'header-bar'},
         page==='new-sched-plan'
           ? React.createElement('div',{className:'crumb-bar crumb-bar-with-intro',style:{marginBottom:8}},
               /* v124（用户图二）：橙描边 + 橙文字 + 白底（原橙实底作废）；容器底部 8px 间距 */
-              React.createElement(KButton,{id:'kbCancelWizard',className:'kb-cancel-wizard',onClick:()=>navigate('sched-plan-list')},
+              React.createElement(KButton,{id:'kbCancelWizard',className:'kb-cancel-wizard',onClick:()=>{
+                /* v140（用户第5条）：取消新建/编辑排产先弹规范确认框（KBConfirmHost），确认后才返回排产列表 */
+                window.__kbConfirm({
+                  title:'取消确认',
+                  content: window.__WIZARD_EDIT
+                    ? '确定取消编辑排产吗？未保存的修改将放弃。'
+                    : '确定取消新建排产吗？未保存的内容将放弃。',
+                  okText:'确认取消',
+                  /* v145（用户第4条）：确认取消后返回排产列表并弹 toast（文案随入口区分，与保存等
+                     确认操作后一致的提示行为；msg 实例挂在 App 层，页面切换后 toast 仍完整展示） */
+                  onOk:()=>{
+                    msg.success(window.__WIZARD_EDIT ? '已取消编辑排产' : '已取消新建排产');
+                    navigate('sched-plan-list');
+                  },
+                });
+              }},
                 React.createElement('span',{style:{display:'inline-flex',alignItems:'center',gap:8}},
                   React.createElement('svg',{width:14,height:14,viewBox:'0 0 16 16',fill:'none','aria-hidden':true},
                     React.createElement('path',{d:'M10 3L5 8L10 13',stroke:'currentColor',strokeWidth:1.5,strokeLinecap:'round',strokeLinejoin:'round'})),
-                  React.createElement('span',null,'取消新建排产')))
+                  /* v130（用户）：编辑入口（排产列表「编辑」预填进入）显示「取消排产编辑」，新建仍为「取消新建排产」；
+                     该按钮全站仅此一处渲染，两个入口共用 SchedulePage，用 __WIZARD_EDIT 区分，不影响其他页面 */
+                  React.createElement('span',null, window.__WIZARD_EDIT ? '取消排产编辑' : '取消新建排产')))
             )
           : React.createElement('div',{className:'crumb-bar crumb-bar-with-intro'},
           React.createElement(Breadcrumb,{
@@ -9659,8 +10028,9 @@ React.createElement('div',{className:'header-bar'},
             separator:React.createElement('svg',{viewBox:'0 0 18 18',width:18,height:18,fill:'none'},
               React.createElement('path',{d:'M7 4.75L11.2426 8.99264L7 13.2353',stroke:'currentColor',strokeLinecap:'round',strokeLinejoin:'round'}))
           }),
+          /* v130（用户）：释义文案统一加 * 前缀 */
           KB_PAGE_INTROS[page]
-            ? React.createElement('span',{className:'crumb-intro'},KB_PAGE_INTROS[page])
+            ? React.createElement('span',{className:'crumb-intro'},'*'+KB_PAGE_INTROS[page])
             : null
         ),
         /* v76：包装层追加 page-<key> 类 —— 供 CSS 按页面精确限定作用域
