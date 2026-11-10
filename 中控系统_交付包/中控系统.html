@@ -6,7 +6,7 @@
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <title>型材立库中控系统 · v10.12-146</title>
+  <title>型材立库中控系统 · v10.12-147</title>
   <link rel="stylesheet" href="antd.min.css">
   <style>
     * { box-sizing: border-box; }
@@ -5178,6 +5178,8 @@ const SchedulePage = ({targetDate,dispatchConfirm,onConfirmDispatch,onCancelDisp
      直接进入第三步（仅界面展示，不实际提交），生产日期 / 排产编号 / 工单列表 / 勾选范围全预填。
      首次渲染取走后立即删除，后续渲染与正常新建流程不再受影响 */
   const wizardPrefill=(()=>{ const p=window.__WIZARD_PREFILL||null; delete window.__WIZARD_PREFILL; return p; })();
+  /* v147：编辑入口的排产编号同步到 window —— 取消确认弹窗文案（RootApp 作用域）需要映射出具体编号 */
+  if (wizardPrefill) window.__WIZARD_SCHED_NO = wizardPrefill.scheduleNo || '';
   const [productionDate,setProductionDate]=useState(wizardPrefill?.productionDate||initialDate);
   const [scheduleNo,setScheduleNo]=useState(()=>wizardPrefill?.scheduleNo||`SCH-${initialDate.replaceAll('-','')}-${String(rnd(900)+100)}`);
   const [createOpen,setCreateOpen]=useState(false);
@@ -5809,16 +5811,17 @@ const SchedulePage = ({targetDate,dispatchConfirm,onConfirmDispatch,onCancelDisp
     React.createElement('section',{className:'wz-card wz-confirm-card'},
       /* v109（图三）：①整卡被 v107 flex:1 拉高后内容相对背景垂直居中（wz-confirm-card）；
          ②生产日期加必填星号（wz-fl-req）；③排产编号置灰只读（wz-ro-input，readOnly 保留） */
-      React.createElement('div',{className:'wz-card-body wz-confirm-head'},
-        React.createElement('span',{className:'wz-fl wz-fl-req'},'生产日期'),
-        React.createElement(DatePicker,{
-          value:productionDate?dayjs(productionDate):null,
-          onChange:d=>setProductionDate(d?d.format('YYYY-MM-DD'):''),
-          allowClear:false, format:'YYYY年M月D日', placeholder:'请选择生产日期', style:{width:180},
-        }),
+      React.createElement('div',{      className:'wz-card-body wz-confirm-head'},
+        /* v147（用户图一红框）：列顺序调整 —— 排产编号移到最左、「生产日期」改名「生产时间」放右侧 */
         React.createElement('span',{className:'wz-fl'},'排产编号'),
         React.createElement(Tooltip,{title:'排产编号由系统生成，不可修改',placement:'top',arrow:false,mouseEnterDelay:0.12},
           React.createElement(Input,{value:scheduleNo, readOnly:true, className:'wz-ro-input', style:{width:200}})),
+        React.createElement('span',{className:'wz-fl wz-fl-req'},'生产时间'),
+        React.createElement(DatePicker,{
+          value:productionDate?dayjs(productionDate):null,
+          onChange:d=>setProductionDate(d?d.format('YYYY-MM-DD'):''),
+          allowClear:false, format:'YYYY年M月D日', placeholder:'请选择生产时间', style:{width:180},
+        }),
         React.createElement('div',{style:{flex:'1 1 auto'}}),
         React.createElement('span',{className:'wz-draft'},'当前为草稿，尚未保存')
       )
@@ -10010,8 +10013,9 @@ React.createElement('div',{className:'header-bar'},
                 /* v140（用户第5条）：取消新建/编辑排产先弹规范确认框（KBConfirmHost），确认后才返回排产列表 */
                 window.__kbConfirm({
                   title:'取消确认',
+                  /* v147（用户图二）：编辑入口文案映射出具体排产编号，明确操作对象 */
                   content: window.__WIZARD_EDIT
-                    ? '确定取消编辑排产吗？未保存的修改将放弃。'
+                    ? ('确定取消排产编号 '+(window.__WIZARD_SCHED_NO||'')+' 的编辑吗？未保存的修改将放弃。')
                     : '确定取消新建排产吗？未保存的内容将放弃。',
                   okText:'确认取消',
                   /* v145（用户第4条）：确认取消后返回排产列表并弹 toast（文案随入口区分，与保存等
