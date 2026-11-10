@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>P-03 计划列表双栏 · 变体预览</title>
+
+<!-- 规范依赖：token 层 + pattern 层。业务项目照这两行引入即可 -->
+<link rel="stylesheet" href="../../assets/design-tokens.css">
+<link rel="stylesheet" href="../../assets/patterns.css">
+
+<style>
+  /* 预览页专用，不属于变体本身 */
+  body { margin: 0; }
+</style>
+</head>
+<body>
+
+<div class="v-demo">
+
+<!-- ═══════════════ 以下为可复用片段：从这里开始复制 ═══════════════ -->
+<!-- 与中控网站「计划列表」页 1:1 同构：白板 → 顶栏 → 左卡片流 + 右详情
+     （面板头 + 排产甘特图 SVG + 切割工单表 + 分页）。字段名/数据按业务替换。 -->
+<section class="v-listform" data-variant="list-form-split" data-version="1.3.0">
+
+  <!-- 顶栏（.plan-head 同参） -->
+  <div class="v-listform__head">
+    <span class="v-listform__head-title">计划列表</span>
+    <div class="v-listform__head-spacer"></div>
+    <button class="v-listform__head-btn" type="button">新建切割包</button>
+  </div>
+
+  <div class="v-listform__body">
+
+    <!-- 左：浅灰栏 + 卡片流（.plan-col / .plan-cards / .plan-card 同参） -->
+    <div class="v-listform__col">
+      <div class="v-listform__scroll">
+        <div class="v-listform__cards">
+
+          <!-- 选中卡：#FFF7E6 底 + 橙描边（is-active 同参） -->
+          <div class="v-plan-card is-active">
+            <div class="v-plan-card__head">
+              <div class="v-plan-card__info">
+                <span class="v-plan-card__k">排产编号</span>
+                <span class="v-plan-card__no">SCH-20260901-482</span>
+              </div>
+              <span class="v-plan-card__acts">
+                <span class="v-plan-card__trash" role="button" aria-label="删除" title="删除"><svg viewBox="0 0 15 16.25" fill="none" aria-hidden="true"><path fill="currentColor" d="M15 3.28125H13.9062V14.2188C13.9062 14.5086 13.7909 14.7872 13.5859 14.9922C13.3808 15.1972 13.1025 15.3125 12.8125 15.3125H4.0625C3.7725 15.3125 3.49416 15.1972 3.28906 14.9922C3.08412 14.7872 2.96884 14.5086 2.96875 14.2188V3.28125H1.875V2.1875H15V3.28125ZM4.0625 14.2188H12.8125V3.28125H4.0625V14.2188ZM7.34375 12.0312H6.25V5.46875H7.34375V12.0312ZM10.625 12.0312H9.53125V5.46875H10.625V12.0312ZM10.625 1.09375H6.25V0H10.625V1.09375Z"></path></svg></span>
+              </span>
+            </div>
+            <div class="v-plan-card__body">
+              <div class="v-plan-card__row v-plan-card__row--split">
+                <span class="v-plan-card__cell">
+                  <span class="v-plan-card__lb">生产时间</span>
+                  <span class="v-plan-card__vl">2026-09-01</span>
+                </span>
+                <span class="v-plan-card__cell">
+                  <span class="v-plan-card__lb">入库状态</span>
+                  <span class="v-plan-card__vl v-plan-card__vl--inb">13/16</span>
+                </span>
+              </div>
+              <div class="v-plan-card__row v-plan-card__row--split">
+                <span class="v-plan-card__cell">
+                  <span class="v-plan-card__lb">切割工单数</span>
+                  <span class="v-plan-card__vl">5单</span>
+                </span>
+                <span class="v-plan-card__cell">
+                  <span class="v-plan-card__lb">套料总数</span>
+                  <span class="v-plan-card__vl">16根</span>
+                </span>
+              </div>
+            </div>
+            <div class="v-plan-card__foot">
+              <span class="v-plan-card__btn" role="button">编辑</span>
+              <span class="v-plan-card__btn v-plan-card__btn--primary" role="button">下发任务</span>
+            </div>
+          </div>
+
+          <!-- 默认卡：白底 1px #D9D9D9；hover 只换橙描边 -->
+          <div class="v-plan-card">
+            <div class="v-plan-card__head">
+              <div class="v-plan-card__info">
+                <span class="v-plan-card__k">排产编号</span>
+                <span class="v-plan-card__no">SCH-20260901-517</span>
+              </div>
+              <span class="v-plan-card__acts">
+                <span class="v-plan-card__trash" role="button" aria-label="删除" title="删除"><svg viewBox="0 0 15 16.25" fill="none" aria-hidden="true"><path fill="currentColor" d="M15 3.28125H13.9062V14.2188C13.9062 14.5086 13.7909 14.7872 13.5859 14.9922C13.3808 15.1972 13.1025 15.3125 12.8125 15.3125H4.0625C3.7725 15.3125 3.49416 15.1972 3.28906 14.9922C3.08412 14.7872 2.96884 14.5086 2.96875 14.2188V3.28125H1.875V2.1875H15V3.28125ZM4.0625 14.2188H12.8125V3.28125H4.0625V14.2188ZM7.34375 12.0312H6.25V5.46875H7.34375V12.0312ZM10.625 12.0312H9.53125V5.46875H10.625V12.0312ZM10.625 1.09375H6.25V0H10.625V1.09375Z"></path></svg></span>
+              </span>
+            </div>
+            <div class="v-plan-card__body">
+              <div class="v-plan-card__row v-plan-card__row--split">
+                <span class="v-plan-card__cell">
+                  <span class="v-plan-card__lb">生产时间</span>
+                  <span class="v-plan-card__vl">2026-09-02</span>
+                </span>
+                <span class="v-plan-card__cell">
+                  <span class="v-plan-card__lb">入库状态</span>
+                  <span class="v-plan-card__vl v-plan-card__vl--inb">0/24</span>
+                </span>
+              </div>
+              <div class="v-plan-card__row v-plan-card__row--split">
+                <span class="v-plan-card__cell">
+                  <span class="v-plan-card__lb">切割工单数</span>
+                  <span class="v-plan-card__vl">7单</span>
+                </span>
+                <span class="v-plan-card__cell">
+                  <span class="v-plan-card__lb">套料总数</span>
+                  <span class="v-plan-card__vl">24根</span>
+                </span>
+              </div>
+            </div>
+            <div class="v-plan-card__foot">
+              <span class="v-plan-card__btn" role="button">编辑</span>
+              <span class="v-plan-card__btn v-plan-card__btn--primary" role="button">下发任务</span>
+            </div>
+          </div>
+
+          <div class="v-plan-card">
+            <div class="v-plan-card__head">
+              <div class="v-plan-card__info">
+                <span class="v-plan-card__k">排产编号</span>
+                <span class="v-plan-card__no">SCH-20260901-533</span>
+              </div>
+              <span class="v-plan-card__acts">
+                <span class="v-plan-card__trash" role="button" aria-label="删除" title="删除"><svg viewBox="0 0 15 16.25" fill="none" aria-hidden="true"><path fill="currentColor" d="M15 3.28125H13.9062V14.2188C13.9062 14.5086 13.7909 14.7872 13.5859 14.9922C13.3808 15.1972 13.1025 15.3125 12.8125 15.3125H4.0625C3.7725 15.3125 3.49416 15.1972 3.28906 14.9922C3.08412 14.7872 2.96884 14.5086 2.96875 14.2188V3.28125H1.875V2.1875H15V3.28125ZM4.0625 14.2188H12.8125V3.28125H4.0625V14.2188ZM7.34375 12.0312H6.25V5.46875H7.34375V12.0312ZM10.625 12.0312H9.53125V5.46875H10.625V12.0312ZM10.625 1.09375H6.25V0H10.625V1.09375Z"></path></svg></span>
+              </span>
+            </div>
+            <div class="v-plan-card__body">
+              <div class="v-plan-card__row v-plan-card__row--split">
+                <span class="v-plan-card__cell">
+                  <span class="v-plan-card__lb">生产时间</span>
+                  <span class="v-plan-card__vl">2026-09-02</span>
+                </span>
+                <span class="v-plan-card__cell">
+                  <span class="v-plan-card__lb">入库状态</span>
+                  <span class="v-plan-card__vl v-plan-card__vl--inb">9/9</span>
+                </span>
+              </div>
+              <div class="v-plan-card__row v-plan-card__row--split">
+                <span class="v-plan-card__cell">
+                  <span class="v-plan-card__lb">切割工单数</span>
+                  <span class="v-plan-card__vl">3单</span>
+                </span>
+                <span class="v-plan-card__cell">
+                  <span class="v-plan-card__lb">套料总数</span>
+                  <span class="v-plan-card__vl">9根</span>
+                </span>
+              </div>
+            </div>
+            <div class="v-plan-card__foot">
+              <span class="v-plan-card__btn" role="button">撤回</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- 右：详情面板（.plan-detail-wrap 同参）＝ 面板头 + 甘特卡 + 表格卡 + 分页 -->
+    <div class="v-listform__detail">
+
+      <!-- ① 面板头 + 排产甘特图（.plan-detail / .plan-gantt / .pg-* 同参） -->
+      <div class="v-plan-detail">
+        <div class="v-plan-detail__head">
+          <span class="v-plan-detail__title">排产编号</span>
+          <span class="v-plan-detail__no">SCH-20260901-482</span>
+          <span class="v-plan-detail__stamp">2026-09-01 10:24</span>
+        </div>
+        <div class="v-plan-gantt">
+          <div class="v-plan-gantt__head"><span class="v-plan-gantt__title">排产甘特图</span></div>
+          <!-- SVG 甘特 1:1：topPad6 + 刻度行20(底#EEF1F8) + 机器行×26(段18直角、白缝2) +
+               网格 #E2E6F2；刻度/机器名 12px #9AA1B0；段无文字，信息走悬停浮框 -->
+          <div class="v-gantt">
+            <svg viewBox="0 0 760 108" preserveAspectRatio="none" style="width:100%;height:108px">
+              <rect x="0" y="0" width="760" height="26" fill="#EEF1F8"></rect>
+              <line x1="64" y1="26" x2="64" y2="104" stroke="#E2E6F2"></line>
+              <line x1="186" y1="26" x2="186" y2="104" stroke="#E2E6F2"></line>
+              <line x1="308" y1="26" x2="308" y2="104" stroke="#E2E6F2"></line>
+              <line x1="430" y1="26" x2="430" y2="104" stroke="#E2E6F2"></line>
+              <line x1="552" y1="26" x2="552" y2="104" stroke="#E2E6F2"></line>
+              <line x1="674" y1="26" x2="674" y2="104" stroke="#E2E6F2"></line>
+              <text x="122" y="20" text-anchor="middle" font-size="12" fill="#9AA1B0">0h00</text>
+              <text x="247" y="20" text-anchor="middle" font-size="12" fill="#9AA1B0">0h30</text>
+              <text x="369" y="20" text-anchor="middle" font-size="12" fill="#9AA1B0">1h00</text>
+              <text x="491" y="20" text-anchor="middle" font-size="12" fill="#9AA1B0">1h30</text>
+              <text x="613" y="20" text-anchor="middle" font-size="12" fill="#9AA1B0">2h00</text>
+              <text x="735" y="20" text-anchor="middle" font-size="12" fill="#9AA1B0">2h30</text>
+              <text x="56" y="43" text-anchor="end" font-size="12" fill="#9AA1B0">切割机C1</text>
+              <text x="56" y="69" text-anchor="end" font-size="12" fill="#9AA1B0">切割机C2</text>
+              <text x="56" y="95" text-anchor="end" font-size="12" fill="#9AA1B0">切割机C3</text>
+              <!-- 段：直角、左右各让 1px（段间 2px 白缝）；颜色 = 色板映射，与表格行首色点同源 -->
+              <rect class="vg-seg" data-key="k1" x="65" y="30" width="180" height="18" fill="#89A6DF"></rect>
+              <rect class="vg-seg" data-key="k2" x="247" y="30" width="150" height="18" fill="#ECC39D"></rect>
+              <rect class="vg-seg" data-key="k3" x="72" y="56" width="120" height="18" fill="#F1B3C6"></rect>
+              <rect class="vg-seg" data-key="k4" x="194" y="56" width="130" height="18" fill="#9BC5A0"></rect>
+              <rect class="vg-seg" data-key="k5" x="110" y="82" width="160" height="18" fill="#AA9FDF"></rect>
+            </svg>
+            <!-- 悬停浮框（.pg-tip 同参：锚定高亮段正下方、两行 12px） -->
+            <div class="v-gantt__tip" id="vgTip">
+              <div class="v-gantt__tip-wo">切割工单：<b class="vg-tip-name"></b></div>
+              <div class="v-gantt__tip-wo vg-tip-meta"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ② 切割工单表卡（.plan-detail.is-main 同参：th54 #FAFAFA / td46 / 行 hover #FFF7E6） -->
+      <div class="v-plan-detail">
+        <div class="v-plan-detail__tablewrap">
+          <table class="v-plan-table">
+            <colgroup><col style="width:26%"><col style="width:20%"><col style="width:16%"><col style="width:12%"><col style="width:12%"><col style="width:14%"></colgroup>
+            <thead>
+              <tr><th>切割工单</th><th>来源切割包</th><th>生产时间</th><th>切割机</th><th>队列序号</th><th>套料总数</th></tr>
+            </thead>
+            <tbody>
+              <tr data-key="k1">
+                <td><span class="v-plan-cellname"><i class="v-sched-dot" style="background:#89A6DF"></i>2779-301-PY</span></td>
+                <td>PKG-3010</td><td>2026-09-01</td><td>C1</td><td>1</td><td>4根</td>
+              </tr>
+              <tr data-key="k2">
+                <td><span class="v-plan-cellname"><i class="v-sched-dot" style="background:#ECC39D"></i>2779-302-PY</span></td>
+                <td>PKG-3010</td><td>2026-09-01</td><td>C1</td><td>2</td><td>5根</td>
+              </tr>
+              <tr data-key="k3">
+                <td><span class="v-plan-cellname"><i class="v-sched-dot" style="background:#F1B3C6"></i>2779-303-PY</span></td>
+                <td>PKG-3011</td><td>2026-09-01</td><td>C2</td><td>3</td><td>3根</td>
+              </tr>
+              <tr data-key="k4">
+                <td><span class="v-plan-cellname"><i class="v-sched-dot" style="background:#9BC5A0"></i>2779-304-PY</span></td>
+                <td>PKG-3011</td><td>2026-09-01</td><td>C2</td><td>4</td><td>4根</td>
+              </tr>
+              <tr data-key="k5">
+                <td><span class="v-plan-cellname"><i class="v-sched-dot" style="background:#AA9FDF"></i>2779-305-PY</span></td>
+                <td>PKG-3012</td><td>2026-09-01</td><td>C3</td><td>5</td><td>5根</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <!-- 分页卡（.plan-pager-card 同参：54 高、上边线+向上投影、钮 32 圆角 2、当前页 #E27400） -->
+        <div class="v-plan-pager-card">
+          <div class="v-plan-pager">
+            <span class="v-plan-pager__total">共 12 条</span>
+            <span class="v-plan-pager__btn">10 条/页</span>
+            <button class="v-plan-pager__btn" type="button">‹</button>
+            <button class="v-plan-pager__btn is-active" type="button">1</button>
+            <button class="v-plan-pager__btn" type="button">2</button>
+            <button class="v-plan-pager__btn" type="button">›</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  
+
+  <!-- 删除确认弹窗（.kb-confirm 同参：420 档、橙警示图标、取消描边/删除橙实底） -->
+  <div class="v-confirm-scrim" id="vgConfirm">
+    <div class="v-confirm">
+      <div class="v-confirm__head">
+        <span class="v-confirm__title">删除确认</span>
+        <button class="v-confirm__close" type="button" aria-label="关闭"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 2L10 10M10 2L2 10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></button>
+      </div>
+      <div class="v-confirm__body">
+        <svg class="v-confirm__ico" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="8" fill="#EE6402"></circle><rect x="7.1" y="3.4" width="1.8" height="5.8" rx="0.9" fill="#fff"></rect><circle cx="8" cy="11.6" r="1.15" fill="#fff"></circle></svg>
+        <div class="v-confirm__text" id="vgConfirmText">确定删除该排产吗？删除后不可恢复。</div>
+      </div>
+      <div class="v-confirm__foot">
+        <button class="v-confirm__btn v-confirm__btn--cancel" type="button">取 消</button>
+        <button class="v-confirm__btn v-confirm__btn--ok" type="button">删 除</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+/* 联动预览（单向，与中控网站一致）：表格行悬停 → 对应段 .is-ext + 其余段 opacity .3 + 浮框；
+   段悬停 → 自身高亮 + 浮框。业务实现按此契约写。 */
+(function(){
+  var segs=[].slice.call(document.querySelectorAll('.vg-seg'));
+  var rows=[].slice.call(document.querySelectorAll('.v-plan-table tbody tr[data-key]'));
+  var tip=document.getElementById('vgTip');
+  var tipName=tip.querySelector('.vg-tip-name');
+  var tipMeta=tip.querySelector('.vg-tip-meta');
+  var meta={k1:['2779-301-PY','4根 · 0h00-0h27'],k2:['2779-302-PY','5根 · 0h27-0h52'],k3:['2779-303-PY','3根 · 0h03-0h23'],k4:['2779-304-PY','4根 · 0h25-0h47'],k5:['2779-305-PY','5根 · 0h10-0h37']};
+  function on(key, seg){
+    segs.forEach(function(el){ el.style.opacity = el.dataset.key===key ? '' : '0.3'; if(el.dataset.key===key) el.classList.add('is-ext'); });
+    tipName.textContent = meta[key][0];
+    tipMeta.textContent = meta[key][1];
+    var r=seg.getBoundingClientRect(), w=seg.closest('.v-gantt').getBoundingClientRect();
+    tip.style.left=Math.min(Math.max(8,(r.left-w.left)+r.width/2-98), Math.max(8,w.width-204))+'px';
+    tip.style.top=(r.bottom-w.top+6)+'px';
+    tip.classList.add('is-on');
+  }
+  function off(){
+    segs.forEach(function(el){ el.style.opacity=''; el.classList.remove('is-ext'); });
+    tip.classList.remove('is-on');
+  }
+  rows.forEach(function(row){
+    row.addEventListener('mouseenter',function(){ on(row.dataset.key, segs.find(function(s){return s.dataset.key===row.dataset.key;})); });
+    row.addEventListener('mouseleave',off);
+  });
+  segs.forEach(function(seg){
+    seg.addEventListener('mouseenter',function(){ on(seg.dataset.key, seg); });
+    seg.addEventListener('mouseleave',off);
+  });
+  /* 卡片点击 → 选中（is-active 唯一）；trash 点击 → 删除确认弹窗（.kb-confirm 同参行为） */
+  var scrim=document.getElementById('vgConfirm');
+  var pendingTrash=null;
+  [].forEach.call(document.querySelectorAll('.v-plan-card'),function(card){
+    card.addEventListener('click',function(){
+      [].forEach.call(document.querySelectorAll('.v-plan-card'),function(c){ c.classList.remove('is-active'); });
+      card.classList.add('is-active');
+    });
+  });
+  [].forEach.call(document.querySelectorAll('.v-plan-card__trash'),function(t){
+    t.addEventListener('click',function(e){
+      e.stopPropagation();
+      pendingTrash=t.closest('.v-plan-card');
+      scrim.classList.add('is-on');
+    });
+  });
+  scrim.addEventListener('click',function(e){
+    if(e.target===scrim){ scrim.classList.remove('is-on'); pendingTrash=null; return; }
+    if(e.target.closest('.v-confirm__btn--cancel')||e.target.closest('.v-confirm__close')){ scrim.classList.remove('is-on'); pendingTrash=null; }
+    if(e.target.closest('.v-confirm__btn--ok')){ if(pendingTrash) pendingTrash.remove(); scrim.classList.remove('is-on'); pendingTrash=null; }
+  });
+})();
+</script>
+</section>
+
+
+<!-- ═══════════════ 可复用片段：到这里结束 ═══════════════ -->
+
+</div>
+
+</body>
+</html>

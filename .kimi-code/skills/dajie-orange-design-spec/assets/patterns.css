@@ -123,61 +123,203 @@
 }
 
 /* ═══════════════════════════════════════════════════════════
-   P-02 详情描述列表  detail-desc
-   适用：只读详情、参数对照、信息卡
-   不适用：需要录入的场景（用 P-01）
+   P-03 计划列表双栏  list-form-split（v1.3.0）
+   与中控网站「计划列表」页 1:1 同参，DOM 结构照抄 plan-* 系列：
+   白板(plan-page) → 顶栏(plan-head 68) → 双栏(plan-body) =
+     左 .plan-col(426/#F5F5F5/圆角12) 卡片流(plan-card 400/圆角8/间距8，
+       卡头48 + 2×2 字段行 + 底部操作条50) +
+     右 .plan-detail-wrap(面板头54 + 甘特卡(渐变#F2F4FB→#FAFBFE、SVG 刻度#EEF1F8/
+       网格#E2E6F2/段18直角白缝2) + 表格卡(th54#FAFAFA/td46/行hover#FFF7E6) + 分页卡54)
+   联动单向：表格行悬停 → 对应段 .is-ext(saturate(1.8) brightness(1.06)) + 其余段 .3
+   色值已映射 token，尺寸为项目实测值，勿改。
    ═══════════════════════════════════════════════════════════ */
-.v-desc {
-  background: #fff;
-  border-radius: var(--radius-card);
-  box-shadow: var(--shadow-card);
-  padding: var(--space-card-y) var(--space-card-x);
+.v-listform { display:flex; flex-direction:column; background:#fff; border-radius:var(--radius-card); box-shadow:var(--shadow-card); }
+
+/* 顶栏（.plan-head 同参：68 高、白底、card-shadow 投影） */
+.v-listform__head {
+  flex:0 0 68px; display:flex; align-items:center; gap:8px; padding:0 16px;
+  background:#fff; box-shadow:var(--shadow-card); position:relative; z-index:2;
+}
+.v-listform__head-title {
+  flex:0 0 auto; margin-right:8px; font-size:16px; line-height:24px;
+  font-weight:500; color:#262626; white-space:nowrap;
+}
+.v-listform__head-spacer { flex:1 1 auto; }
+.v-listform__head-btn {
+  height:30px; padding:0 17px; border:none; border-radius:4px; cursor:pointer;
+  background:var(--brand); color:#fff; font-family:inherit; font-size:var(--fs-body); font-weight:400;
 }
 
-.v-desc__head {
-  margin-bottom: 16px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid var(--divider);
+/* 双栏（.plan-body 同参：gap 8、padding 16 12 16 16） */
+.v-listform__body { flex:1 1 auto; min-height:0; display:flex; align-items:flex-start; gap:8px; padding:16px 12px 16px 16px; }
+
+/* 左栏（.plan-col 同参） */
+.v-listform__col {
+  flex:0 0 426px; width:426px; min-width:0; box-sizing:border-box;
+  display:flex; flex-direction:column; height:auto;
+  padding:10px 0 0; background:var(--track);
+  border:1px solid var(--divider); border-radius:var(--radius-card);
 }
-.v-desc__title {
-  margin: 0;
-  font-size: var(--fs-title);
-  font-weight: 500;
-  color: var(--text-1);
+.v-listform__scroll {
+  flex:1 1 auto; min-height:0; margin-top:8px;
+  display:flex; flex-direction:column; align-items:flex-start;
 }
 
-.v-desc__list {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 18px 24px;
-  margin: 0;
-}
-.v-desc__item {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-}
-.v-desc__item--full { grid-column: 1 / -1; }
+/* 卡片流（.plan-cards 同参：421 宽内 padding-left 10、gap 8、bottom 8） */
+.v-listform__cards { width:100%; display:flex; flex-direction:column; gap:8px; padding:0 10px 8px; box-sizing:border-box; }
 
-.v-desc__k {
-  font-size: var(--fs-hint);
-  font-weight: 400;
-  color: var(--text-3);
+/* 卡片（.plan-card 同参） */
+.v-plan-card {
+  flex:0 0 auto; box-sizing:border-box; display:flex; flex-direction:column;
+  width:400px; max-width:100%; min-height:140px;
+  background:#fff; border:1px solid var(--border); border-radius:8px;
+  box-shadow:var(--shadow-card); cursor:pointer;
+  transition:border-color .15s, background .15s;
 }
-.v-desc__v {
-  margin: 0;                      /* 清掉 dd 浏览器默认的 40px 缩进 */
-  font-size: var(--fs-body);
-  font-weight: 500;
-  color: var(--text-1);
-  word-break: break-word;
-}
-/* 数字类取值用 DIN */
-.v-desc__v--num { font-family: var(--font-number); }
+.v-plan-card:hover { border-color:var(--brand); }
+.v-plan-card.is-active, .v-plan-card.is-active:hover { border-color:var(--brand); background:var(--brand-light); }
 
-@media (max-width: 900px) {
-  .v-desc__list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+/* 卡头（.plan-card-head 同参） */
+.v-plan-card__head {
+  flex:none; display:flex; align-items:center; gap:4px; height:48px;
+  padding:0 13px 0 16px; border-bottom:1px solid var(--divider);
 }
-@media (max-width: 600px) {
-  .v-desc__list { grid-template-columns: 1fr; }
+.v-plan-card__info { flex:1 1 auto; min-width:0; display:flex; align-items:center; gap:4px; }
+.v-plan-card__k { flex:0 0 auto; font-size:var(--fs-body); line-height:24px; font-weight:500; color:var(--text-1); white-space:nowrap; }
+.v-plan-card__no { flex:0 1 auto; min-width:0; font-size:var(--fs-body); line-height:24px; font-weight:500; color:var(--text-1); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.v-plan-card__acts { flex:0 0 auto; display:flex; align-items:center; justify-content:flex-end; }
+
+/* 卡体 2×2 字段（.plan-card-row.is-split 同参） */
+.v-plan-card__body { flex:1 1 auto; display:flex; flex-direction:column; justify-content:center; padding:6px 0; }
+.v-plan-card__row { flex:0 0 auto; display:flex; align-items:center; gap:8px; padding:0 16px; font-size:var(--fs-body); line-height:24px; white-space:nowrap; }
+.v-plan-card__row--split { display:grid; grid-template-columns:224px minmax(0,1fr); column-gap:0; }
+.v-plan-card__cell { display:inline-flex; align-items:center; gap:9px; flex:0 0 auto; min-width:0; }
+.v-plan-card__lb { flex:0 0 auto; color:#8c8c8c; font-weight:400; }
+.v-plan-card__vl { overflow:hidden; text-overflow:ellipsis; color:var(--text-1); }
+.v-plan-card__vl--inb { color:var(--brand); font-weight:500; font-variant-numeric:tabular-nums; }
+
+/* 底部操作条（.plan-card-foot 同参：50 高、右下角、图标+文字钮 24 高） */
+.v-plan-card__foot { flex:none; display:flex; align-items:flex-end; justify-content:flex-end; gap:8px; height:50px; padding:0 18px 12px; }
+.v-plan-card__btn {
+  height:24px; display:inline-flex; align-items:center; justify-content:center; gap:4px;
+  padding:0 8px; border-radius:4px; cursor:pointer; flex:none;
+  background:#fff; border:1px solid var(--border);
+  font-family:inherit; font-size:12px; font-weight:400; color:var(--text-1);
 }
+.v-plan-card__btn--primary { background:var(--brand); border-color:var(--brand); color:#fff; }
+
+/* 右栏（.plan-detail-wrap 同参） */
+.v-listform__detail { flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:8px; height:auto; }
+
+/* 面板卡通用（.plan-detail 同参：白底 1px 描边圆角 12） */
+.v-plan-detail { background:#fff; border:1px solid var(--border); border-radius:var(--radius-card); overflow:hidden; }
+.v-plan-detail__head {
+  flex:0 0 54px; display:flex; align-items:center; gap:8px; padding:0 17px;
+}
+.v-plan-detail__title { font-size:var(--fs-body); line-height:24px; font-weight:500; color:var(--text-1); white-space:nowrap; }
+.v-plan-detail__no { font-size:var(--fs-body); line-height:24px; font-weight:500; color:var(--text-1); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.v-plan-detail__stamp { font-size:var(--fs-body); line-height:24px; font-weight:500; color:rgba(140,140,140,.85); white-space:nowrap; }
+
+/* 甘特卡（.plan-gantt + .pg-card/.pg-head/.pg-title 同参） */
+.v-plan-gantt { padding:4px 8px 6px; border-bottom:1px solid var(--border); background:linear-gradient(180deg,#F2F4FB 0%,#FAFBFE 100%); }
+.v-plan-gantt__head { display:flex; align-items:center; margin-bottom:4px; }
+.v-plan-gantt__title { font-size:14px; line-height:22px; font-weight:500; color:#262B38; white-space:nowrap; }
+
+/* SVG 甘特尺寸（项目常量：labelW 64 / rowH 26 / barH 18 / topPad 6 / tickH 20） */
+.v-gantt { position:relative; }
+.v-gantt svg { display:block; width:100%; height:auto; }
+
+/* 甘特浮框（.pg-tip 同参：白底圆角 10、投影、两行 12px） */
+.v-gantt__tip {
+  position:absolute; z-index:5; pointer-events:none;
+  background:#fff; border-radius:10px; padding:8px 14px;
+  box-shadow:0 8px 24px rgba(70,90,140,.16); white-space:nowrap;
+  display:none;
+}
+.v-gantt__tip.is-on { display:block; }
+.v-gantt__tip-wo { display:flex; font-size:12px; line-height:17px; font-weight:400; color:var(--text-1); }
+
+/* 表格卡（.plan-detail.is-main + .plan-detail 表格同参） */
+.v-plan-detail__tablewrap { flex:1 1 auto; min-height:0; overflow:hidden; }
+.v-plan-table { width:100%; border-collapse:collapse; table-layout:fixed; }
+.v-plan-table th {
+  height:54px; padding:0 16px; background:#fafafa; text-align:left;
+  font-size:var(--fs-body); font-weight:500; color:var(--text-1); white-space:nowrap;
+}
+.v-plan-table td {
+  height:46px; padding:0 16px; font-size:var(--fs-body); font-weight:400;
+  color:var(--text-1); white-space:nowrap; overflow:hidden;
+}
+.v-plan-table tbody tr { cursor:pointer; transition:background .15s; }
+.v-plan-table tbody tr:hover td { background:var(--brand-light); }
+.v-plan-table tbody tr.is-dim td { opacity:.45; }
+.v-plan-cellname { display:flex; align-items:center; min-width:0; font-weight:500; color:var(--text-1); }
+
+/* 色点（.sched-dot 同参：8×8 直角、右距 6） */
+.v-sched-dot { flex:none; display:inline-block; width:8px; height:8px; border-radius:0; margin-right:6px; }
+
+/* 分页卡（.plan-pager-card / .plan-pager 同参：54 高、上边线+向上投影、钮 32 圆角 2、当前页 #E27400） */
+.v-plan-pager-card { flex:0 0 54px; border-top:1px solid var(--divider); background:#fff; box-shadow:0 -2px 4px rgba(0,0,0,.04); position:relative; z-index:1; }
+.v-plan-pager { height:100%; display:flex; align-items:center; justify-content:flex-end; padding:0 16px; gap:8px; }
+.v-plan-pager__total { font-size:var(--fs-body); font-weight:400; color:var(--text-3); }
+.v-plan-pager__btn {
+  min-width:32px; height:32px; border:1px solid var(--border); border-radius:2px;
+  background:#fff; color:var(--text-1); font-family:inherit; font-size:var(--fs-body); font-weight:400;
+  cursor:pointer; display:inline-flex; align-items:center; justify-content:center; padding:0 6px;
+}
+.v-plan-pager__btn:hover { border-color:var(--brand); }
+.v-plan-pager__btn.is-active { border-color:#E27400; }
+.v-plan-pager__btn.is-active { color:#E27400; }
+
+@media (max-width:1180px) {
+  .v-listform__body { flex-direction:column; }
+  .v-listform__col { flex:0 0 auto; width:100%; max-height:340px; }
+  .v-plan-card { width:100%; }
+}
+
+/* 甘特段交互（.pg-seg 同参：hover/is-ext 同款滤镜，过渡 150ms） */
+.vg-seg { cursor:pointer; transition:opacity .15s, filter .15s; }
+.vg-seg:hover, .vg-seg.is-ext { filter:saturate(1.8) brightness(1.06); }
+
+/* ── 删除功能（.plan-card-trash + 删除确认弹窗 同参，v1.3.1）──────────
+   原稿形式：卡头右端 40 宽操作区内的**垃圾桶图标钮**（15×16.25 carbon:trash-can），
+   默认隐藏（opacity 0），卡片 hover 或选中时显示；图标 hover = 浅红底 #FFF1F0 + 红 #F5222D；
+   点击 → 确认弹窗（420 档 --modal-w-sm：橙警示图标 + 标题 + 说明 + 取消/删除） */
+.v-plan-card__acts { flex:0 0 40px; width:40px; display:flex; align-items:center; justify-content:flex-end; }
+.v-plan-card__trash {
+  flex:0 0 auto; width:15px; height:16.25px; display:inline-flex; align-items:center; justify-content:center;
+  border-radius:2px; color:rgba(0,0,0,.85);
+  opacity:0; pointer-events:none; cursor:pointer;
+  transition:opacity .12s, background .12s, color .12s;
+}
+.v-plan-card:hover .v-plan-card__trash,
+.v-plan-card.is-active .v-plan-card__trash { opacity:1; pointer-events:auto; }
+.v-plan-card__trash svg { display:block; width:15px; height:16.25px; }
+.v-plan-card__trash:hover { background:#FFF1F0; color:#F5222D; }
+
+/* 删除确认弹窗（.kb-confirm 同参：420 档、橙警示图标 16、85% 黑说明、取消描边/删除橙实底） */
+.v-confirm-scrim { position:fixed; inset:0; background:var(--scrim); z-index:1000; display:none; align-items:center; justify-content:center; }
+.v-confirm-scrim.is-on { display:flex; }
+.v-confirm {
+  width:var(--modal-w-sm); background:#fff; border-radius:var(--radius-card);
+  box-shadow:0 12px 40px rgba(0,0,0,.18); overflow:hidden;
+}
+.v-confirm__head { display:flex; align-items:center; padding:16px 24px; border-bottom:1px solid var(--divider); }
+.v-confirm__title { font-size:var(--fs-title); font-weight:500; color:var(--text-1); }
+.v-confirm__close {
+  margin-left:auto; width:24px; height:24px; display:inline-flex; align-items:center; justify-content:center;
+  border:none; background:transparent; cursor:pointer; color:var(--text-3); border-radius:2px;
+}
+.v-confirm__close:hover { color:var(--brand); }
+.v-confirm__body { display:flex; align-items:flex-start; gap:8px; padding:20px 24px; }
+.v-confirm__ico { flex:0 0 auto; display:block; width:16px; height:16px; margin-top:3px; }
+.v-confirm__text { flex:1 1 auto; min-width:0; font-size:var(--fs-body); line-height:22px; font-weight:400; color:var(--text-1); }
+.v-confirm__foot { display:flex; justify-content:flex-end; align-items:center; gap:var(--modal-foot-gap); padding:0 24px 24px; }
+.v-confirm__btn {
+  height:var(--ctl-h); padding:0 var(--ctl-px); border-radius:var(--radius-btn);
+  font-family:inherit; font-size:var(--fs-body); font-weight:400; cursor:pointer; white-space:nowrap;
+}
+.v-confirm__btn--cancel { background:#fff; color:var(--text-1); border:1px solid var(--border); }
+.v-confirm__btn--cancel:hover { border-color:var(--brand); color:var(--brand); }
+.v-confirm__btn--ok { background:var(--brand); border:none; color:#fff; }
+.v-confirm__btn--ok:hover { background:var(--brand-hover); }
